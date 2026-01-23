@@ -6,8 +6,6 @@ services:
     ports:
       - "8000:8000" # Porta PC : Porta Container
     volumes:
-      # O "Pulo do Gato": Espelha sua pasta local dentro do container.
-      # Assim, o 'hot reload' funciona quando você salvar um arquivo no VS Code.
       - ./backend:/app/backend
     env_file:
       - ./backend/.env # Lê as senhas do arquivo .env
