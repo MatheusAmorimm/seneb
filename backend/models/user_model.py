@@ -1,12 +1,16 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime, timezone
 from typing import Optional
-from backend.core.types import PyObjectId  # <--- Importando do arquivo novo
+from backend.core.types import PyObjectId
 
 class UserModel(BaseModel):
-    # Usamos o PyObjectId que está no outro arquivo
+    # Configuração Limpa (Sem json_encoders)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
+
     id: Optional[PyObjectId] = Field(default=None, alias="_id")
-    
     email: EmailStr
     password_hash: str
     full_name: str
@@ -17,7 +21,3 @@ class UserModel(BaseModel):
     
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-    class Config:
-        populate_by_name = True
-        from_attributes = True
