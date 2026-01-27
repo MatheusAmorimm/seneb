@@ -7,7 +7,6 @@ from backend.core.database import db
 router = APIRouter()
 
 # --- MODELO DE DADOS (DTO) ---
-# Isso valida o que o Frontend manda. Se estiver errado, o Backend rejeita.
 class TransactionSchema(BaseModel):
     id: Optional[str] = None
     description: str

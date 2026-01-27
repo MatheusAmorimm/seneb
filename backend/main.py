@@ -5,8 +5,7 @@ from backend.core.configs import settings
 from backend.core.database import db
 
 # Importamos as rotas
-from backend.routes.auth_routes import router as auth_router
-from backend.routes.transaction_routes import router as transaction_router # <--- IMPORT NOVO
+from backend.api.v1.endpoints.auth_routes import router as api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,13 +34,7 @@ app.add_middleware(
 )
 
 # --- ROTAS ---
-
-# 1. Rota de Autenticação (Mantive como estava)
-app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
-
-# 2. Rota de Transações (A QUE FALTAVA)
-# O prefixo "/transactions" faz a URL virar: http://localhost:8000/transactions
-app.include_router(transaction_router, prefix="/transactions", tags=["transactions"])
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/health")
 async def health_check():
