@@ -6,6 +6,8 @@ __pycache__/
 env/
 venv/
 *.env
+context.py
+projeto_completo.txt
 
 # Node / JS
 node_modules/
