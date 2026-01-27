@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito_Sans, Tinos, Karla } from "next/font/google";
 import "./globals.css";
+import { Toaster } from 'sonner';
 
 const nunito = Nunito_Sans({
   subsets: ["latin"],
@@ -37,6 +38,7 @@ export default function RootLayout({
         className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased bg-brand-cream text-zinc-800 font-sans`}
       >
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api } from "../../../services/api"; 
+import api from "../../../services/api"; 
 import { Transaction } from "../../../types";
 import { BalanceCard } from "../../../components/balance_card";
 import { TransactionForm } from "../../../components/transaction_form";

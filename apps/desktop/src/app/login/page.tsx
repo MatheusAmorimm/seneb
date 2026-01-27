@@ -1,17 +1,59 @@
 "use client";
 
+import { AxiosError } from 'axios';
 import { useState } from 'react';
 import Link from 'next/link';
-import { DollarSign, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { DollarSign } from 'lucide-react'; // Mantive apenas o que você já tinha
+import { useRouter } from 'next/navigation';
+import api from '../../services/api'; // Certifique-se que o caminho está certo
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login:", { email, password });
+    setLoading(true);
+
+    try {
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
+
+      // ALTERAÇÃO AQUI: 
+      // Chamamos apenas '/login'. A base URL (api/v1) vem do arquivo api.ts (que lê o .env)
+      const response = await api.post('/login', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+
+      console.log("LOGIN SUCESSO:", response.data);
+
+      localStorage.setItem('token', response.data.access_token);
+      
+      // Verifica se o backend retorna user_name e salva
+      if (response.data.user_name) {
+         localStorage.setItem('user', JSON.stringify(response.data.user_name));
+      }
+
+      router.push('/'); 
+
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.detail || "Erro ao conectar com o servidor.";
+        console.error("Erro no Login:", error.response?.data);
+        alert(errorMessage);
+      } else {
+        console.error("Erro desconhecido:", error);
+        alert("Ocorreu um erro inesperado.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,9 +79,8 @@ export default function LoginPage() {
                   E-MAIL
                 </label>
                 <div className="relative">
-                  {/* ÍCONE COM POSICIONAMENTO ABSOLUTO NO CENTRO EXATO */}
+                  {/* ÍCONE COM POSICIONAMENTO ABSOLUTO (Mantido vazio conforme pedido) */}
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-
                   </div>
                   <input
                     id="email"
@@ -49,7 +90,7 @@ export default function LoginPage() {
                     className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all"
                     style={{ 
                       borderColor: '#e2e8f0',
-                      paddingLeft: '20px' // Espaço para o ícone
+                      paddingLeft: '20px' 
                     }}
                     onFocus={(e) => {
                       e.target.style.borderColor = '#00988D';
@@ -65,47 +106,52 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Campo Senha - Apenas Olho Interno */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label htmlFor="password" className="text-slate-700 font-medium text-sm">
-                  SENHA
-                </label>
+              {/* Campo Senha */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label htmlFor="password" className="text-slate-700 font-medium text-sm">
+                    SENHA
+                  </label>
+                </div>
+                
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all text-slate-700"
+                    style={{ borderColor: '#e2e8f0' }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#00988D';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(0, 152, 141, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e2e8f0';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
               </div>
               
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  // pr-12 para dar espaço ao olho
-                  className="w-full px-4 pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all text-slate-700"
-                  style={{ borderColor: '#e2e8f0' }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#00988D';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(0, 152, 141, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#e2e8f0';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-            </div>
-            <button type="button" className="text-xs text-[#F23E02] hover:underline cursor-pointer">
+              <button 
+                type="button" 
+                className="text-xs text-[#F23E02] hover:underline cursor-pointer"
+              >
                 <strong>Esqueceu a senha?</strong>
-            </button>
-            <button
+              </button>
+
+              <button
                 type="submit"
+                disabled={loading}
                 className="w-full py-3 rounded-lg text-white font-bold shadow-md cursor-pointer 
                 bg-[#F23E02] hover:bg-[#d63802] 
-                transition-transform duration-200 hover:scale-[1.05]"
-                >
-                Entrar
-            </button>
+                transition-transform duration-200 hover:scale-[1.05] disabled:opacity-70"
+              >
+                {loading ? 'Entrando...' : 'Entrar'}
+              </button>
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-300"></div></div>
