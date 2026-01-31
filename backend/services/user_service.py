@@ -47,5 +47,6 @@ class UserService:
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "user_name": user.full_name
+            "user_name": user.full_name,
+            "nickname": user.nickname
         }

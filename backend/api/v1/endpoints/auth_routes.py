@@ -80,21 +80,35 @@ async def create_user(user_request: UserSignupRequest):
         password=user_request.password,
         confirm_password=user_request.confirm_password
     )
-
-    service = get_user_service()
     
+    service = get_user_service()
     try:
-        # 4. Cria o usuário no banco (O service já verifica se o email existe na tabela users)
+        # Cria o usuário no MongoDB [cite: 1948, 1949]
         new_user = await service.create_user(user_data)
         
-        # 5. Limpeza: Se deu tudo certo, apaga o código usado
-        await db.db.verification_codes.delete_one({"email": user_request.email})
-        
-        return new_user
+        # Gera o token para Auto-Login imediato [cite: 1943, 1962]
+        from datetime import timedelta
+        from backend.core.configs import settings
+        from backend.core.security import create_access_token
 
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(new_user.id)}, 
+            expires_delta=access_token_expires
+        )
+
+        # Limpa o código usado [cite: 1924]
+        await db.db.verification_codes.delete_one({"email": user_request.email})
+
+        # Retorna o mesmo formato que a rota de /login [cite: 1964]
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user_name": new_user.full_name,
+            "user_nickname": new_user.nickname
+        }
     except ValueError as e:
-        # Captura erros do service (ex: email duplicado)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
