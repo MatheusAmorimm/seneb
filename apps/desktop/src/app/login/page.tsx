@@ -3,58 +3,94 @@
 import { AxiosError } from 'axios';
 import { useState } from 'react';
 import Link from 'next/link';
-import { DollarSign } from 'lucide-react'; // Mantive apenas o que você já tinha
+import { DollarSign, Check } from 'lucide-react'; // Mantive apenas o que você já tinha
 import { useRouter } from 'next/navigation';
 import api from '../../services/api'; // Certifique-se que o caminho está certo
+import { setStorageItem } from '@/src/lib/storage';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword] = useState(false);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [keepLogged, setKeepLogged] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault(); // Sempre no início para evitar o refresh da página 
+  setLoading(true);
 
-    try {
-      const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
+  try {
+    const formData = new URLSearchParams();
+    formData.append('username', email); // 
+    formData.append('password', password); // 
 
-      // ALTERAÇÃO AQUI: 
-      // Chamamos apenas '/login'. A base URL (api/v1) vem do arquivo api.ts (que lê o .env)
-      const response = await api.post('/login', formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      });
-
-      console.log("LOGIN SUCESSO:", response.data);
-
-      localStorage.setItem('token', response.data.access_token);
-      
-      // Verifica se o backend retorna user_name e salva
-      if (response.data.user_name) {
-         localStorage.setItem('user', JSON.stringify(response.data.user_name));
+    // Chamada à API configurada em services/api.ts [cite: 584, 585]
+    const response = await api.post('/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
+    });
 
-      router.push('/'); 
+    // --- MUDANÇA SÊNIOR: ARMAZENAMENTO NATIVO ---
+    // Em apps Tauri, não usamos localStorage por segurança e persistência 
+    await setStorageItem('token', response.data.access_token);
 
-    } catch (error) {
+    await setStorageItem('remember_me', keepLogged);
+
+    const displayName = response.data.nickname || response.data.user_name.split(' ')[0];
+    
+    if (response.data.user_name) {
+       // Salvamos o nome diretamente sem necessidade de JSON.stringify manual
+       await setStorageItem('nickname', displayName);
+    }
+
+    toast.success(`Bem-vindo, ${displayName || 'de volta'}!`);
+    router.push('/'); 
+
+  } catch (error) {
       if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.detail || "Erro ao conectar com o servidor.";
-        console.error("Erro no Login:", error.response?.data);
-        alert(errorMessage);
+        const status = error.response?.status;
+        const data = error.response?.data;
+
+        // Tenta pegar a mensagem exata do backend (detail)
+        let errorMessage = data?.detail;
+
+        // Se não vier mensagem do backend, usamos mensagens padrões baseadas no Status Code
+        if (!errorMessage) {
+          switch (status) {
+            case 401:
+              errorMessage = "E-mail ou senha incorretos.";
+              break;
+            case 400:
+              errorMessage = "Dados inválidos. Verifique os campos.";
+              break;
+            case 422:
+              errorMessage = "Formato de e-mail inválido.";
+              break;
+            case 500:
+              errorMessage = "Erro interno no servidor. Tente novamente mais tarde.";
+              break;
+            default:
+              errorMessage = "Não foi possível conectar ao servidor.";
+          }
+        }
+
+        // Se o detail for um array (erros de validação do Pydantic), pegamos o primeiro
+        if (Array.isArray(errorMessage)) {
+            errorMessage = errorMessage[0]?.msg || "Erro de validação.";
+        }
+
+        toast.error(errorMessage);
+        
       } else {
-        console.error("Erro desconhecido:", error);
-        alert("Ocorreu um erro inesperado.");
+        toast.error("Ocorreu um erro inesperado.");
       }
     } finally {
       setLoading(false);
     }
-  };
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
@@ -136,12 +172,40 @@ export default function LoginPage() {
                 </div>
               </div>
               
-              <button 
-                type="button" 
-                className="text-xs text-[#F23E02] hover:underline cursor-pointer"
-              >
-                <strong>Esqueceu a senha?</strong>
-              </button>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  style={{ WebkitAppRegion: 'no-drag', cursor: 'pointer' } as React.CSSProperties} // IMPORTANTE: Impede que o botão envie o formulário
+                  onClick={(e) => {
+                    e.stopPropagation(); // Garante que o clique não suba para o form
+                    setKeepLogged(prev => !prev); // Usa callback para garantir estado atual
+                  }}
+                  className="relative z-50 flex items-center gap-2 group focus:outline-none">
+                
+                    <div className={`
+                      w-5 h-5 rounded border flex items-center justify-center transition-all duration-200
+                      ${keepLogged 
+                      ? 'border-[#00988D]' // Estado ATIVO (Fundo verde, Borda verde)
+                      : 'bg-white border-slate-300 group-hover:border-[#00988D]' // Estado INATIVO (Fundo branco + Hover na borda)
+                      }`
+                    }
+                    style={{
+                      backgroundColor: keepLogged ? '#00988D' : 'white',
+                    }}>
+                      <Check 
+                      size={14} 
+                      className={`text-white transition-transform duration-200 ${keepLogged ? 'scale-100' : 'scale-0'}`} 
+                      strokeWidth={3}
+                      />
+                    </div>
+                  <span className="text-sm text-slate-600 font-medium group-hover:text-[#00988D] transition-colors select-none pointer-events-none">
+                    Manter-me conectado
+                  </span>
+                </button>
+                  <button type="button" className="text-xs text-[#F23E02] hover:underline cursor-pointer">
+                    <strong>Esqueceu a senha?</strong>
+                  </button>
+              </div>
 
               <button
                 type="submit"

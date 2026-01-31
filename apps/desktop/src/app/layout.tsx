@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Nunito_Sans, Tinos, Karla } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
+import { AuthProvider } from "../components/auth_provider";
 
 const nunito = Nunito_Sans({
   subsets: ["latin"],
@@ -37,7 +38,9 @@ export default function RootLayout({
       <body
         className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased bg-brand-cream text-zinc-800 font-sans`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster richColors position="top-right" />
       </body>
     </html>

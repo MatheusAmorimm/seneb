@@ -1,15 +1,39 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PlusCircle, History, BarChart3, ArrowRight } from "lucide-react";
 import { Navbar } from "../components/navbar";
+import { getStorageItem } from "../lib/storage"; 
 
 export default function HomePage() {
+  // Inicializamos com o valor padrão. 
+  // Como o getStorageItem é assíncrono, não teremos erro de hidratação.
+  const [userNickanme, setNickname] = useState("Robot");
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        // Busca do Tauri Store (assíncrono)
+        const savedUser = await getStorageItem<string>("nickname");
+        
+        // Se houver usuário salvo, atualizamos o estado
+        if (savedUser) {
+          setNickname(savedUser);
+        }
+      } catch (e) {
+        console.error("Falha ao carregar nome do usuário", e);
+      }
+    }
+    loadUser();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
       <Navbar />
-      {/* Saudação e Cabeçalho */}
       <div className="text-center space-y-4 mb-16 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="text-5xl md:text-6xl font-serif font-bold text-[#013750]">
-          Olá, <span className="text-[#2C6B74]">Robot!</span>
+          Olá, <span className="text-[#2C6B74]">{userNickanme}!</span>
         </h1>
         <p className="text-lg text-slate-600 font-sans">
           Bem-vindo de volta ao seu controle financeiro. <br />
@@ -17,15 +41,14 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Grid de Navegação (Os 3 Cards Principais) */}
+      {/* Grid de Navegação (Mantendo o design original intacto) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
         
-        {/* CARD 1: Lançamentos (Leva para a tela com Sidebar) */}
+        {/* CARD 1: Lançamentos */}
         <Link 
           href="/lancamentos"
           className="group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-[#ffe4d6] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-          {/* Efeito de brilho laranja no fundo */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#fff0e6] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           <div className="relative z-10">

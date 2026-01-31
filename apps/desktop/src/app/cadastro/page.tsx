@@ -7,6 +7,7 @@ import { AxiosError } from 'axios';
 import api from '../../services/api'; 
 import { DollarSign } from 'lucide-react';
 import { toast } from 'sonner'; 
+import { setStorageItem } from '@/src/lib/storage';
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -95,10 +96,14 @@ export default function CadastroPage() {
         verification_code: inputCode // <--- O Backend vai validar isso no Mongo
       };
 
-      await api.post('/signup', payload);
+      const response = await api.post('/signup', payload);
 
       toast.success("Conta criada com sucesso! Redirecionando...");
       setTimeout(() => router.push('/login'), 2000);
+
+      await setStorageItem('token', response.data.access_token);
+      await setStorageItem('user', response.data.user_name);
+      await setStorageItem('remember_me', true)
 
     } catch (error) {
       if (error instanceof AxiosError) {
