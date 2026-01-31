@@ -7,7 +7,7 @@ env/
 venv/
 *.env
 context.py
-projeto_completo.txt
+projeto_completo*
 
 # Node / JS
 node_modules/
