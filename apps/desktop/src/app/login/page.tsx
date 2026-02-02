@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { DollarSign, Check } from 'lucide-react'; // Mantive apenas o que você já tinha
 import { useRouter } from 'next/navigation';
 import api from '../../services/api'; // Certifique-se que o caminho está certo
-import { setStorageItem } from '@/src/lib/storage';
+import { setStorageItem, removeFromDiskOnly } from '@/src/lib/storage';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -18,79 +18,76 @@ export default function LoginPage() {
   const [keepLogged, setKeepLogged] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault(); // Sempre no início para evitar o refresh da página 
-  setLoading(true);
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const formData = new URLSearchParams();
-    formData.append('username', email); // 
-    formData.append('password', password); // 
+    // DEBUG: Verifique no console (F12) se estes valores aparecem quando você clica em entrar
+    console.log("Tentando Login com:", { email, password });
 
-    // Chamada à API configurada em services/api.ts [cite: 584, 585]
-    const response = await api.post('/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
+    try {
+      // 1. FORÇA BRUTA: Criamos os dados no formato exato de formulário
+      const params = new URLSearchParams();
+      params.append('username', email); // FastAPI exige 'username', não 'email'
+      params.append('password', password);
 
-    // --- MUDANÇA SÊNIOR: ARMAZENAMENTO NATIVO ---
-    // Em apps Tauri, não usamos localStorage por segurança e persistência 
-    await setStorageItem('token', response.data.access_token);
-
-    await setStorageItem('remember_me', keepLogged);
-
-    const displayName = response.data.nickname || response.data.user_name.split(' ')[0];
-    
-    if (response.data.user_name) {
-       // Salvamos o nome diretamente sem necessidade de JSON.stringify manual
-       await setStorageItem('nickname', displayName);
-    }
-
-    toast.success(`Bem-vindo, ${displayName || 'de volta'}!`);
-    router.push('/'); 
-
-  } catch (error) {
-      if (error instanceof AxiosError) {
-        const status = error.response?.status;
-        const data = error.response?.data;
-
-        // Tenta pegar a mensagem exata do backend (detail)
-        let errorMessage = data?.detail;
-
-        // Se não vier mensagem do backend, usamos mensagens padrões baseadas no Status Code
-        if (!errorMessage) {
-          switch (status) {
-            case 401:
-              errorMessage = "E-mail ou senha incorretos.";
-              break;
-            case 400:
-              errorMessage = "Dados inválidos. Verifique os campos.";
-              break;
-            case 422:
-              errorMessage = "Formato de e-mail inválido.";
-              break;
-            case 500:
-              errorMessage = "Erro interno no servidor. Tente novamente mais tarde.";
-              break;
-            default:
-              errorMessage = "Não foi possível conectar ao servidor.";
-          }
+      // 2. ENVIO EXPLÍCITO: Forçamos o header para 'application/x-www-form-urlencoded'
+      // Isso impede que o Axios tente enviar como JSON acidentalmente
+      const response = await api.post('/login', params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
         }
+      });
+      
+      // 3. SE SUCESSO:
+      const token = response.data.access_token;
+      // Pega o apelido, ou primeiro nome, ou fallback
+      const userName = response.data.nickname || response.data.user_name?.split(' ')[0] || "Usuário";
 
-        // Se o detail for um array (erros de validação do Pydantic), pegamos o primeiro
-        if (Array.isArray(errorMessage)) {
-            errorMessage = errorMessage[0]?.msg || "Erro de validação.";
-        }
-
-        toast.error(errorMessage);
-        
+      // 4. LÓGICA DE PERSISTÊNCIA (Como combinamos)
+      if (keepLogged) {
+        // Checkbox MARCADO -> Disco
+        await setStorageItem('token', token);
+        await setStorageItem('user', userName);
+        await setStorageItem('remember_me', true);
       } else {
-        toast.error("Ocorreu um erro inesperado.");
+        // Checkbox DESMARCADO -> RAM
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('user', JSON.stringify(userName));
+        
+        // CORREÇÃO CRÍTICA:
+        // Usamos a função nova para limpar SÓ O DISCO.
+        // Assim, a RAM (onde acabamos de salvar o token) continua intacta.
+        await removeFromDiskOnly('token');
+        await removeFromDiskOnly('user');
+        await removeFromDiskOnly('remember_me');
+      }
+
+      toast.success(`Bem-vindo(a), ${userName}!`);
+      router.push('/');
+
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error("Erro Completo Backend:", error.response?.data);
+        
+        const detail = error.response?.data?.detail;
+        
+        // Tratamento específico para erros de validação (Array)
+        if (Array.isArray(detail)) {
+             // Geralmente o erro é: [{loc: ['body', 'username'], msg: 'field required', ...}]
+             const field = detail[0]?.loc[1] === 'username' ? 'E-mail' : 'Senha';
+             toast.error(`O campo ${field} é obrigatório.`);
+        } else if (typeof detail === 'string') {
+             toast.error(detail); // Ex: "E-mail ou senha incorretos"
+        } else {
+             toast.error("Verifique seus dados e tente novamente.");
+        }
+      } else {
+        toast.error("Erro inesperado. Verifique sua conexão.");
       }
     } finally {
       setLoading(false);
     }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
@@ -185,8 +182,8 @@ export default function LoginPage() {
                     <div className={`
                       w-5 h-5 rounded border flex items-center justify-center transition-all duration-200
                       ${keepLogged 
-                      ? 'border-[#00988D]' // Estado ATIVO (Fundo verde, Borda verde)
-                      : 'bg-white border-slate-300 group-hover:border-[#00988D]' // Estado INATIVO (Fundo branco + Hover na borda)
+                      ? 'border-brand-turquoise' // Estado ATIVO (Fundo verde, Borda verde)
+                      : 'bg-white border-slate-300 group-hover:border-brand-turquoise' // Estado INATIVO (Fundo branco + Hover na borda)
                       }`
                     }
                     style={{
@@ -198,11 +195,11 @@ export default function LoginPage() {
                       strokeWidth={3}
                       />
                     </div>
-                  <span className="text-sm text-slate-600 font-medium group-hover:text-[#00988D] transition-colors select-none pointer-events-none">
+                  <span className="text-sm text-slate-600 font-medium group-hover:text-brand-turquoise transition-colors select-none pointer-events-none">
                     Manter-me conectado
                   </span>
                 </button>
-                  <button type="button" className="text-xs text-[#F23E02] hover:underline cursor-pointer">
+                  <button type="button" className="text-xs text-brand-orange hover:underline cursor-pointer">
                     <strong>Esqueceu a senha?</strong>
                   </button>
               </div>
@@ -211,7 +208,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 className="w-full py-3 rounded-lg text-white font-bold shadow-md cursor-pointer 
-                bg-[#F23E02] hover:bg-[#d63802] 
+                bg-brand-orange hover:bg-[#d63802] 
                 transition-transform duration-200 hover:scale-[1.05] disabled:opacity-70"
               >
                 {loading ? 'Entrando...' : 'Entrar'}

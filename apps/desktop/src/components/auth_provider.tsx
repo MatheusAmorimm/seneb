@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getStorageItem, removeStorageItem } from "../lib/storage";
+import { getStorageItem } from "../lib/storage";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -11,47 +11,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function checkAuth() {
-      try {
-        const token = await getStorageItem<string>("token");
-        const rememberMe = await getStorageItem<boolean>("remember_me")
+      // O getStorageItem vai procurar na RAM (sessão) E no Disco (persistente)
+      const token = await getStorageItem<string>("token");
+      const isPublicRoute = ["/login", "/cadastro"].includes(pathname);
 
-        const isPublicRoute = ["/login", "/cadastro"].includes(pathname);
-
-        // Regra de Ouro: Só é válido se tem Token E RememberMe é estritamente TRUE
-        const isAuthenticated = !!token && rememberMe === true;
-
-        if (!isAuthenticated) {
-          // Se não está autenticado (ou não pediu para lembrar), 
-          // LIMPEZA FORÇADA para garantir que não sobrem resquícios
-          if (token) {
-            await removeStorageItem("token");
-            await removeStorageItem("user");
-            // Opcional: limpar o remember_me também para garantir estado limpo
-            await removeStorageItem("remember_me");
-          }
-
-          if (!isPublicRoute) {
-            router.replace("/login");
-          } else {
-            setIsReady(true);
-          }
+      if (!token) {
+        // Se não tem token em lugar nenhum, manda pro Login
+        if (!isPublicRoute) {
+          router.replace("/login");
         } else {
-          // Usuário autenticado e pediu para lembrar
-          if (isPublicRoute) {
-            router.replace("/");
-          } else {
-            setIsReady(true);
-          }
+          setIsReady(true); // Deixa ver a tela de login
         }
-      } catch (err) {
-        router.replace("/login");
+      } else {
+        // Se TEM token (seja da RAM ou do Disco), deixa entrar
+        if (isPublicRoute) {
+          router.replace("/"); // Já tá logado, sai do login
+        } else {
+          setIsReady(true); // Mostra a Home
+        }
       }
     }
-    
     checkAuth();
   }, [pathname, router]);
 
-  // Enquanto verifica, não renderiza nada para evitar "piscada" de tela errada
   if (!isReady) return null;
 
   return <>{children}</>;

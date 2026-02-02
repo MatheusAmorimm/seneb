@@ -121,7 +121,7 @@ export default function CadastroPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
       
-      <div className="w-[450px]">
+      <div className="w-112.5">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           
           <div className="p-8 text-center" style={{ background: 'linear-gradient(to right, #013750, #2C6B74)' }}>
@@ -150,7 +150,7 @@ export default function CadastroPage() {
                       type="text"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#00988D] focus:ring-[#00988D] transition-all"
+                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Seu nome completo"
                       required
@@ -166,7 +166,7 @@ export default function CadastroPage() {
                       type="text"
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
-                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#00988D] focus:ring-[#00988D] transition-all"
+                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Seu apelido"
                     />
@@ -181,7 +181,7 @@ export default function CadastroPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#00988D] focus:ring-[#00988D] transition-all"
+                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
                       style={{ paddingLeft: '20px' }}
                       placeholder="seu@email.com"
                       required
@@ -197,7 +197,7 @@ export default function CadastroPage() {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#00988D] focus:ring-[#00988D] transition-all"
+                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Mínimo 8 caracteres"
                     />
@@ -212,7 +212,7 @@ export default function CadastroPage() {
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#00988D] focus:ring-[#00988D] transition-all"
+                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Digite a senha novamente"
                     />
@@ -272,7 +272,7 @@ export default function CadastroPage() {
                     maxLength={4}
                     value={inputCode}
                     onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ''))} // Só aceita números
-                    className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-[#F23E02] focus:ring-1 focus:ring-[#F23E02] transition-all"
+                    className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
                     placeholder="0000"
                     autoFocus
                   />
