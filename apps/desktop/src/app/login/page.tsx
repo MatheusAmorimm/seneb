@@ -32,7 +32,7 @@ export default function LoginPage() {
 
       // 2. ENVIO EXPLÍCITO: Forçamos o header para 'application/x-www-form-urlencoded'
       // Isso impede que o Axios tente enviar como JSON acidentalmente
-      const response = await api.post('/login', params, {
+      const response = await api.post('/auth/login', params, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
