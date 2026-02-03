@@ -110,3 +110,25 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+@layer utilities {
+  .btn-primary-action {
+    background-color: #F23E02;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .btn-primary-action:hover {
+    background-color: #d63802 !important; /* !important garante override */
+    transform: scale(1.02);
+  }
+
+  .btn-primary-action:active {
+    transform: scale(0.98);
+  }
+
+  .btn-primary-action:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+}

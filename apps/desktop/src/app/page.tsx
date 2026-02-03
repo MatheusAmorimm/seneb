@@ -49,7 +49,7 @@ export default function HomePage() {
           href="/lancamentos"
           className="group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-expense-start shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-          <div className="absolute inset-0 bg-linear-to-br from-[#fff0e6] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#fff0e6] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-brand-orange/10 flex items-center justify-center mb-6 group-hover:bg-brand-orange transition-colors duration-300">
@@ -74,7 +74,7 @@ export default function HomePage() {
           href="/historico"
           className="group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-[#cceae8] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-          <div className="absolute inset-0 bg-linear-to-br from-[#e0f7fa] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#e0f7fa] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-brand-turquoise/10 flex items-center justify-center mb-6 group-hover:bg-brand-turquoise transition-colors duration-300">
@@ -99,7 +99,7 @@ export default function HomePage() {
           href="/analytics"
           className="group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-[#bfdbfe] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-          <div className="absolute inset-0 bg-linear-to-br from-[#eef2ff] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-brand-deepBlue/10 flex items-center justify-center mb-6 group-hover:bg-brand-deepBlue transition-colors duration-300">

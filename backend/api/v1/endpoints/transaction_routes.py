@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from uuid import uuid4
+from bson import ObjectId
 from backend.core.database import db
 from backend.models.user_model import UserModel
 from backend.core.deps import get_current_user # <--- Importamos a segurança
@@ -60,26 +61,34 @@ async def create_transaction(
 @router.delete("/{transaction_id}")
 async def delete_transaction(
     transaction_id: str,
-    current_user: UserModel = Depends(get_current_user) # <--- O porteiro
+    current_user: UserModel = Depends(get_current_user)
 ):
-    # A query de deleção agora exige que o ID bata E que o user_id seja o do logado
+    # Lógica Robusta:
+    # 1. O usuário DEVE ser o dono (user_id match)
+    # 2. O ID pode ser um UUID (campo "id") OU um ObjectId (campo "_id")
+    
+    filters = []
+    
+    # Se for um ObjectId válido (24 chars hex), adiciona à busca pelo _id
+    if ObjectId.is_valid(transaction_id):
+        filters.append({"_id": ObjectId(transaction_id)})
+    
+    # Sempre adiciona a busca pelo campo "id" (string UUID)
+    filters.append({"id": transaction_id})
+
+    # Monta a query final com segurança
     query = {
-        "$and": [
-            {"user_id": str(current_user.id)}, # Segurança
-            {"$or": [{"id": transaction_id}, {"_id": transaction_id}]} # Flexibilidade de ID
-        ]
+        "user_id": str(current_user.id), # Trava de segurança do usuário
+        "$or": filters
     }
     
-    # Nota: Precisamos tratar o ObjectId na query $or se for necessário, 
-    # mas geralmente deletamos pelo UUID ("id") que o front manda.
-    
-    # Simplificando para MVP (deletar pelo UUID):
-    result = await db.db.transactions.delete_one({
-        "id": transaction_id, 
-        "user_id": str(current_user.id) # Garante que ninguém apaga transação de outro
-    })
+    # DEBUG (Opcional - pode remover depois)
+    print(f"Tentando deletar com query: {query}")
+
+    result = await db.db.transactions.delete_one(query)
     
     if result.deleted_count == 1:
         return {"message": "Deletado com sucesso"}
     
-    raise HTTPException(status_code=404, detail="Transação não encontrada ou acesso negado")
+    # Se chegou aqui, ou não achou, ou não pertence ao usuário
+    raise HTTPException(status_code=404, detail="Transação não encontrada.")
