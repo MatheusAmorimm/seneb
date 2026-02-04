@@ -3,29 +3,32 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileSearch, ArrowLeft, UnlockKeyhole } from "lucide-react";
+import { FileSearch, ArrowLeft, UnlockKeyhole, AlertTriangle, X, RotateCcw } from "lucide-react"; // Novos ícones
 import Link from "next/link";
 
 import api from "../../../services/api";
 import { Transaction } from "../../../types";
 import { TransactionList } from "../../../components/transaction_list";
 import { BalanceCard } from "../../../components/balance_card";
-import { useReports } from "../../../hooks/use_reports"; // Reutilizamos o hook limpo
+import { useReports } from "../../../hooks/use_reports"; 
 
 export default function HistoricoPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reportId = searchParams.get("id");
 
-  // 1. Hook de Relatórios (Traz a lista e metadados como saldo, nome, etc)
+  // 1. Hook de Relatórios
   const { reports, isLoading: loadingReports, refetch: refreshSidebar } = useReports();
 
-  // 2. Estados locais para os detalhes da transação
+  // 2. Estados locais
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  
+  // 3. Estados do Modal e UX
+  const [showReopenModal, setShowReopenModal] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-
-  // 3. Efeito: Sempre que o reportId da URL mudar, carregamos os detalhes
+  // 4. Efeito: Carregar detalhes
   useEffect(() => {
     if (!reportId) return;
 
@@ -45,15 +48,42 @@ export default function HistoricoPage() {
     loadDetails();
   }, [reportId]);
 
-  // 4. Lógica de Redirecionamento Automático (Opcional)
-  // Se entrou na página sem ID e tem relatórios, joga para o mais recente
+  // 5. Redirecionamento Automático
   useEffect(() => {
     if (!loadingReports && reports.length > 0 && !reportId) {
       router.replace(`/historico?id=${reports[0].id}`);
     }
   }, [loadingReports, reports, reportId, router]);
 
-  // --- ESTADO: Carregando Lista Principal ---
+  const currentReport = reports.find(r => r.id === reportId);
+
+  // --- HANDLERS ---
+
+  // Apenas abre o modal
+  const handleRequestReopen = () => {
+    if (!currentReport) return;
+    setShowReopenModal(true);
+  };
+
+  // Executa a ação real (chamado pelo Modal)
+  const confirmReopen = async () => {
+    if (!currentReport) return;
+
+    try {
+      await api.delete(`/reports/${currentReport.id}/reopen`);
+      toast.success("Mês reaberto com sucesso!");
+      
+      setShowReopenModal(false); // Fecha modal
+      await refreshSidebar();    // Atualiza sidebar (remove cadeado)
+      router.push("/lancamentos"); // Vai para edição
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao reabrir mês.");
+    }
+  };
+
+  // --- RENDERS DE ESTADO ---
+
   if (loadingReports) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -62,7 +92,6 @@ export default function HistoricoPage() {
     );
   }
 
-  // --- ESTADO: Sem Nenhum Histórico ---
   if (reports.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4 animate-in fade-in">
@@ -83,10 +112,6 @@ export default function HistoricoPage() {
     );
   }
 
-  // Encontra o relatório ativo para mostrar os Cards de Saldo (Metadados)
-  const currentReport = reports.find(r => r.id === reportId);
-
-  // Se tem ID na URL mas não achou o relatório (ex: ID inválido), mostra erro
   if (reportId && !currentReport) {
     return (
       <div className="text-center mt-20">
@@ -98,31 +123,11 @@ export default function HistoricoPage() {
     );
   }
 
-  const handleReopenMonth = async () => {
-    if (!currentReport) return;
-
-    const confirm = window.confirm(`Tem certeza que deseja reabrir "${currentReport.name}"? Isso moverá todas as transações de volta para "Lançamentos".`);
-    
-    if (confirm){
-      try {
-        await api.delete(`/reports/${currentReport.id}/reopen`);
-        toast.success("Mês reaberto com sucesso!");
-        
-        await refreshSidebar();
-        router.push("/lancamentos");
-      } catch (error) {
-        toast.error("Erro ao reabrir mês:");
-      }
-    }
-  };
-
-    return (
-    <div className="space-y-8 pb-10">
+  return (
+    <div className="space-y-8 pb-10 relative">
       
-      {/* --- INÍCIO DA ALTERAÇÃO: NOVO CABEÇALHO --- */}
+      {/* CABEÇALHO */}
       <div className="flex items-end justify-between mb-6 animate-in slide-in-from-top-4">
-        
-        {/* LADO ESQUERDO: Voltar, Label e Título */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
               <Link href="/" className="p-1.5 -ml-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
@@ -142,10 +147,9 @@ export default function HistoricoPage() {
           )}
         </div>
 
-        {/* LADO DIREITO: Botão Compacto e Alinhado */}
         {currentReport && (
           <button 
-            onClick={handleReopenMonth}
+            onClick={handleRequestReopen} // Agora abre o modal
             className="h-fit w-fit bg-[#F23E02] hover:bg-[#d93602] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
             title="Voltar itens para edição"
           >
@@ -154,9 +158,8 @@ export default function HistoricoPage() {
           </button>
         )}
       </div>
-      {/* --- FIM DA ALTERAÇÃO --- */}
 
-      {/* Cards de Saldo (Mantido igual) */}
+      {/* METADADOS */}
       {currentReport && (
         <section className="animate-in fade-in duration-500">
           <BalanceCard 
@@ -167,7 +170,7 @@ export default function HistoricoPage() {
         </section>
       )}
 
-      {/* Lista de Transações (Mantido igual) */}
+      {/* LISTA */}
       <section className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
         <h3 className="text-lg font-bold text-[#013750] mb-4 flex items-center gap-2">
             Detalhamento
@@ -187,6 +190,62 @@ export default function HistoricoPage() {
           />
         )}
       </section>
+
+      {/* --- MODAL DE CONFIRMAÇÃO (Substitui o window.confirm) --- */}
+      {showReopenModal && currentReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100">
+            
+            {/* Header Amarelo (Atenção) */}
+            <div className="bg-amber-50 p-6 flex items-center gap-4 border-b border-amber-100">
+              <div className="bg-amber-100 p-3 rounded-full">
+                <AlertTriangle className="text-amber-600 w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif font-bold text-brand-deepBlue">Reabrir este mês?</h3>
+                <p className="text-sm text-slate-500">Os dados voltarão para a tela de lançamentos.</p>
+              </div>
+              <button 
+                onClick={() => setShowReopenModal(false)}
+                className="ml-auto text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Conteúdo Explicativo */}
+            <div className="px-6 py-4 bg-white text-sm text-slate-600">
+              <p>Ao reabrir <strong>{currentReport.name}</strong>, você poderá editar ou excluir as transações novamente na aba de Planejamento.</p>
+              <p className="mt-2 text-xs text-slate-400">Nota: O relatório sairá do histórico até ser finalizado novamente.</p>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 bg-white flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowReopenModal(false)}
+                className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              
+              <button
+                onClick={confirmReopen}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                className="px-4 py-2 text-white font-bold rounded-lg shadow-md flex items-center gap-2 transition-all duration-200 active:scale-95"
+                style={{ 
+                  backgroundColor: isHovered ? '#d97706' : '#f59e0b', // Laranja Escuro -> Mais escuro no hover
+                  cursor: 'pointer' 
+                }}
+              >
+                <RotateCcw size={18} />
+                Sim, Reabrir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

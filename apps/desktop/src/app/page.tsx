@@ -3,25 +3,46 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PlusCircle, History, BarChart3, ArrowRight } from "lucide-react";
-import { Navbar } from "../components/navbar"; // Verifique se o import está como @/ ou ../
-import { getStorageItem } from "../lib/storage"; // Verifique se o import está como @/ ou ../
+import { Navbar } from "../components/navbar";
+import { getStorageItem } from "../lib/storage"; 
+import { UserData } from "../types/index"
 
 export default function HomePage() {
-  // Inicializamos com um valor padrão profissional
   const [userName, setUserName] = useState("Investidor");
 
   useEffect(() => {
     async function loadUser() {
       try {
-        // CORREÇÃO AQUI: A chave que salvamos no login é "user", não "nickname"
-        const savedUser = await getStorageItem<string>("user");
+        const savedUser = await getStorageItem("user");
         
-        // Se houver usuário salvo, atualizamos o estado
         if (savedUser) {
-          setUserName(savedUser);
+          let parsedData = savedUser;
+
+          // 1. Tenta fazer parse se for string
+          if (typeof parsedData === 'string') {
+            try {
+              parsedData = JSON.parse(parsedData);
+            } catch { /* erro silencioso, mantém o valor original */ }
+          }
+
+          // 2. PROTEÇÃO CONTRA DUPLO STRINGIFY: 
+          // Se depois do parse acima ainda for string (aquele JSON que você viu), faz parse de novo!
+          if (typeof parsedData === 'string') {
+            try {
+              parsedData = JSON.parse(parsedData);
+            } catch { /* erro silencioso */ }
+          }
+
+          // 3. Agora garantimos que é um objeto antes de acessar as propriedades
+          if (typeof parsedData === 'object' && parsedData !== null) {
+            // Prioridade: Apelido > Primeiro Nome > Fallback
+            const userObj = parsedData as UserData;
+            const displayName = userObj.nickname || userObj.full_name?.split(' ')[0] || "Investidor";
+            setUserName(displayName);
+          }
         }
       } catch (e) {
-        console.error("Falha ao carregar nome do usuário", e);
+        console.error("Falha ao carregar usuário", e);
       }
     }
     loadUser();

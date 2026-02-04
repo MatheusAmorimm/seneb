@@ -1,26 +1,23 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, CreditCard, AlertCircle, Hash, CalendarClock, Save, Info } from 'lucide-react';
+import { Plus, CreditCard, AlertCircle, Hash, CalendarClock, Save, Info, X, PenLine } from 'lucide-react';
 import api from '../services/api';
 import { Transaction, TransactionType, PaymentMethod } from '../types';
 import { toast } from 'sonner';
 
 // --- CONSTANTES ---
-
 const CATEGORIES = {
   income: ["Salário", "Férias", "Décimo Terceiro", "Investimentos", "Outros"],
   expense: ["Compra", "Conta Fixa", "Empréstimo", "Impostos", "Fatura do Cartão"]
 };
 
-// Sugestões para o campo DESCRIÇÃO
 const DESCRIPTION_SUGGESTIONS: Record<string, string[]> = {
   "Conta Fixa": ["Aluguel", "Luz", "Internet", "Água", "Gás", "Condomínio"],
   "Empréstimo": ["FGTS", "Pessoal", "Consignado"],
   "Impostos": ["IPVA", "IPTU", "Imposto de Renda"],
 };
 
-// Bancos Padrão
 const DEFAULT_BANKS = [
   "Nubank", "Itaú", "Inter", "Bradesco", "Santander", "Caixa", "Banco do Brasil", "C6 Bank"
 ];
@@ -47,9 +44,11 @@ const PAYMENT_OPTIONS_FIXED = [
 
 interface TransactionFormProps {
   onAddTransaction: (transaction: Transaction) => Promise<void>;
+  initialData?: Transaction | null; 
+  onCancelEdit?: () => void;
 }
 
-export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
+export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- STATE ---
@@ -69,9 +68,58 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
   const [totalInstallments, setTotalInstallments] = useState(1);
   const [currentInstallment, setCurrentInstallment] = useState(1);
 
-  // Helper de formatação (Ex: nubank -> Nubank)
+  // Estado de Erros Visual
+  const [errors, setErrors] = useState({
+    category: false,
+    description: false,
+    amount: false
+  });
+
   const formatBankName = (name: string) => {
     return name.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  };
+
+  // --- EFEITO: CARREGAR DADOS DE EDIÇÃO ---
+  useEffect(() => {
+    if (initialData) {
+      setType(initialData.type);
+      setCategory(initialData.category);
+      setDescription(initialData.description || '');
+      setAmount(initialData.amount.toString());
+      setPaymentMethod(initialData.payment_method || '');
+      setDueDate(initialData.due_date || '');
+      setBank(initialData.bank || '');
+      
+      setIsInstallment(!!initialData.is_installment);
+      setTotalInstallments(initialData.total_installments || 1);
+      
+      if (initialData.installment_identifier) {
+        const [current] = initialData.installment_identifier.split('/');
+        setCurrentInstallment(parseInt(current) || 1);
+      } else {
+        setCurrentInstallment(1);
+      }
+      
+      setErrors({ category: false, description: false, amount: false });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      resetForm();
+    }
+  }, [initialData]);
+
+  const resetForm = () => {
+    setType('expense');
+    setCategory('');
+    setDescription('');
+    setAmount('');
+    setPaymentMethod('');
+    setBank('');
+    setDueDate('');
+    setIsInstallment(false);
+    setIsCustomBankMode(false);
+    setTotalInstallments(1);
+    setCurrentInstallment(1);
+    setErrors({ category: false, description: false, amount: false });
   };
 
   // --- BUSCA BANCOS ---
@@ -110,13 +158,8 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
 
   const showBankField = useMemo(() => {
     if (type === 'income') return false;
-    // 1. Categorias que sempre pedem banco
     if (["Empréstimo", "Impostos", "Conta Fixa", "Fatura do Cartão"].includes(category)) return true;
-    
-    // 2. CORREÇÃO AQUI: Compra pede banco se tiver meio de pagamento e NÃO for Dinheiro.
-    // (Isso inclui agora Cartão de Crédito, Débito e Pix)
     if (category === "Compra" && paymentMethod && paymentMethod !== 'cash') return true;
-    
     return false;
   }, [type, category, paymentMethod]);
 
@@ -139,13 +182,18 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
     return false;
   }, [category, isInstallment]);
 
-  // --- EFEITOS ---
+  // --- EFEITOS DE LIMPEZA ---
   useEffect(() => {
-    setCategory(''); setDescription(''); setAmount(''); setPaymentMethod('');
-    setBank(''); setDueDate(''); setIsInstallment(false); setIsCustomBankMode(false);
+    if (!initialData) {
+       setCategory(''); setDescription(''); setAmount(''); setPaymentMethod('');
+       setBank(''); setDueDate(''); setIsInstallment(false); setIsCustomBankMode(false);
+       setErrors({ category: false, description: false, amount: false });
+    }
   }, [type]);
 
   useEffect(() => {
+    if (initialData && category === initialData.category) return;
+
     setPaymentMethod(''); setBank(''); setDueDate('');
     setIsInstallment(false); setIsCustomBankMode(false);
     if (category === "Fatura do Cartão") {
@@ -194,15 +242,34 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!category || !amount) return;
-    if (type === 'expense' && !description) return;
+
+    // 1. Definição clara dos erros
+    const hasCategoryError = !category;
+    // O valor é erro se for vazio ou se for 0/negativo
+    const hasAmountError = !amount || parseFloat(amount) <= 0;
+    const hasDescriptionError = type === 'expense' && category !== "Fatura do Cartão" && !description;
+
+    const newErrors = {
+        category: hasCategoryError,
+        amount: hasAmountError,
+        description: hasDescriptionError
+    };
+
+    // 2. Bloqueia se houver erro
+    if (hasCategoryError || hasAmountError || hasDescriptionError) {
+        setErrors(newErrors);
+        toast.error("Preencha os campos obrigatórios em vermelho.");
+        return;
+    }
 
     try {
       setIsSubmitting(true);
       const finalDescription = category === "Fatura do Cartão" ? "Fatura do Cartão" : description;
+      
       const payload: Transaction = {
+        id: initialData?.id,
         type, category, description: finalDescription, amount: parseFloat(amount),
-        date: new Date().toISOString().split('T')[0],
+        date: initialData?.date || new Date().toISOString().split('T')[0],
         due_date: showDueDateField && dueDate ? dueDate : undefined,
         payment_method: showPaymentField ? (paymentMethod as PaymentMethod) : undefined,
         bank: showBankField ? bank : undefined,
@@ -210,11 +277,15 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
         total_installments: isInstallment ? totalInstallments : 1,
         installment_identifier: isInstallment ? `${currentInstallment}/${totalInstallments}` : undefined
       };
+      
       await onAddTransaction(payload);
       
-      if (category !== "Fatura do Cartão") setDescription('');
-      setAmount(''); setPaymentMethod(''); setBank(''); setDueDate('');
-      setIsInstallment(false); setTotalInstallments(1); setCurrentInstallment(1); setIsCustomBankMode(false);
+      if (!initialData) {
+        if (category !== "Fatura do Cartão") setDescription('');
+        setAmount(''); setPaymentMethod(''); setBank(''); setDueDate('');
+        setIsInstallment(false); setTotalInstallments(1); setCurrentInstallment(1); setIsCustomBankMode(false);
+        setErrors({ category: false, description: false, amount: false });
+      }
     } catch (error) { console.error(error); } 
     finally { setIsSubmitting(false); }
   };
@@ -225,11 +296,26 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }, [amount, totalInstallments]);
 
+  // Função de estilo Agressiva para Erros (Usa ring para forçar visibilidade)
+  const getInputClass = (hasError: boolean) => 
+    `w-full h-11 px-3 border rounded-lg focus:outline-none transition-all ${
+        hasError 
+        ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-400 ring-1 ring-red-500' // Ring força a borda vermelha
+        : 'border-slate-200 focus:border-[#F23E02] bg-white text-slate-700'
+    }`;
+
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-8">
+    <form onSubmit={handleSubmit} className={`bg-white p-6 rounded-xl shadow-sm border mb-8 transition-colors ${initialData ? 'border-orange-200 bg-orange-50/10' : 'border-slate-100'}`}>
+      
       {/* HEADER TIPO */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-serif font-bold text-[#013750]">Nova Movimentação</h2>
+        <div className="flex items-center gap-2">
+            <h2 className="text-lg font-serif font-bold text-[#013750]">
+                {initialData ? 'Editar Movimentação' : 'Nova Movimentação'}
+            </h2>
+            {initialData && <PenLine size={16} className="text-orange-500"/>}
+        </div>
+        
         <div className="flex bg-slate-100 p-1 rounded-lg">
           <button type="button" onClick={() => setType('income')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'income' ? 'bg-white text-[#00988D] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Receita</button>
@@ -243,35 +329,56 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
           
           <div className="md:col-span-3">
-            <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">Categoria</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}
-              className="w-full h-11 px-3 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white text-slate-700 transition-all">
+            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.category ? 'text-red-600' : 'text-[#2C6B74]'}`}>Categoria *</label>
+            <select 
+              value={category} 
+              onChange={(e) => {
+                  setCategory(e.target.value);
+                  if(e.target.value) setErrors(prev => ({...prev, category: false}));
+              }}
+              className={getInputClass(errors.category)}
+            >
               <option value="">Selecione...</option>
               {CATEGORIES[type].map(cat => (<option key={cat} value={cat}>{cat}</option>))}
             </select>
           </div>
 
           <div className="md:col-span-5">
-            <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">Descrição</label>
+            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.description ? 'text-red-600' : 'text-[#2C6B74]'}`}>
+                Descrição {type === 'expense' && category !== "Fatura do Cartão" ? "*" : ""}
+            </label>
             {hasDescriptionOptions ? (
               <div className="relative">
-                <select value={description} onChange={(e) => setDescription(e.target.value)} disabled={!category}
-                  className="w-full h-11 px-3 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white text-slate-700 transition-all disabled:bg-slate-50 disabled:text-slate-400">
+                <select 
+                  value={description} 
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    if(e.target.value) setErrors(prev => ({...prev, description: false}));
+                  }} 
+                  disabled={!category}
+                  className={getInputClass(errors.description)}
+                >
                   <option value="">{category ? "Selecione..." : "Escolha a categoria"}</option>
                   {descriptionOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
                 </select>
               </div>
             ) : (
-              <input value={description} onChange={(e) => setDescription(e.target.value)}
+              <input 
+                value={description} 
+                onChange={(e) => {
+                    setDescription(e.target.value);
+                    if(e.target.value) setErrors(prev => ({...prev, description: false}));
+                }}
                 disabled={(!category && type === 'expense') || category === "Fatura do Cartão"}
-                className="w-full h-11 px-4 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02] transition-all disabled:bg-slate-50 disabled:placeholder-slate-300"
-                placeholder={category === "Fatura do Cartão" ? "Automático" : (type === 'income' ? "Opcional" : "Ex: Supermercado")} />
+                className={`${getInputClass(errors.description)} disabled:bg-slate-50 disabled:border-slate-200 disabled:text-slate-400`}
+                placeholder={category === "Fatura do Cartão" ? "Automático" : (type === 'income' ? "Opcional" : "Ex: Supermercado")} 
+              />
             )}
           </div>
 
           <div className="md:col-span-4 relative">
             <div className="flex items-center gap-1.5 mb-1.5 ml-1">
-              <label className="block text-xs font-bold text-[#2C6B74] uppercase">Valor Total (R$)</label>
+              <label className={`block text-xs font-bold uppercase ${errors.amount ? 'text-red-600' : 'text-[#2C6B74]'}`}>Valor Total (R$) *</label>
               {showTotalValueWarning && (
                 <div className="group relative flex items-center justify-center cursor-help">
                   <Info size={14} className="text-orange-500 hover:text-orange-600 transition-colors" />
@@ -282,8 +389,16 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
                 </div>
               )}
             </div>
-            <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)}
-              className="w-full h-11 px-4 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02] transition-all" placeholder="0,00" />
+            <input 
+                type="number" step="0.01" 
+                value={amount} 
+                onChange={(e) => {
+                    setAmount(e.target.value);
+                    if(e.target.value) setErrors(prev => ({...prev, amount: false}));
+                }}
+                className={getInputClass(errors.amount)}
+                placeholder="0,00" 
+            />
           </div>
         </div>
 
@@ -374,10 +489,21 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
           </div>
         )}
 
-        <div className="mt-2 flex justify-end">
-          <button type="submit" disabled={isSubmitting || !amount || !category}
-            className="bg-[#F23E02] hover:bg-[#d93602] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-xl flex items-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95">
-            {isSubmitting ? 'Processando...' : <><Plus size={20} /> Adicionar</>}
+        <div className="mt-2 flex justify-end gap-3">
+          {initialData && (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2"
+            >
+              <X size={20} /> Cancelar
+            </button>
+          )}
+
+          {/* O disabled agora é apenas para quando está carregando, para permitir o clique e a validação */}
+          <button type="submit" disabled={isSubmitting}
+            className={`text-white font-bold py-3 px-8 rounded-xl flex items-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95 disabled:bg-slate-300 disabled:cursor-not-allowed ${initialData ? 'bg-orange-500 hover:bg-orange-600' : 'bg-[#F23E02] hover:bg-[#d93602]'}`}>
+            {isSubmitting ? 'Processando...' : initialData ? <><Save size={20} /> Salvar Edição</> : <><Plus size={20} /> Adicionar</>}
           </button>
         </div>
       </div>

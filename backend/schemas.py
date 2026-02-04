@@ -58,3 +58,13 @@ class TransactionSchema(BaseModel):
     # Controle de Estado do Planejamento
     status: str = "draft"  # 'draft' (Lançamentos) ou 'finalized' (Histórico)
     report_id: Optional[str] = None # ID do relatório quando finalizado
+    
+class TransactionUpdate(BaseModel):
+    description: Optional[str] = None
+    amount: Optional[float] = None
+    category: Optional[str] = None
+    type: Optional[str] = None
+    date: Optional[str] = None
+    due_date: Optional[str] = None
+    payment_method: Optional[str] = None
+    bank: Optional[str] = None

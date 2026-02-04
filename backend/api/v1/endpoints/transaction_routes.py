@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from backend.core.database import db
-from backend.schemas import TransactionSchema
+from backend.schemas import TransactionSchema, TransactionUpdate
+from bson import ObjectId
 from backend.core.security import get_current_user
 from backend.models.user_model import UserModel
 from typing import List
@@ -58,21 +59,41 @@ async def create_transaction(
     await db.db.transactions.insert_one(data)
     return prepare_transaction(data)
 
-@router.delete("/{transaction_id}")
+@router.delete("/{transaction_id}", status_code=204)
 async def delete_transaction(
     transaction_id: str,
-    current_user: UserModel = Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    # Nota: Aqui buscamos pelo "id" (UUID) que criamos, não pelo _id do Mongo
-    result = await db.db.transactions.delete_one({
-        "id": transaction_id,
-        "user_id": str(current_user.id),
-        "status": "draft"
-    })
+    """
+    Remove uma transação (Aceita UUID ou ObjectId).
+    """
     
-    if result.deleted_count == 1:
-        return {"message": "Transação removida"}
-    raise HTTPException(status_code=404, detail="Transação não encontrada")
+    # 1. Lógica de Busca Híbrida (Igual à do Update)
+    try:
+        # Tenta padrão MongoDB (ObjectId)
+        filter_query = {
+            "_id": ObjectId(transaction_id),
+            "user_id": str(current_user.id)
+        }
+    except:
+        # Se falhar, tenta buscar como String (UUID)
+        filter_query = {
+            "$or": [
+                {"_id": transaction_id},
+                {"id": transaction_id}
+            ],
+            "user_id": str(current_user.id)
+        }
+
+    # 2. Tenta deletar
+    result = await db.db.transactions.delete_one(filter_query)
+
+    # 3. Se não deletou nada (ID não existe ou não é do usuário), retorna 404
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Transação não encontrada.")
+        
+    # Retorna 204 (No Content) sucesso
+    return None
 
 # --- POST: FINALIZAR O MÊS (A Mágica) ---
 class FinalizeRequest(BaseModel):
@@ -161,3 +182,63 @@ async def finalize_planning(
         await db.db.transactions.insert_many(next_month_transactions)
 
     return {"message": "Mês finalizado com sucesso!", "report_id": report_id}
+
+@router.put("/{transaction_id}", response_model=TransactionSchema)
+async def update_transaction(
+    transaction_id: str,
+    transaction_data: TransactionUpdate,
+    current_user = Depends(get_current_user)
+):
+    """
+    Atualiza uma transação existente (Aceita UUID ou ObjectId).
+    """
+    
+    # 1. Definir a Query de Busca (Híbrida)
+    # Tenta converter para ObjectId (Padrão Mongo). Se der erro (ex: é UUID), usa como String.
+    try:
+        filter_query = {
+            "_id": ObjectId(transaction_id),
+            "user_id": str(current_user.id)
+        }
+    except:
+        # Se falhou a conversão, assumimos que o ID foi salvo como string (UUID) ou campo 'id'
+        # Buscamos tanto no _id (se foi salvo como string) quanto no campo id explícito
+        filter_query = {
+            "$or": [
+                {"_id": transaction_id},
+                {"id": transaction_id}
+            ],
+            "user_id": str(current_user.id)
+        }
+
+    # 2. Verificar se a transação existe
+    existing_transaction = await db.db.transactions.find_one(filter_query)
+
+    if not existing_transaction:
+        raise HTTPException(status_code=404, detail="Transação não encontrada ou ID incompatível.")
+
+    # 3. Filtrar dados para update
+    update_data = transaction_data.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Nenhum dado enviado para atualização.")
+
+    # 4. Atualizar no Banco (Usando o _id original encontrado para garantir precisão)
+    await db.db.transactions.update_one(
+        {"_id": existing_transaction["_id"]},
+        {"$set": update_data}
+    )
+
+    # 5. Retornar a transação atualizada
+    updated_transaction = await db.db.transactions.find_one({"_id": existing_transaction["_id"]})
+    
+    if not updated_transaction:
+        raise HTTPException(status_code=404, detail="Erro ao recuperar transação atualizada.")
+    
+    # Conversão para o Schema
+    transaction_dict = {k: v for k, v in updated_transaction.items()}
+    
+    if "_id" in transaction_dict:
+        transaction_dict["id"] = str(transaction_dict.pop("_id"))
+    
+    return TransactionSchema(**transaction_dict)

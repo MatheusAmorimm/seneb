@@ -33,3 +33,8 @@ export interface Report {
   balance: number;
   created_at: string;
 }
+export interface UserData {
+  nickname?: string;
+  full_name?: string;
+  email?: string;
+}

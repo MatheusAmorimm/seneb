@@ -1,12 +1,13 @@
-import { Trash2, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote, Barcode, Wallet, Building2 } from 'lucide-react';
+import { Trash2, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote, Barcode, Wallet, Building2, Pencil, Calendar, CalendarClock } from 'lucide-react';
 import { Transaction } from '../types';
 
 interface TransactionListProps {
   transactions: Transaction[];
   onDeleteTransaction: (id: string) => void;
+  onEditTransaction?: (transaction: Transaction) => void;
 }
 
-export function TransactionList({ transactions, onDeleteTransaction }: TransactionListProps) {
+export function TransactionList({ transactions, onDeleteTransaction, onEditTransaction }: TransactionListProps) {
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -25,21 +26,17 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
   const getPaymentInfo = (transaction: Transaction) => {
     const method = transaction.payment_method;
     
-    // Lógica da Parcela: Mostra "3/10" se tiver, ou "10x" se for só o total
+    // Lógica da Parcela
     let installmentLabel = '';
     if (transaction.installment_identifier) {
-      installmentLabel = ` ${transaction.installment_identifier}`; // Ex: " 3/10"
+      installmentLabel = ` ${transaction.installment_identifier}`;
     } else if (transaction.total_installments && transaction.total_installments > 1) {
       installmentLabel = ` (${transaction.total_installments}x)`;
     }
 
     switch (method) {
       case 'credit_card':
-        return { 
-          label: `Crédito${installmentLabel}`, // "Crédito 3/10"
-          icon: CreditCard, 
-          color: 'text-purple-600 bg-purple-50' 
-        };
+        return { label: `Crédito${installmentLabel}`, icon: CreditCard, color: 'text-purple-600 bg-purple-50' };
       case 'debit_card':
         return { label: 'Débito', icon: CreditCard, color: 'text-blue-600 bg-blue-50' };
       case 'pix':
@@ -65,20 +62,26 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
         <table className="w-full">
           <thead className="bg-slate-50">
             <tr>
+              {/* 1. DATA (Primeira Coluna) */}
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Data</th>
+              
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Descrição</th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Valor</th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Categoria</th>
-              {/* Nova Coluna: BANCO */}
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Banco</th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Pagamento</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Data</th>
+              
+              {/* 2. VENCIMENTO (Nova Coluna) */}
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Vencimento</th>
+              
               <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-[#2C6B74]">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                {/* Ajustado colSpan para 8 colunas */}
+                <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-3">
                     <Wallet size={40} className="text-slate-200" />
                     <p className="text-sm font-medium">Nenhuma transação lançada neste mês.</p>
@@ -93,6 +96,14 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
                 return (
                   <tr key={transaction.id} className="group transition-colors hover:bg-slate-50/80">
                     
+                    {/* 1. DATA (Movido para o início) */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                       <div className="flex items-center gap-2">
+                          <Calendar size={14} className="text-slate-300" />
+                          {formatDate(transaction.date)}
+                       </div>
+                    </td>
+
                     {/* Descrição */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -118,7 +129,7 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
                       </span>
                     </td>
 
-                    {/* Banco (Novo Campo) */}
+                    {/* Banco */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       {transaction.bank ? (
                         <div className="flex items-center gap-1.5 text-sm text-slate-600">
@@ -130,7 +141,7 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
                       )}
                     </td>
 
-                    {/* Pagamento + Parcela */}
+                    {/* Pagamento */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       {transaction.type === 'expense' ? (
                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${Payment.color}`}>
@@ -142,20 +153,40 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
                       )}
                     </td>
 
-                    {/* Data */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {formatDate(transaction.date)}
+                    {/* 2. VENCIMENTO (Nova lógica) */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                        {transaction.due_date ? (
+                           <div className="flex items-center gap-1.5 text-sm text-orange-600 font-medium">
+                              <CalendarClock size={14} />
+                              {formatDate(transaction.due_date)}
+                           </div>
+                        ) : (
+                           <span className="text-slate-300 text-xs pl-4">-</span>
+                        )}
                     </td>
 
                     {/* Ações */}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
-                        onClick={() => transaction.id && onDeleteTransaction(transaction.id)} 
-                        className="text-slate-300 hover:text-[#F23E02] transition-colors p-2 rounded-full hover:bg-rose-50"
-                        title="Excluir"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        
+                        {onEditTransaction && (
+                          <button 
+                            onClick={() => onEditTransaction(transaction)} 
+                            className="text-slate-300 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-blue-50"
+                            title="Editar"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                        )}
+
+                        <button 
+                          onClick={() => transaction.id && onDeleteTransaction(transaction.id)} 
+                          className="text-slate-300 hover:text-[#F23E02] transition-colors p-2 rounded-full hover:bg-rose-50"
+                          title="Excluir"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
