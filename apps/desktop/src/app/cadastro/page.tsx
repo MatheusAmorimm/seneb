@@ -54,7 +54,7 @@ export default function CadastroPage() {
     try {
       // 2. CHAMA O BACKEND REAL
       // Essa rota vai salvar o código no Mongo e enviar o E-mail
-      await api.post('/send-code', { email });
+      await api.post('auth/send-code', { email });
       
       setLoading(false);
       setStep(2); // Muda para tela de código
@@ -96,10 +96,10 @@ export default function CadastroPage() {
         verification_code: inputCode // <--- O Backend vai validar isso no Mongo
       };
 
-      const response = await api.post('/signup', payload);
+      const response = await api.post('auth/signup', payload);
 
       toast.success("Conta criada com sucesso! Redirecionando...");
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push('auth/login'), 2000);
 
       await setStorageItem('token', response.data.access_token);
       await setStorageItem('user', response.data.user_name);
