@@ -3,9 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.configs import settings
 from backend.core.database import db
-
-# --- CORREÇÃO AQUI: Importar do api.py, não do auth_routes ---
-from backend.api.v1.api import api_router 
+from backend.api.v1.api import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

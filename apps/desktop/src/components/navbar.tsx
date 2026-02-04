@@ -1,26 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// Remova o useRouter, não vamos mais precisar dele para o logout
+// import { useRouter } from "next/navigation"; 
 import { LogOut, UserCircle } from "lucide-react";
 import { removeStorageItem } from "../lib/storage";
 import { toast } from "sonner";
+import api from "../services/api"; // Importe sua instância do Axios para limpar o header
 
 export function Navbar() {
-  const router = useRouter();
+  // const router = useRouter(); // Não use router para logout
 
   const handleLogout = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Impede a navegação imediata do Link
+    e.preventDefault();
 
     try {
-      // Limpamos o token e os dados do usuário do armazenamento nativo (.json)
+      // 1. Limpeza de Disco (Persistência)
       await removeStorageItem("token");
       await removeStorageItem("user");
+      
+      // 2. Limpeza de Memória Imediata (Opcional, mas boa prática)
+      api.defaults.headers.common['Authorization'] = undefined;
 
       toast.info("Sessão encerrada.");
       
-      // Redireciona para o login e limpa o histórico de navegação
-      router.replace("/login");
+      // 3. A SOLUÇÃO: Hard Reload
+      // window.location.href força o navegador a destruir a página atual e carregar a nova do zero.
+      // Isso mata qualquer variável "zumbi" ou estado de contexto antigo.
+      window.location.href = "/login";
+      
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast.error("Erro ao encerrar sessão.");

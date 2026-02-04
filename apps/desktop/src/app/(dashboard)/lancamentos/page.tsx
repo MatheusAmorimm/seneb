@@ -7,15 +7,17 @@ import { BalanceCard } from "../../../components/balance_card";
 import { TransactionForm } from "../../../components/transaction_form";
 import { TransactionList } from "../../../components/transaction_list";
 import { toast } from "sonner";
-import { AlertTriangle, X, Trash2 } from "lucide-react"; // Importamos ícones para o modal
+import { AlertTriangle, X, Trash2, Save } from "lucide-react"; // Importamos ícones para o modal
+import { useReports } from "../../../hooks/use_reports"; // Reutilizamos o hook limpo
 
 export default function LancamentosPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-
-  // --- NOVO: Estado para controlar o Modal de Deleção ---
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [reportName, setReportName] = useState("");
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const {refetch : updateSidebar } = useReports(); // Para atualizar a sidebar após finalizar
 
   useEffect(() => {
     fetchTransactions();
@@ -24,13 +26,39 @@ export default function LancamentosPage() {
   const fetchTransactions = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/transactions'); 
+      const response = await api.get('/transactions/draft'); 
       setTransactions(response.data);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
       toast.error("Não foi possível carregar o histórico.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFinalize = async () => {
+    if (!reportName) {
+      toast.warning("Dê um nome para o relatório (Ex: Março 2026)");
+      return;
+    }
+
+    try {
+      await api.post('/transactions/finalize', {
+        report_name: reportName,
+        reference_month: new Date().toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })
+      });
+      
+      toast.success("Mês finalizado! Relatório salvo no Histórico.");
+      setShowFinalizeModal(false);
+      setReportName("");
+      
+      // [3] A MÁGICA ACONTECE AQUI:
+      // Atualiza a lista global. A Sidebar vai "piscar" com o novo dado instantaneamente.
+      await updateSidebar(); 
+      
+      fetchTransactions(); 
+    } catch (error) {
+      toast.error("Erro ao finalizar mês.");
     }
   };
 
@@ -85,6 +113,17 @@ export default function LancamentosPage() {
 
   return (
     <div className="space-y-8 pb-10 relative">
+      <div className="flex justify-between items-center animate-in slide-in-from-top-4">
+        <h1 className="text-3xl font-serif font-bold text-[#013750]">Planejamento</h1>
+        
+        <button
+          onClick={() => setShowFinalizeModal(true)}
+          className="bg-[#00988D] hover:bg-[#007f76] text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all hover:scale-105"
+        >
+          <Save size={20} />
+          Finalizar Mês
+        </button>
+      </div>
       <section className="animate-in slide-in-from-top-4 duration-500">
         <TransactionForm onAddTransaction={handleAddTransaction} />
       </section>
@@ -99,7 +138,40 @@ export default function LancamentosPage() {
           onDeleteTransaction={requestDelete} // Passamos a função que abre o modal
         />
       </section>
-
+      {showFinalizeModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-2xl w-[400px] shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-serif font-bold text-[#013750] mb-2">Fechar Planejamento</h2>
+            <p className="text-slate-500 mb-6 text-sm">
+              Isso salvará os dados atuais no Histórico e preparará a tela para o próximo mês.
+            </p>
+            
+            <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1">Nome do Relatório</label>
+            <input 
+              autoFocus
+              value={reportName}
+              onChange={(e) => setReportName(e.target.value)}
+              placeholder="Ex: Fevereiro 2026"
+              className="w-full p-3 border border-slate-300 rounded-lg mb-6 focus:outline-none focus:border-[#F23E02]"
+            />
+            
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setShowFinalizeModal(false)}
+                className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg font-medium"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleFinalize}
+                className="px-6 py-2 bg-[#F23E02] text-white rounded-lg font-bold hover:bg-[#d93602]"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* --- NOVO: O Modal Customizado --- */}
       {transactionToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">

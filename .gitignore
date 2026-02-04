@@ -6,8 +6,10 @@ __pycache__/
 env/
 venv/
 *.env
+gerar_contexto.py
 context.py
 projeto_completo.txt
+contexto_completo.md
 
 # Node / JS
 node_modules/
