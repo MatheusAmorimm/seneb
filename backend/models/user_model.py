@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, List
 from backend.core.types import PyObjectId
 
 class UserModel(BaseModel):
@@ -15,6 +15,8 @@ class UserModel(BaseModel):
     password_hash: str
     full_name: str
     nickname: Optional[str] = None
+
+    custom_banks: List[str] = Field(default_factory=list)
     
     is_active: bool = True
     is_superuser: bool = False

@@ -97,3 +97,32 @@ async def reopen_report(
     await db.db.reports.delete_one({"id": report_id})
     
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_report_permanently(
+    report_id: str,
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    EXCLUSÃO PERMANENTE: Remove o relatório e todas as transações associadas a ele.
+    Cuidado: Isso destrói os dados históricos.
+    """
+    # 1. Verifica existência
+    report = await db.db.reports.find_one({
+        "id": report_id, 
+        "user_id": str(current_user.id)
+    })
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Relatório não encontrado.")
+
+    # 2. Exclui as transações históricas desse relatório
+    await db.db.transactions.delete_many({
+        "report_id": report_id, 
+        "user_id": str(current_user.id)
+    })
+
+    # 3. Exclui o documento do Relatório
+    await db.db.reports.delete_one({"id": report_id})
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

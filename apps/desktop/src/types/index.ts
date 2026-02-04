@@ -9,7 +9,8 @@ export interface Transaction {
   type: TransactionType;
   category: string;
   date: string;
-  
+  due_date?: string;
+
   payment_method?: PaymentMethod;
   bank?: string;
   

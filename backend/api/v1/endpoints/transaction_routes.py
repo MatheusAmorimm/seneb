@@ -92,11 +92,8 @@ async def finalize_planning(
     """
     
     existing_report = await db.db.reports.find_one({
-        "user_id": current_user.id,
-        "or": [
-            {"name": request.report_name},
-            {"reference_month": request.reference_month}
-        ]
+        "user_id": str(current_user.id),
+        "name": request.report_name
     })
 
     if existing_report:

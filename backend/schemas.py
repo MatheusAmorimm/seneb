@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 
@@ -10,6 +10,7 @@ class UserSchema(BaseModel):
     full_name: str
     nickname: Optional[str] = None
     created_at: Optional[datetime] = None
+    custom_banks: List[str] = []
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -32,6 +33,9 @@ class ReportSchema(BaseModel):
     balance: float
     
     created_at: datetime = Field(default_factory=datetime.now)
+
+class BankAdd(BaseModel):
+    bank_name: str
 class TransactionSchema(BaseModel):
     id: Optional[str] = None
     user_id: Optional[str] = None # Injetado pelo backend
@@ -40,7 +44,8 @@ class TransactionSchema(BaseModel):
     type: str     
     category: str 
     date: str
-    
+    due_date: Optional[str] = None
+
     payment_method: Optional[str] = None
     bank: Optional[str] = None
     

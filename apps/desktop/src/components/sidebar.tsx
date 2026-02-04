@@ -11,10 +11,14 @@ import {
   ChevronDown, 
   ChevronRight, 
   FileText,
-  PlusCircle 
+  PlusCircle,
+  Trash2,
+  AlertTriangle // Para o ícone de alerta do modal
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useReports } from "../hooks/use_reports";
+import api from "../services/api";
+import { toast } from "sonner";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,14 +27,48 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams(); // Para ler o ?id=...
+  const searchParams = useSearchParams();
   const router = useRouter();
   
-  const { reports, isLoading } = useReports();
+  const { reports, isLoading, refetch } = useReports();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  
+  // --- Estados para o Modal Personalizado ---
+  const [reportToDelete, setReportToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // ID do relatório ativo na URL (se houver)
   const activeReportId = searchParams.get("id");
+
+  // 1. Apenas abre o modal, não deleta ainda
+  const requestDelete = (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation(); // Não navega
+    e.preventDefault();
+    setReportToDelete({ id, name }); // Abre o modal
+  };
+
+  // 2. Executa a exclusão real
+  const confirmDelete = async () => {
+    if (!reportToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/reports/${reportToDelete.id}`);
+      toast.success("Histórico excluído permanentemente.");
+      
+      // Se estava vendo esse relatório, volta pra home
+      if (activeReportId === reportToDelete.id) {
+        router.push("/historico");
+      }
+      
+      await refetch();
+      setReportToDelete(null); // Fecha modal
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir histórico.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const menuItems = [
     { 
@@ -49,7 +87,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     },
   ];
 
-  // Configurações visuais do Histórico
   const historyActive = pathname.includes("/historico");
   const historyStyles = {
     active: "bg-[#e0f7fa] text-[#00988D]",
@@ -117,8 +154,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium",
                 "text-gray-500", 
                 historyStyles.hover,
-                // CORREÇÃO AQUI: Removemos a restrição !isHistoryOpen. 
-                // Se estiver na rota de histórico, mantém a cor sempre.
                 historyActive && cn(historyStyles.active, "font-bold shadow-sm")
               )}
             >
@@ -136,26 +171,35 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="text-xs text-slate-400 animate-pulse px-8 py-2">Carregando...</div>
               ) : reports.length > 0 ? (
                 reports.map((report) => {
-                  // Verifica se este é o relatório que está na tela
                   const isActiveReport = report.id === activeReportId;
 
                   return (
-                    <button
-                      key={report.id}
-                      onClick={() => {
-                        router.push(`/historico?id=${report.id}`);
-                        onClose();
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-8 py-2 text-sm transition-colors text-left border-l-2",
-                        isActiveReport 
-                          ? "text-[#00988D] font-bold border-[#00988D] bg-teal-50/50" // Estilo do item selecionado
-                          : "text-slate-500 border-transparent hover:text-[#00988D] hover:border-[#00988D] hover:bg-teal-50"
-                      )}
+                    <div
+                        key={report.id}
+                        className={cn(
+                            "group/item flex items-center justify-between pr-2 pl-8 py-2 text-sm transition-colors border-l-2 cursor-pointer",
+                            isActiveReport 
+                              ? "text-[#00988D] font-bold border-[#00988D] bg-teal-50/50" 
+                              : "text-slate-500 border-transparent hover:text-[#00988D] hover:border-[#00988D] hover:bg-teal-50"
+                        )}
+                        onClick={() => {
+                            router.push(`/historico?id=${report.id}`);
+                            onClose();
+                        }}
                     >
-                      <FileText size={14} className={isActiveReport ? "fill-current" : ""} />
-                      {report.name}
-                    </button>
+                      <div className="flex items-center gap-2 overflow-hidden">
+                          <FileText size={14} className={isActiveReport ? "fill-current flex-shrink-0" : "flex-shrink-0"} />
+                          <span className="truncate">{report.name}</span>
+                      </div>
+
+                      <button
+                        onClick={(e) => requestDelete(e, report.id, report.name)}
+                        className="opacity-0 group-hover/item:opacity-100 p-1.5 rounded-md hover:bg-red-100 text-red-400 hover:text-red-600 transition-all"
+                        title="Excluir"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   );
                 })
               ) : (
@@ -180,6 +224,51 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         </nav>
       </aside>
+
+      {/* --- MODAL DE CONFIRMAÇÃO --- */}
+      {reportToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 scale-100">
+            
+            <div className="bg-red-50 p-6 flex flex-col items-center text-center gap-4 border-b border-red-100">
+              <div className="bg-red-100 p-4 rounded-full">
+                <AlertTriangle className="text-brand-orange w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-xl font-serif font-bold text-brand-deepBlue">Excluir Histórico?</h3>
+                <p className="text-sm text-slate-500 mt-2">
+                  Você está prestes a apagar <strong>&quot;{reportToDelete.name}&quot;</strong>.
+                  <br/>
+                  <span className="text-red-600 font-bold text-xs mt-1 block">ISSO NÃO PODE SER DESFEITO.</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white flex flex-col gap-3">
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="w-full py-3 bg-[#F23E02] hover:bg-[#d93602] text-white font-bold rounded-xl shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? 'Excluindo...' : (
+                  <>
+                    <Trash2 size={18} />
+                    Sim, excluir tudo
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => setReportToDelete(null)}
+                disabled={isDeleting}
+                className="w-full py-3 text-slate-500 font-medium hover:bg-slate-50 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

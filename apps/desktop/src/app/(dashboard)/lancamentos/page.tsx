@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AxiosError } from "axios";
 import api from "../../../services/api"; 
 import { Transaction } from "../../../types";
 import { BalanceCard } from "../../../components/balance_card";
@@ -58,8 +59,13 @@ export default function LancamentosPage() {
       
       fetchTransactions(); 
     } catch (error) {
-      toast.error("Erro ao finalizar mês.");
-    }
+      if (error instanceof AxiosError && error.response?.data?.detail) {
+        // Se o backend mandou uma mensagem explicativa (ex: duplicidade), mostramos ela
+        toast.error(error.response.data.detail);
+      } else {
+        // Se foi erro de rede ou algo inesperado
+        toast.error("Erro ao finalizar mês. Verifique sua conexão.");
+    }}
   };
 
   const handleAddTransaction = async (transaction: Transaction) => {
