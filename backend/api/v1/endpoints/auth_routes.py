@@ -1,136 +1,128 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
-from typing import Any
-from datetime import timedelta
-import random
-
+from backend.schemas import UserCreate, UserSchema, UserLogin
 from backend.core.database import db
-from backend.core.configs import settings
-from backend.core.security import create_access_token, verify_password
-from backend.core.mail import send_verification_code
-from backend.schemas import UserCreate, UserSchema, Token
 from backend.repositories.user_repository import UserRepository
+from backend.services.user_service import UserService
+from backend.core.mail import send_verification_code
+import random
 
 router = APIRouter()
 
-# --- SCHEMAS LOCAIS ---
+# --- SCHEMAS LOCAIS (Apenas para receber dados na rota) ---
+
 class EmailSchema(BaseModel):
     email: EmailStr
 
+# Renomeei para UserSignupRequest para não conflitar com o UserCreate do backend.schemas
 class UserSignupRequest(BaseModel):
     full_name: str
     nickname: str | None = None
     email: EmailStr
     password: str
     confirm_password: str
-    verification_code: str
+    verification_code: str # Campo obrigatório para validar
 
-# Injeção de Dependência
-def get_user_repo() -> UserRepository:
-    if not db.client:
-        raise HTTPException(status_code=500, detail="Database not connected")
-    return UserRepository(db.client.get_database(settings.DATABASE_NAME))
+# --- DEPENDÊNCIAS ---
+
+def get_user_service():
+    # Aqui você usa db.db, então mantivemos o padrão para o resto do arquivo
+    repository = UserRepository(db.db)
+    return UserService(repository)
+
+# --- ROTAS ---
 
 @router.post("/send-code")
 async def send_code(data: EmailSchema):
-    if not db.client:
-        raise HTTPException(status_code=500, detail="Database error")
-    
+    # 1. Gera código de 4 dígitos
     code = str(random.randint(1000, 9999))
+
     try:
-        # CORREÇÃO 1: Adicionado settings.DATABASE_NAME
-        await db.client.get_database(settings.DATABASE_NAME)["verification_codes"].update_one(
+        # 2. Salva no MongoDB (Usando db.db conforme seu padrão)
+        # A coleção será criada automaticamente se não existir
+        await db.db.verification_codes.update_one(
             {"email": data.email},
             {"$set": {"code": code, "email": data.email}}, 
             upsert=True 
         )
+
+        # 3. Envia o e-mail real
         await send_verification_code(data.email, code)
+        
         return {"message": "Código enviado com sucesso."}
+
     except Exception as e:
-        print(f"Erro envio código: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao enviar código.")
+        print(f"Erro Mongo: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao processar envio.")
 
-@router.post("/signup", response_model=Any, status_code=status.HTTP_201_CREATED)
-async def signup(
-    user_req: UserSignupRequest,
-    repo: UserRepository = Depends(get_user_repo)
-):
-    if not db.client: raise HTTPException(500, "DB Error")
-
-    # 1. Valida Senha
-    if user_req.password != user_req.confirm_password:
+@router.post("/signup", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+async def create_user(user_request: UserSignupRequest):
+    # 1. Validação de Senha
+    if user_request.password != user_request.confirm_password:
         raise HTTPException(status_code=400, detail="Senhas não conferem")
 
-    # 2. Valida Código
-    # CORREÇÃO 2: Adicionado settings.DATABASE_NAME
-    code_doc = await db.client.get_database(settings.DATABASE_NAME)["verification_codes"].find_one({"email": user_req.email})
-    
-    if not code_doc or code_doc["code"] != user_req.verification_code:
-        raise HTTPException(status_code=400, detail="Código inválido ou expirado.")
+    # 2. BUSCA E VALIDA O CÓDIGO NO MONGODB
+    stored_data = await db.db.verification_codes.find_one({"email": user_request.email})
 
-    # 3. Verifica existência
-    existing = await repo.get_by_email(user_req.email)
-    if existing:
-        raise HTTPException(status_code=400, detail="E-mail já cadastrado.")
+    if not stored_data:
+        raise HTTPException(status_code=400, detail="Nenhum código solicitado para este e-mail.")
 
-    # 4. Cria Usuário
-    user_create = UserCreate(
-        email=user_req.email,
-        password=user_req.password,
-        confirm_password=user_req.confirm_password,
-        full_name=user_req.full_name,
-        nickname=user_req.nickname
+    if stored_data["code"] != user_request.verification_code:
+        raise HTTPException(status_code=400, detail="Código de verificação inválido.")
+
+    # 3. Prepara os dados para o Service
+    # Transformamos o UserSignupRequest (que tem código) no UserCreate (que o service espera)
+    user_data = UserCreate(
+        full_name=user_request.full_name,
+        nickname=user_request.nickname,
+        email=user_request.email,
+        password=user_request.password,
+        confirm_password=user_request.confirm_password
     )
-    new_user = await repo.create(user_create)
-
-    # 5. Gera Token (Auto-Login)
-    access_token = create_access_token(
-        data={"sub": str(new_user.id)}, 
-        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-
-    # 6. Limpa código
-    # CORREÇÃO 3: Adicionado settings.DATABASE_NAME
-    await db.client.get_database(settings.DATABASE_NAME)["verification_codes"].delete_one({"email": user_req.email})
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_name": new_user.full_name,
-        "user_nickname": new_user.nickname
-    }
-
-@router.post("/login", response_model=Token)
-async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    repo: UserRepository = Depends(get_user_repo)
-) -> Any:
-    # 1. Busca usuário
-    user = await repo.get_by_email(form_data.username)
-    if not user:
-        raise HTTPException(status_code=400, detail="Credenciais inválidas.")
-
-    # 2. Busca hash (Seguro)
-    # Aqui usamos o repo.collection, que já tem o banco certo injetado no get_user_repo!
-    user_doc = await repo.collection.find_one({"email": form_data.username})
     
-    if not user_doc:
-        raise HTTPException(status_code=400, detail="Credenciais inválidas.")
+    service = get_user_service()
+    try:
+        # Cria o usuário no MongoDB [cite: 1948, 1949]
+        new_user = await service.create_user(user_data)
         
-    hashed_pw = user_doc.get("hashed_password")
+        # Gera o token para Auto-Login imediato [cite: 1943, 1962]
+        from datetime import timedelta
+        from backend.core.configs import settings
+        from backend.core.security import create_access_token
 
-    if not hashed_pw or not verify_password(form_data.password, hashed_pw):
-         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(new_user.id)}, 
+            expires_delta=access_token_expires
+        )
 
-    # 3. Token
-    access_token = create_access_token(
-        data={"sub": str(user.id)},
-        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
+        # Limpa o código usado [cite: 1924]
+        await db.db.verification_codes.delete_one({"email": user_request.email})
+
+        # Retorna o mesmo formato que a rota de /login [cite: 1964]
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user_name": new_user.full_name,
+            "user_nickname": new_user.nickname
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    service = get_user_service()
     
-    return {
-        "access_token": access_token, 
-        "token_type": "bearer",
-        "user": user 
-    }
+    user_login = UserLogin(email=form_data.username, password=form_data.password)
+    
+    auth_result = await service.authenticate(user_login)
+    
+    if not auth_result:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return auth_result

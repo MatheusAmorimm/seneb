@@ -99,7 +99,7 @@ export default function CadastroPage() {
       const response = await api.post('auth/signup', payload);
 
       toast.success("Conta criada com sucesso! Redirecionando...");
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push('auth/login'), 2000);
 
       await setStorageItem('token', response.data.access_token);
       await setStorageItem('user', response.data.user_name);

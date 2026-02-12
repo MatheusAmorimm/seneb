@@ -1,168 +1,244 @@
-from typing import List, Any
-from fastapi import APIRouter, HTTPException, Depends, status, Body
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from datetime import datetime
-from uuid import uuid4
-from backend.core.configs import settings
 from backend.core.database import db
+from backend.schemas import TransactionSchema, TransactionUpdate
+from bson import ObjectId
 from backend.core.security import get_current_user
 from backend.models.user_model import UserModel
-from backend.schemas import TransactionSchema, TransactionUpdate
-from backend.repositories.transaction_repository import TransactionRepository
+from typing import List
+from uuid import uuid4
+from datetime import datetime
 
 router = APIRouter()
 
-# --- DEPENDENCY INJECTION ---
-def get_transaction_repo() -> TransactionRepository:
-    # Correção do Erro 1: Verificação explícita do cliente
-    if not db.client:
-        raise HTTPException(status_code=500, detail="Database not connected")
-    
-    database = db.client.get_database(settings.DATABASE_NAME)
-    return TransactionRepository(database)
 
-# --- SCHEMAS LOCAIS ---
-class FinalizeRequest(BaseModel):
-    report_name: str
-    reference_month: str
-
-# --- ROTAS ---
-
-@router.get("/draft", response_model=List[TransactionSchema])
-async def get_draft_transactions(
-    current_user: UserModel = Depends(get_current_user),
-    repo: TransactionRepository = Depends(get_transaction_repo)
-) -> Any:
+def prepare_transaction(doc):
     """
-    Lista apenas os lançamentos em RASCUNHO (Mês Atual).
+    Prepara o documento do MongoDB para o Frontend/Pydantic.
+    1. Garante que existe um campo 'id'.
+    2. Remove '_id' para evitar conflitos de validação.
     """
-    # Correção do Erro 2: Garantir que user.id é string
-    if not current_user.id:
-        raise HTTPException(status_code=400, detail="User ID invalid")
+    if doc:
+        # Se já tem UUID (id), mantemos. Se não, usamos o ObjectId como string.
+        if "id" not in doc:
+             doc["id"] = str(doc["_id"])
         
-    return await repo.get_drafts_by_user(str(current_user.id))
+        # Remove o _id original para não confundir o Schema (que não tem mais alias)
+        if "_id" in doc:
+            del doc["_id"]
+            
+    return doc
 
-@router.post("/", response_model=TransactionSchema, status_code=status.HTTP_201_CREATED)
+# --- GET: Lista apenas o Rascunho (Lançamentos) ---
+@router.get("/draft", response_model=List[TransactionSchema])
+async def get_draft_transactions(current_user = Depends(get_current_user)):
+    # Retorna apenas o que NÃO foi finalizado (status="draft")
+    transactions = await db.db.transactions.find({
+        "user_id": current_user.id,
+        "status": "draft"
+    }).to_list(1000)
+    return [prepare_transaction(t) for t in transactions]
+
+# --- POST: Criar Transação (Adiciona ao Rascunho) ---
+@router.post("/", response_model=TransactionSchema)
 async def create_transaction(
-    transaction_in: TransactionSchema,
-    current_user: UserModel = Depends(get_current_user),
-    repo: TransactionRepository = Depends(get_transaction_repo)
-) -> Any:
-    """
-    Cria uma nova transação.
-    """
-    # Garantia de ID
-    if not current_user.id:
-        raise HTTPException(status_code=400, detail="User ID invalid")
-
-    transaction_in.user_id = str(current_user.id)
-    transaction_in.status = "draft"
+    transaction: TransactionSchema, 
+    current_user = Depends(get_current_user)
+):
+    data = transaction.dict()
+    data["user_id"] = current_user.id
+    data["status"] = "draft" # Sempre nasce como rascunho
     
-    if transaction_in.is_installment and transaction_in.total_installments > 1:
-        transaction_in.installment_identifier = (
-            f"{transaction_in.current_installment}/{transaction_in.total_installments}"
-        )
+    if not data.get("id"):
+        data["id"] = str(uuid4())
+        
+    # Lógica simples de Identificador de Parcela para exibição
+    if data["is_installment"] and data["total_installments"] > 1:
+        data["installment_identifier"] = f"{data['current_installment']}/{data['total_installments']}"
 
-    return await repo.create(transaction_in)
+    await db.db.transactions.insert_one(data)
+    return prepare_transaction(data)
 
-@router.put("/{transaction_id}", response_model=TransactionSchema)
-async def update_transaction(
-    transaction_id: str,
-    transaction_in: TransactionUpdate,
-    current_user: UserModel = Depends(get_current_user),
-    repo: TransactionRepository = Depends(get_transaction_repo)
-) -> Any:
-    """
-    Atualiza uma transação.
-    """
-    existing = await repo.get_by_id(transaction_id)
-    # Comparação segura de IDs
-    if not existing or str(existing.user_id) != str(current_user.id):
-        raise HTTPException(status_code=404, detail="Transaction not found")
-
-    return await repo.update(transaction_id, transaction_in)
-
-@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{transaction_id}", status_code=204)
 async def delete_transaction(
     transaction_id: str,
-    current_user: UserModel = Depends(get_current_user),
-    repo: TransactionRepository = Depends(get_transaction_repo)
-) -> None:  # <--- CORREÇÃO: Mude de -> Any para -> None
+    current_user = Depends(get_current_user)
+):
     """
-    Remove uma transação.
+    Remove uma transação (Aceita UUID ou ObjectId).
     """
-    existing = await repo.get_by_id(transaction_id)
-    if not existing or str(existing.user_id) != str(current_user.id):
-        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    # 1. Lógica de Busca Híbrida (Igual à do Update)
+    try:
+        # Tenta padrão MongoDB (ObjectId)
+        filter_query = {
+            "_id": ObjectId(transaction_id),
+            "user_id": str(current_user.id)
+        }
+    except:
+        # Se falhar, tenta buscar como String (UUID)
+        filter_query = {
+            "$or": [
+                {"_id": transaction_id},
+                {"id": transaction_id}
+            ],
+            "user_id": str(current_user.id)
+        }
+
+    # 2. Tenta deletar
+    result = await db.db.transactions.delete_one(filter_query)
+
+    # 3. Se não deletou nada (ID não existe ou não é do usuário), retorna 404
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Transação não encontrada.")
         
-    deleted = await repo.delete(transaction_id)
+    # Retorna 204 (No Content) sucesso
     return None
 
-# --- FINALIZAÇÃO DE MÊS ---
-@router.post("/finalize", status_code=status.HTTP_200_OK)
-async def finalize_month(
-    request: FinalizeRequest,
-    current_user: UserModel = Depends(get_current_user),
-    repo: TransactionRepository = Depends(get_transaction_repo)
-) -> Any:
-    if not db.client:
-        raise HTTPException(status_code=500, detail="Database not connected")
-        
-    user_id = str(current_user.id)
-    if not user_id:
-         raise HTTPException(status_code=400, detail="User ID invalid")
+# --- POST: FINALIZAR O MÊS (A Mágica) ---
+class FinalizeRequest(BaseModel):
+    report_name: str # Ex: "Janeiro 2025"
+    reference_month: str # Ex: "01/2025"
 
-    # 1. Busca drafts
-    drafts = await repo.get_drafts_by_user(user_id)
+@router.post("/finalize")
+async def finalize_planning(
+    request: FinalizeRequest,
+    current_user = Depends(get_current_user)
+):
+    """
+    1. Calcula totais do Rascunho atual.
+    2. Cria um Relatório (Snapshot) no histórico.
+    3. Marca itens atuais como 'finalized'.
+    4. Gera automaticamente as próximas parcelas no novo Rascunho.
+    """
+    
+    existing_report = await db.db.reports.find_one({
+        "user_id": str(current_user.id),
+        "name": request.report_name
+    })
+
+    if existing_report:
+        raise HTTPException(status_code=400, detail="Já existe um relatório com esse nome ou mês de referência.")
+
+    # 1. Busca todos os drafts do usuário
+    drafts = await db.db.transactions.find({
+        "user_id": current_user.id,
+        "status": "draft"
+    }).to_list(None)
+
     if not drafts:
         raise HTTPException(status_code=400, detail="Não há lançamentos para finalizar.")
 
-    # 2. Cálculos
-    total_income = sum(t.amount for t in drafts if t.type == 'income')
-    total_expense = sum(t.amount for t in drafts if t.type == 'expense')
+    # 2. Cálculos para o Holerite
+    total_income = sum(t['amount'] for t in drafts if t['type'] == 'income')
+    total_expense = sum(t['amount'] for t in drafts if t['type'] == 'expense')
     
-    # 3. Criação do Relatório (Acesso direto seguro)
-    db_instance = db.client.get_database(settings.DATABASE_NAME)
-    
-    existing_report = await db_instance["reports"].find_one({
-        "user_id": user_id,
-        "name": request.report_name
-    })
-    if existing_report:
-        raise HTTPException(status_code=400, detail="Relatório já existe.")
-
+    # 3. Criar o Objeto Relatório
+    report_id = str(uuid4())
     new_report = {
-        "user_id": user_id,
+        "id": report_id,
+        "user_id": current_user.id,
         "name": request.report_name,
         "reference_month": request.reference_month,
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": total_income - total_expense,
-        "created_at": datetime.now()
+        "created_at": datetime.now(),
+        "items_snapshot": drafts # Opcional: Salvar uma cópia estática aqui se quiser performance extrema no histórico
     }
-    result_report = await db_instance["reports"].insert_one(new_report)
-    report_id = str(result_report.inserted_id)
-
-    # 4. Processar Itens
-    ids_to_finalize = []
     
-    for item in drafts:
-        # Garante que item.id é string para a lista
-        if item.id:
-            ids_to_finalize.append(str(item.id))
-        
-        if item.is_installment and item.current_installment < item.total_installments:
-            next_data = item.model_dump(exclude={"id", "created_at", "status", "report_id"})
-            
-            next_data["current_installment"] += 1
-            next_data["installment_identifier"] = f"{next_data['current_installment']}/{next_data['total_installments']}"
-            next_data["status"] = "draft"
-            next_data["user_id"] = user_id
-            
-            new_transaction = TransactionSchema(**next_data)
-            await repo.create(new_transaction)
+    await db.db.reports.insert_one(new_report)
 
-    # 5. Finaliza
-    await repo.finalize_batch(ids_to_finalize, report_id)
+    # 4. Processar Itens: Finalizar Atuais & Gerar Futuros
+    next_month_transactions = []
+
+    for item in drafts:
+        # Se for parcelado e NÃO for a última parcela, joga a próxima pro "Lançamentos" (Draft)
+        if item.get("is_installment") and item.get("current_installment") < item.get("total_installments"):
+            
+            next_installment = item.copy()
+            next_installment["id"] = str(uuid4()) # Novo ID
+
+            if "_id" in next_installment:
+                del next_installment["_id"]  # Remove o _id original
+
+            next_installment["current_installment"] += 1
+            next_installment["installment_identifier"] = f"{next_installment['current_installment']}/{next_installment['total_installments']}"
+            next_installment["status"] = "draft" # Vai aparecer na tela "limpa"
+            next_installment["report_id"] = None
+            
+            # Aqui você poderia adicionar lógica para incrementar a data em +30 dias se quisesse
+            
+            next_month_transactions.append(next_installment)
+
+    # Atualiza os antigos para 'finalized' e vincula ao relatório
+    await db.db.transactions.update_many(
+        {"user_id": current_user.id, "status": "draft"},
+        {"$set": {"status": "finalized", "report_id": report_id}}
+    )
+
+    # Insere as parcelas do próximo mês (se houver)
+    if next_month_transactions:
+        await db.db.transactions.insert_many(next_month_transactions)
 
     return {"message": "Mês finalizado com sucesso!", "report_id": report_id}
+
+@router.put("/{transaction_id}", response_model=TransactionSchema)
+async def update_transaction(
+    transaction_id: str,
+    transaction_data: TransactionUpdate,
+    current_user = Depends(get_current_user)
+):
+    """
+    Atualiza uma transação existente (Aceita UUID ou ObjectId).
+    """
+    
+    # 1. Definir a Query de Busca (Híbrida)
+    # Tenta converter para ObjectId (Padrão Mongo). Se der erro (ex: é UUID), usa como String.
+    try:
+        filter_query = {
+            "_id": ObjectId(transaction_id),
+            "user_id": str(current_user.id)
+        }
+    except:
+        # Se falhou a conversão, assumimos que o ID foi salvo como string (UUID) ou campo 'id'
+        # Buscamos tanto no _id (se foi salvo como string) quanto no campo id explícito
+        filter_query = {
+            "$or": [
+                {"_id": transaction_id},
+                {"id": transaction_id}
+            ],
+            "user_id": str(current_user.id)
+        }
+
+    # 2. Verificar se a transação existe
+    existing_transaction = await db.db.transactions.find_one(filter_query)
+
+    if not existing_transaction:
+        raise HTTPException(status_code=404, detail="Transação não encontrada ou ID incompatível.")
+
+    # 3. Filtrar dados para update
+    update_data = transaction_data.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Nenhum dado enviado para atualização.")
+
+    # 4. Atualizar no Banco (Usando o _id original encontrado para garantir precisão)
+    await db.db.transactions.update_one(
+        {"_id": existing_transaction["_id"]},
+        {"$set": update_data}
+    )
+
+    # 5. Retornar a transação atualizada
+    updated_transaction = await db.db.transactions.find_one({"_id": existing_transaction["_id"]})
+    
+    if not updated_transaction:
+        raise HTTPException(status_code=404, detail="Erro ao recuperar transação atualizada.")
+    
+    # Conversão para o Schema
+    transaction_dict = {k: v for k, v in updated_transaction.items()}
+    
+    if "_id" in transaction_dict:
+        transaction_dict["id"] = str(transaction_dict.pop("_id"))
+    
+    return TransactionSchema(**transaction_dict)
