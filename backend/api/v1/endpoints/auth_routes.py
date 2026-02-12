@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
-from backend.schemas import UserCreate, UserSchema, UserLogin
+from backend.schemas import UserCreate, UserLogin, UserSignupResponse
 from backend.core.database import db
 from backend.repositories.user_repository import UserRepository
 from backend.services.user_service import UserService
@@ -56,7 +56,7 @@ async def send_code(data: EmailSchema):
         print(f"Erro Mongo: {e}")
         raise HTTPException(status_code=500, detail="Erro ao processar envio.")
 
-@router.post("/signup", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", response_model=UserSignupResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(user_request: UserSignupRequest):
     # 1. Validação de Senha
     if user_request.password != user_request.confirm_password:

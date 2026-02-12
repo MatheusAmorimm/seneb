@@ -19,6 +19,12 @@ class UserCreate(BaseModel):
     full_name: str
     nickname: Optional[str] = None
 
+class UserSignupResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user_name: str
+    user_nickname: str | None = None
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
