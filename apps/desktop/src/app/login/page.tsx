@@ -25,45 +25,59 @@ export default function LoginPage() {
     console.log("Tentando Login com:", { email, password });
 
     try {
-      // 1. FORÇA BRUTA: Criamos os dados no formato exato de formulário
+      // 1. Prepara o envio como FORM DATA (exigência do OAuth2)
       const params = new URLSearchParams();
-      params.append('username', email); // FastAPI exige 'username', não 'email'
+      params.append('username', email);
       params.append('password', password);
 
-      // 2. ENVIO EXPLÍCITO: Forçamos o header para 'application/x-www-form-urlencoded'
-      // Isso impede que o Axios tente enviar como JSON acidentalmente
       const response = await api.post('/auth/login', params, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       });
       
-      // 3. SE SUCESSO:
-      const token = response.data.access_token;
-      // Pega o apelido, ou primeiro nome, ou fallback
-      const userName = response.data.nickname || response.data.user_name?.split(' ')[0] || "Usuário";
+      // 2. DEBUG: Ver o que o backend realmente mandou (Abra o F12 -> Console)
+      console.log("Resposta do Login:", response.data);
 
-      // 4. LÓGICA DE PERSISTÊNCIA (Como combinamos)
+      const token = response.data.access_token;
+
+      // 3. CORREÇÃO DE CHAVES:
+      // O backend retorna 'user_name' e 'nickname'.
+      // O signup retorna 'user_nickname'.
+      // Montamos um objeto robusto que aceita qualquer um dos formatos.
+      const userObject = {
+        nickname: response.data.nickname || response.data.user_nickname, 
+        full_name: response.data.user_name || response.data.full_name,
+        email: email
+      };
+
+      // 4. LÓGICA DE EXIBIÇÃO DO TOAST
+      // Se não tiver nickname, pega o primeiro nome do full_name. Se não tiver, "Usuário".
+      const firstName = userObject.full_name ? userObject.full_name.split(' ')[0] : undefined;
+      const displayName = userObject.nickname || firstName || "Usuário";
+
+      // 5. SALVAR OBJETO NO STORAGE (Essencial para a Home funcionar)
       if (keepLogged) {
-        // Checkbox MARCADO -> Disco
         await setStorageItem('token', token);
-        await setStorageItem('user', userName);
+        await setStorageItem('user', userObject); // Salva Objeto { nickname, full_name... }
         await setStorageItem('remember_me', true);
       } else {
-        // Checkbox DESMARCADO -> RAM
+        // Sessão temporária (RAM)
         sessionStorage.setItem('token', token);
-        sessionStorage.setItem('user', JSON.stringify(userName));
+        sessionStorage.setItem('user', JSON.stringify(userObject));
         
-        // CORREÇÃO CRÍTICA:
-        // Usamos a função nova para limpar SÓ O DISCO.
-        // Assim, a RAM (onde acabamos de salvar o token) continua intacta.
+        // Garante limpeza do disco
         await removeFromDiskOnly('token');
         await removeFromDiskOnly('user');
         await removeFromDiskOnly('remember_me');
       }
 
-      toast.success(`Bem-vindo(a), ${userName}!`);
-      router.push('/');
+      toast.success(`Bem-vindo(a), ${displayName}!`);
+      
+      // Pequeno delay para garantir que o storage foi gravado antes do redirect
+      setTimeout(() => {
+        router.push('/');
+      }, 100);
 
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -232,7 +246,7 @@ export default function LoginPage() {
           </div>
         </div>
         <div className="text-center mt-8">
-          <p className="text-white text-sm">© {new Date().getFullYear()} Controle Financeiro Pessoal.</p>
+          <p className="text-white text-sm">© {new Date().getFullYear()} Seneb.</p>
         </div>
       </div>
     </div>
