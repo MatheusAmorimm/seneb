@@ -101,7 +101,7 @@ async def signup(
         "user_nickname": new_user.nickname
     }
 
-@router.post("/login", response_model=Any) # Mudou de Token para Any
+@router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     repo: UserRepository = Depends(get_user_repo)
@@ -112,13 +112,13 @@ async def login(
         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
 
     # 2. Busca hash (Seguro)
-    # Acessa a collection direto para pegar o campo hashed_password que o Model geralmente esconde
+    # Aqui usamos o repo.collection, que já tem o banco certo injetado no get_user_repo!
     user_doc = await repo.collection.find_one({"email": form_data.username})
     
     if not user_doc:
         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
         
-    hashed_pw = user_doc.get("password_hash") or user_doc.get("hashed_password") # Tenta os dois nomes comuns
+    hashed_pw = user_doc.get("hashed_password")
 
     if not hashed_pw or not verify_password(form_data.password, hashed_pw):
          raise HTTPException(status_code=400, detail="Credenciais inválidas.")
@@ -129,13 +129,8 @@ async def login(
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     
-    # 4. Retorno Padronizado (IGUAL AO SIGNUP)
     return {
         "access_token": access_token, 
         "token_type": "bearer",
-        "user_name": user.full_name,     # O frontend busca isso
-        "user_nickname": user.nickname,  # O frontend busca isso
-        # Campos de fallback para compatibilidade extra:
-        "full_name": user.full_name,
-        "nickname": user.nickname
+        "user": user 
     }
