@@ -37,16 +37,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body
-        className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased bg-brand-cream text-zinc-800 font-sans`}
-      >
-        <UpdateScreen>
-          <AuthProvider>
-            <ReportsProvider>
-            {children}
-            </ReportsProvider>
-          </AuthProvider>
-        </UpdateScreen>
+      <body className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased bg-brand-cream text-zinc-800 font-sans`}>
+          <UpdateScreen>
+            <AuthProvider>
+              <ReportsProvider>
+                {children}
+              </ReportsProvider>
+            </AuthProvider>
+          </UpdateScreen>
         <Toaster richColors position="top-right" />
       </body>
     </html>
