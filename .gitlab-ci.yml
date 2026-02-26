@@ -1,7 +1,6 @@
 stages:
   - deploy
 
-# O nome deste job DEVE ser 'pages' para o GitLab entender que é hospedagem
 pages:
   stage: deploy
   image: alpine:latest
