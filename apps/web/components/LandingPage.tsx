@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   DollarSign, 
@@ -9,12 +10,39 @@ import {
   Download, 
   CheckCircle, 
   ArrowRight, 
-  Sparkles 
+  Sparkles,
+  MonitorSmartphone 
 } from 'lucide-react';
 
 export default function LandingPage() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // 🚀 URL DEFINITIVA DO INSTALADOR NO GITLAB
+  const DOWNLOAD_URL = "https://finance-control-saas-1efccb.gitlab.io/Seneb-Setup.exe";
+
+  // 🚀 DETECÇÃO DE DISPOSITIVO AO CARREGAR A PÁGINA (Com tipagem e fluxo corrigidos)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const customWindow = window as typeof window & { opera?: string };
+      const userAgent = navigator.userAgent || navigator.vendor || customWindow.opera || "";
+      
+      if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
+        setIsMobile(true);
+      }
+      
+      setIsMounted(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleCTAClick = () => {
-    alert('Em breve! O app estará disponível para acesso.');
+    if (isMobile) {
+      alert('O Seneb é um sistema robusto para Desktop. Acesse este site pelo seu computador (Windows) para baixar o aplicativo!');
+      return;
+    }
+    window.location.href = DOWNLOAD_URL;
   };
 
   return (
@@ -61,12 +89,16 @@ export default function LandingPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleCTAClick}
-                className="px-6 py-2 rounded-lg text-white transition-all shadow-lg transform hover:scale-105"
+                className="px-6 py-2 rounded-lg text-white transition-all shadow-lg transform hover:scale-105 flex items-center gap-2"
                 style={{ backgroundColor: '#F23E02' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
               >
-                Começar Grátis
+                {isMounted && isMobile ? (
+                  <><MonitorSmartphone className="w-4 h-4" /> Acesse pelo PC</>
+                ) : (
+                  <><Download className="w-4 h-4" /> Baixar Grátis</>
+                )}
               </button>
             </div>
           </div>
@@ -115,10 +147,9 @@ export default function LandingPage() {
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
                   >
-                    Começar Agora
-                    <ArrowRight className="w-5 h-5" />
+                    {isMounted && isMobile ? "Acesse pelo Computador" : "Baixar para Windows"}
+                    {isMounted && isMobile ? <MonitorSmartphone className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
                   </button>
-                  
                 </div>
 
                 {/* Stats */}
@@ -240,18 +271,21 @@ export default function LandingPage() {
             <Download className="w-16 h-16 mx-auto mb-6" style={{ color: '#00988D' }} />
             <h2 className="text-4xl font-bold mb-4 text-slate-800">Baixe o Seneb.</h2>
             <p className="text-xl text-slate-600 mb-8">
-              Disponível como aplicação web. Acesse de qualquer dispositivo, 
-              a qualquer momento. Sem instalação necessária!
+              Aplicativo nativo para Windows. Desempenho máximo, segurança e seus dados sempre protegidos.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={handleCTAClick}
-                className="px-10 py-5 rounded-lg text-white font-bold text-xl transition-all shadow-lg transform hover:scale-105"
+                className="flex items-center gap-3 px-10 py-5 rounded-lg text-white font-bold text-xl transition-all shadow-lg transform hover:scale-105"
                 style={{ backgroundColor: '#F23E02' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
               >
-                Salvar na Área de Trabalho
+                {isMounted && isMobile ? (
+                  <><MonitorSmartphone className="w-6 h-6" /> Acesse pelo Computador</>
+                ) : (
+                  <><Download className="w-6 h-6" /> Baixar Instalador (.exe)</>
+                )}
               </button>
             </div>
           </div>
@@ -336,12 +370,16 @@ export default function LandingPage() {
               </p>
               <button
                 onClick={handleCTAClick}
-                className="px-12 py-5 rounded-xl text-white text-xl font-bold transition-all shadow-xl transform hover:scale-105"
+                className="flex items-center mx-auto gap-2 px-12 py-5 rounded-xl text-white text-xl font-bold transition-all shadow-xl transform hover:scale-105"
                 style={{ backgroundColor: '#F23E02' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
               >
-                Download
+                {isMounted && isMobile ? (
+                  <><MonitorSmartphone className="w-6 h-6" /> Acesse pelo PC</>
+                ) : (
+                  <><Download className="w-6 h-6" /> Baixar Agora</>
+                )}
               </button>
             </div>
           </div>

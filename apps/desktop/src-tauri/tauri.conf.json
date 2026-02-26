@@ -37,7 +37,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/update.json"
+        "https://finance-control-saas-1efccb.gitlab.io/update.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNDRTQ0QjkzRjVDOTY4RjQKUldUMGFNbjFrMHZrUE8yWFRJTllOQWxYVHR1MjFMZWN1bWxmdW0vRSt6Tmxxb2FHUTM3bVYzRFoK",
       "windows": {

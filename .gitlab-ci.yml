@@ -1,23 +1,45 @@
 stages:
+  - build
   - deploy
 
-# O nome deste job DEVE ser 'pages' para o GitLab entender que é hospedagem
+# 🚀 1. A FÁBRICA DO WINDOWS
+build-windows:
+  stage: build
+  # Pede ao GitLab um computador com Windows para rodar isso
+  tags:
+    - saas-windows-medium-amd64
+  variables:
+    # Passa os segredos do GitLab para o robô do Tauri
+    TAURI_PRIVATE_KEY: $TAURI_PRIVATE_KEY
+    TAURI_KEY_PASSWORD: $TAURI_KEY_PASSWORD
+  script:
+    # Entra na pasta do frontend
+    - cd apps/desktop
+    # Instala as dependências do Node
+    - npm install
+    # Compila o instalador do Tauri (ele vai assinar automaticamente pq as variáveis estão ali)
+    - npm run tauri build
+  artifacts:
+    # Salva o .exe e o .json gerados para podermos baixar e usar
+    paths:
+      - apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+      - apps/desktop/src-tauri/target/release/bundle/nsis/*.zip
+      - apps/desktop/src-tauri/target/release/bundle/nsis/*.json
+    expire_in: 1 week
+
+# 🚀 2. A HOSPEDAGEM OTA (GitLab Pages)
 pages:
   stage: deploy
+  needs: ["build-windows"] # Só roda DEPOIS que o instalador estiver pronto
   image: alpine:latest
   script:
-    # Cria a pasta mágica que o GitLab Pages exige
     - mkdir public
-    
-    # Copia o nosso arquivo estático para dentro dela
-    - cp update.json public/update.json
-    
-    # Se você quiser, pode criar um index.html super simples só pra testar a URL
-    - echo "<h1>Servidor de Atualizacoes OTA do Seneb</h1>" > public/index.html
-    
+    # Copia o update.json gerado magicamente pelo Tauri com a assinatura real para a página pública
+    - cp apps/desktop/src-tauri/target/release/bundle/nsis/latest.json public/update.json
+    - cp apps/desktop/src-tauri/target/release/bundle/nsis/*.exe public/Seneb-Setup.exe
+    - echo "<h1>Servidor de Atualizacoes OTA do Seneb rodando!</h1>" > public/index.html
   artifacts:
     paths:
       - public
   rules:
-    # Só publica no Pages quando o código for mesclado na branch 'main' (ou 'master')
     - if: $CI_COMMIT_BRANCH == "main"
