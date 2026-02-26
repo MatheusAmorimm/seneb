@@ -13,6 +13,10 @@ build-windows:
     TAURI_PRIVATE_KEY: $TAURI_PRIVATE_KEY
     TAURI_KEY_PASSWORD: $TAURI_KEY_PASSWORD
   script:
+    - Invoke-WebRequest -Uri https://win.rustup.rs/ -OutFile rustup-init.exe
+    - .\rustup-init.exe -y --default-toolchain stable --profile minimal
+    - $env:PATH += ";$env:USERPROFILE\.cargo\bin"
+    - rustc --version
     # Entra na pasta do frontend
     - cd apps/desktop
     # Instala as dependências do Node
