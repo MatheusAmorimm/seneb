@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "notes": "Versão inicial do sistema",
+  "pub_date": "2026-02-25T00:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "ASSINATURA_FALSA_POR_ENQUANTO",
+      "url": "https://dummy-link.com/app.exe"
+    }
+  }
+}

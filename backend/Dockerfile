@@ -1,4 +1,4 @@
-FROM python:3.14-rc-slim as builder
+FROM python:3.12-slim as builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-FROM python:3.14-rc-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -35,4 +35,4 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

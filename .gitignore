@@ -22,7 +22,9 @@ build/
 scripts/
 
 # Tauri / Rust
-src-tauri/target/
+src-tauri/*
+seneb.key
+seneb.key.pub
 
 # OS
 .DS_Store

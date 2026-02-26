@@ -1,0 +1,23 @@
+stages:
+  - deploy
+
+# O nome deste job DEVE ser 'pages' para o GitLab entender que é hospedagem
+pages:
+  stage: deploy
+  image: alpine:latest
+  script:
+    # Cria a pasta mágica que o GitLab Pages exige
+    - mkdir public
+    
+    # Copia o nosso arquivo estático para dentro dela
+    - cp update.json public/update.json
+    
+    # Se você quiser, pode criar um index.html super simples só pra testar a URL
+    - echo "<h1>Servidor de Atualizacoes OTA do Seneb</h1>" > public/index.html
+    
+  artifacts:
+    paths:
+      - public
+  rules:
+    # Só publica no Pages quando o código for mesclado na branch 'main' (ou 'master')
+    - if: $CI_COMMIT_BRANCH == "main"
