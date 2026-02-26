@@ -75,7 +75,10 @@ export default function HistoricoPage() {
       
       setShowReopenModal(false); // Fecha modal
       await refreshSidebar();    // Atualiza sidebar (remove cadeado)
-      router.push("/lancamentos"); // Vai para edição
+      
+      // 🚀 A CORREÇÃO DE OURO: Agora nós enviamos o ID na URL!
+      router.push(`/lancamentos?reopenedId=${currentReport.id}`); 
+      
     } catch (error) {
       console.error(error);
       toast.error("Erro ao reabrir mês.");

@@ -23,7 +23,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       // Busca os relatórios no endpoint que já temos configurado
-      const response = await api.get("/reports/");
+      const response = await api.get("/reports");
       setReports(response.data);
     } catch (err) {
       console.error("Erro ao buscar relatórios globais", err);

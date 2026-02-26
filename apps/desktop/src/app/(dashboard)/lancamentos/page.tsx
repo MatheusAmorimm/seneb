@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+// 🚀 1. Importado useCallback
+import { useState, useEffect, useCallback } from "react";
 import { AxiosError } from "axios";
 import api from "../../../services/api"; 
 import { Transaction } from "../../../types";
@@ -9,9 +10,16 @@ import { TransactionForm } from "../../../components/transaction_form";
 import { TransactionList } from "../../../components/transaction_list";
 import { toast } from "sonner";
 import { AlertTriangle, X, Trash2, Save, Pencil, FileEdit } from "lucide-react"; 
-import { useReports } from "../../../hooks/use_reports"; 
+import { useReports } from "../../../hooks/use_reports";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LancamentosPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // 🚀 2. Corrigido de 'report_id' para 'reopenedId' (como vem da tela de Histórico)
+  const editingReportId = searchParams.get('reopenedId'); 
+  
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -30,14 +38,15 @@ export default function LancamentosPage() {
 
   const { refetch : updateSidebar } = useReports(); 
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  const fetchTransactions = async () => {
+  // 🚀 3. useCallback e URL dinâmica
+  const fetchTransactions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/transactions/draft'); 
+      const url = editingReportId 
+        ? `/transactions/draft?report_id=${editingReportId}` 
+        : '/transactions/draft';
+        
+      const response = await api.get(url); 
       setTransactions(response.data);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
@@ -45,12 +54,15 @@ export default function LancamentosPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [editingReportId]); // Recarrega se o ID da URL mudar
 
-  // --- LÓGICA DE SALVAR/EDITAR (CORRIGIDA PARA ERRO 400) ---
+  // 🚀 4. useEffect agora escuta a função
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
   const handleSaveTransaction = async (transaction: Transaction) => {
     try {
-      // 1. Prepara os dados brutos e remove vazios
       const rawPayload = {
         description: transaction.description,
         amount: transaction.amount,
@@ -62,16 +74,16 @@ export default function LancamentosPage() {
         bank: transaction.bank || null,
         is_installment: transaction.is_installment,
         total_installments: transaction.total_installments,
-        installment_identifier: transaction.installment_identifier || null
+        installment_identifier: transaction.installment_identifier || null,
+        // 🚀 5. Corrigido de 'editingTransaction' (Objeto) para 'editingReportId' (String da URL)
+        report_id: editingReportId || null 
       };
 
-      // Remove chaves que são null, undefined ou string vazia
       const payload = Object.fromEntries(
         Object.entries(rawPayload).filter(([_, v]) => v !== null && v !== undefined && v !== "")
       );
 
       if (transaction.id) {
-        // --- EDIÇÃO (PUT) ---
         const response = await api.put(`/transactions/${transaction.id}`, payload);
         
         setTransactions((prev) => 
@@ -81,8 +93,6 @@ export default function LancamentosPage() {
         toast.success("Lançamento atualizado!");
         setEditingTransaction(null);
       } else {
-        // --- CRIAÇÃO (POST) ---
-        // Para POST, enviamos o rawPayload se o backend aceitar, ou o payload limpo
         const response = await api.post('/transactions', rawPayload); 
         setTransactions((prev) => [response.data, ...prev]);
         toast.success("Lançamento salvo!");
@@ -108,7 +118,6 @@ export default function LancamentosPage() {
     }
   };
 
-  // --- LÓGICA DE FINALIZAR MÊS ---
   const handleFinalize = async () => {
     if (!reportName) {
       toast.warning("Dê um nome para o relatório (Ex: Março 2026)");
@@ -117,13 +126,18 @@ export default function LancamentosPage() {
     try {
       await api.post('/transactions/finalize', {
         report_name: reportName,
-        reference_month: new Date().toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })
+        reference_month: new Date().toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }),
+        reopened_report_id: editingReportId || null
       });
       toast.success("Mês finalizado! Relatório salvo no Histórico.");
       setShowFinalizeModal(false);
       setReportName("");
       await updateSidebar(); 
-      fetchTransactions(); 
+      if (editingReportId) {
+        router.replace('/lancamentos');
+      } else {
+        fetchTransactions(); 
+      }
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data?.detail) {
         toast.error(error.response.data.detail);
@@ -132,7 +146,6 @@ export default function LancamentosPage() {
     }}
   };
 
-  // --- LÓGICA DE DELETE (AS VARIÁVEIS QUE FALTAVAM) ---
   const requestDelete = (id: string) => {
     setTransactionToDelete(id);
   };
@@ -141,13 +154,12 @@ export default function LancamentosPage() {
     if (!transactionToDelete) return;
     try {
       const id = transactionToDelete;
-      setTransactions((prev) => prev.filter((t) => t.id !== id)); // Otimista
+      setTransactions((prev) => prev.filter((t) => t.id !== id)); 
       setTransactionToDelete(null); 
       
       await api.delete(`/transactions/${id}`);
       toast.success("Item removido.");
       
-      // Se deletou o item que estava sendo editado, limpa o form
       if (editingTransaction?.id === id) {
         setEditingTransaction(null);
       }
@@ -158,7 +170,6 @@ export default function LancamentosPage() {
     }
   };
 
-  // --- LÓGICA DE EDIÇÃO ---
   const handleEditClick = (transaction: Transaction) => {
     setTransactionToEdit(transaction);
   };
@@ -177,9 +188,23 @@ export default function LancamentosPage() {
     toast.info("Edição cancelada.");
   };
 
-  // Cálculos de Totais
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  // 🚀 LÓGICA DE VALOR EFETIVO: Calcula a parcela se houver
+  const getEffectiveAmount = (t: Transaction) => {
+    if (t.is_installment && t.total_installments && t.total_installments > 0) {
+      return t.amount / t.total_installments;
+    }
+    return t.amount;
+  };
+
+  // 🚀 Cálculos de Totais agora usam o Valor Efetivo
+  const totalIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + getEffectiveAmount(t), 0);
+    
+  const totalExpense = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + getEffectiveAmount(t), 0);
+    
   const balance = totalIncome - totalExpense;
 
   if (isLoading) {

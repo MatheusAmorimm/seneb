@@ -1,16 +1,19 @@
 from contextlib import asynccontextmanager
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.configs import settings
 from backend.core.database import db
 from backend.api.v1.api import api_router
 
+logger = logging.getLogger("uvicorn")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Iniciando conexão com MongoDB...")
+    logger.info("Iniciando conexão com MongoDB...")
     await db.connect_to_mongo()
     yield
-    print("Fechando conexão com MongoDB...")
+    logger.info("Fechando conexão com MongoDB...")
     await db.close_mongo_connection()
 
 app = FastAPI(
@@ -21,7 +24,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "tauri://localhost"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:3001", # 🚀 Nova porta de segurança
+        "tauri://localhost"
+                   ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

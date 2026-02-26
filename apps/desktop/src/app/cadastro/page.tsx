@@ -30,7 +30,6 @@ export default function CadastroPage() {
   const handlePreSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Validações Locais
     if (!nome || !email || !password || !confirmPassword) {
       toast.warning("Preencha todos os campos obrigatórios.");
       return;
@@ -40,10 +39,14 @@ export default function CadastroPage() {
       toast.error("Por favor, digite um e-mail válido.");
       return;
     }
-    if (password.length < 8) {
-      toast.error("A senha deve ter no mínimo 8 caracteres.");
+
+    // 🚀 NOVA VALIDAÇÃO DE SENHA FORTE NO FRONTEND
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      toast.error("A senha deve ter 8+ caracteres, 1 maiúscula, 1 minúscula e 1 caractere especial.");
       return;
     }
+
     if (password !== confirmPassword) {
       toast.error("As senhas não coincidem.");
       return;
@@ -98,12 +101,15 @@ export default function CadastroPage() {
 
       const response = await api.post('auth/signup', payload);
 
-      toast.success("Conta criada com sucesso! Redirecionando...");
-      setTimeout(() => router.push('auth/login'), 2000);
-
       await setStorageItem('token', response.data.access_token);
       await setStorageItem('user', response.data.user_name);
-      await setStorageItem('remember_me', true)
+      await setStorageItem('remember_me', true);
+
+      toast.success("Conta criada com sucesso! Redirecionando...");
+
+      setTimeout(() => {
+          window.location.href = '/'; 
+      }, 1500);
 
     } catch (error) {
       if (error instanceof AxiosError) {

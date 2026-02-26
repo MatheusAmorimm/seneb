@@ -31,8 +31,6 @@ async def get_reports(current_user: UserModel = Depends(get_current_user)):
     """
     Lista os relatórios (Cards de Resumo).
     """
-    print(f"🚨 QUEM ESTÁ CHAMANDO? Email: {current_user.email} | ID: {current_user.id}")
-    
     reports = await db.db.reports.find({
         "user_id": str(current_user.id)
     }).sort("created_at", -1).to_list(100)
@@ -74,28 +72,38 @@ async def reopen_report(
     report_id: str,
     current_user: UserModel = Depends(get_current_user)
 ):
-    """
-    Exclui o relatório e volta suas transações para 'draft'.
-    """
-    # 1. Verifica se o relatório existe e pertence ao usuário
-    report = await db.db.reports.find_one({
-        "id": report_id, 
-        "user_id": str(current_user.id)
-    })
-    
+    report = await db.db.reports.find_one({"id": report_id, "user_id": str(current_user.id)})
     if not report:
         raise HTTPException(status_code=404, detail="Relatório não encontrado.")
 
-    # 2. Reverte as transações vinculadas para 'draft'
-    # Remove o report_id e muda status para draft
+    # 🚀 PASSO 1: Busca os itens que estão sendo reabertos ANTES de mudar o status
+    reopened_items = await db.db.transactions.find({
+        "report_id": report_id, 
+        "user_id": str(current_user.id)
+    }).to_list(None)
+
+    # 🚀 PASSO 2: Desfazimento em Cascata (Deleta as parcelas projetadas para frente)
+    for item in reopened_items:
+        if item.get("is_installment") and item.get("current_installment", 1) < item.get("total_installments", 1):
+            next_installment = item.get("current_installment") + 1
+            
+            # Deleta a parcela "filha" que estava solta nos lançamentos atuais
+            await db.db.transactions.delete_one({
+                "user_id": str(current_user.id),
+                "status": "draft",
+                "description": item.get("description"), # Usa a descrição como âncora
+                "current_installment": next_installment,
+                "$or": [{"report_id": None}, {"report_id": ""}, {"report_id": {"$exists": False}}]
+            })
+
+    # 🚀 PASSO 3: Volta os itens do histórico para edição (Mantendo o ID do lote!)
     await db.db.transactions.update_many(
         {"report_id": report_id, "user_id": str(current_user.id)},
-        {"$set": {"status": "draft", "report_id": None}}
+        {"$set": {"status": "draft"}}
     )
 
-    # 3. Exclui o documento do Relatório
+    # Passo 4: Exclui a capa do relatório
     await db.db.reports.delete_one({"id": report_id})
-    
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)

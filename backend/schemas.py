@@ -1,10 +1,11 @@
 from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from datetime import datetime
 
 # --- USER SCHEMAS ---
 
 class UserSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     id: Optional[str] = None
     email: EmailStr
     full_name: str

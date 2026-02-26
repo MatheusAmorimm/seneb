@@ -93,6 +93,10 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
                 const Payment = getPaymentInfo(transaction);
                 const PaymentIcon = Payment.icon;
 
+                const effectiveAmount = transaction.is_installment && transaction.total_installments && transaction.total_installments > 0
+                  ? transaction.amount / transaction.total_installments
+                  : transaction.amount;
+
                 return (
                   <tr key={transaction.id} className="group transition-colors hover:bg-slate-50/80">
                     
@@ -116,10 +120,18 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
 
                     {/* Valor */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`font-bold ${transaction.type === 'income' ? 'text-emerald-600' : 'text-[#F23E02]'}`}>
-                        {transaction.type === 'expense' ? '- ' : '+ '}
-                        {formatCurrency(transaction.amount)}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className={`font-bold ${transaction.type === 'income' ? 'text-emerald-600' : 'text-[#F23E02]'}`}>
+                          {transaction.type === 'expense' ? '- ' : '+ '}
+                          {formatCurrency(effectiveAmount)}
+                        </span>
+                        {/* 🚀 Se for parcelado, mostra o valor total da compra em miniatura */}
+                        {transaction.is_installment && (
+                          <span className="text-[10px] text-slate-400 mt-0.5">
+                            Total: {formatCurrency(transaction.amount)}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Categoria */}

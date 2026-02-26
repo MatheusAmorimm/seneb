@@ -61,12 +61,6 @@ export default function LandingPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleCTAClick}
-                className="px-6 py-2 rounded-lg transition-colors text-white border-2 border-white/30 hover:bg-white/10"
-              >
-                Entrar
-              </button>
-              <button
-                onClick={handleCTAClick}
                 className="px-6 py-2 rounded-lg text-white transition-all shadow-lg transform hover:scale-105"
                 style={{ backgroundColor: '#F23E02' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
@@ -125,13 +119,6 @@ export default function LandingPage() {
                     <ArrowRight className="w-5 h-5" />
                   </button>
                   
-                  <button
-                    onClick={handleCTAClick}
-                    className="px-8 py-4 rounded-xl text-slate-700 text-lg font-semibold transition-all border-2 hover:bg-white"
-                    style={{ borderColor: '#013750' }}
-                  >
-                    Ver Demo
-                  </button>
                 </div>
 
                 {/* Stats */}
@@ -259,14 +246,11 @@ export default function LandingPage() {
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={handleCTAClick}
-                className="px-8 py-4 rounded-xl text-white text-lg font-bold transition-all shadow-lg transform hover:scale-105"
+                className="px-10 py-5 rounded-lg text-white font-bold text-xl transition-all shadow-lg transform hover:scale-105"
                 style={{ backgroundColor: '#F23E02' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
               >
-                Acessar Agora
-              </button>
-              <button className="px-8 py-4 rounded-xl bg-white text-slate-700 text-lg font-semibold transition-all shadow-lg hover:shadow-xl">
                 Salvar na Área de Trabalho
               </button>
             </div>
@@ -357,7 +341,7 @@ export default function LandingPage() {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
               >
-                Criar Conta Grátis
+                Download
               </button>
             </div>
           </div>
@@ -366,8 +350,8 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="text-white py-12 px-4 sm:px-6 lg:px-8" style={{ background: 'linear-gradient(to right, #013750, #2C6B74)' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+        <div className="max-w-7xl mx-auto justify-center items-center">
+          <div className="grid md:grid-cols-4 gap-8 mb-8 justify-center items-center">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <DollarSign className="w-6 h-6" />
@@ -376,33 +360,6 @@ export default function LandingPage() {
               <p className="text-white/70 text-sm">
                 Controle financeiro pessoal simples e eficaz.
               </p>
-            </div>
-            
-            <div>
-              <h4 className="mb-4 font-semibold">Produto</h4>
-              <ul className="space-y-2 text-sm text-white/70">
-                <li><Link href="#" className="hover:text-white transition-colors">Recursos</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Preços</Link></li>
-                <li><Link href="#download" className="hover:text-white transition-colors">Download</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="mb-4 font-semibold">Suporte</h4>
-              <ul className="space-y-2 text-sm text-white/70">
-                <li><Link href="#bugs" className="hover:text-white transition-colors">Bugs</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">FAQ</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Contato</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="mb-4 font-semibold">Legal</h4>
-              <ul className="space-y-2 text-sm text-white/70">
-                <li><Link href="#" className="hover:text-white transition-colors">Privacidade</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Termos</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Cookies</Link></li>
-              </ul>
             </div>
           </div>
           

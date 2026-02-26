@@ -18,6 +18,9 @@ dist/
 out/
 build/
 
+# Scripts
+scripts/
+
 # Tauri / Rust
 src-tauri/target/
 

@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from backend.schemas import UserCreate, UserLogin, UserSignupResponse
 from backend.core.database import db
 from backend.repositories.user_repository import UserRepository
 from backend.services.user_service import UserService
 from backend.core.mail import send_verification_code
 import random
+import re
 
 router = APIRouter()
 
@@ -23,6 +24,19 @@ class UserSignupRequest(BaseModel):
     password: str
     confirm_password: str
     verification_code: str # Campo obrigatório para validar
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('A senha deve ter no mínimo 8 caracteres.')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('A senha deve conter pelo menos uma letra maiúscula.')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('A senha deve conter pelo menos uma letra minúscula.')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+            raise ValueError('A senha deve conter pelo menos um caractere especial.')
+        return v
 
 # --- DEPENDÊNCIAS ---
 
@@ -53,7 +67,6 @@ async def send_code(data: EmailSchema):
         return {"message": "Código enviado com sucesso."}
 
     except Exception as e:
-        print(f"Erro Mongo: {e}")
         raise HTTPException(status_code=500, detail="Erro ao processar envio.")
 
 @router.post("/signup", response_model=UserSignupResponse, status_code=status.HTTP_201_CREATED)
