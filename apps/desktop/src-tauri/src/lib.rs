@@ -1,9 +1,12 @@
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        // Adicionando os plugins necessários
         .plugin(tauri_plugin_log::Builder::default().build())
-        .plugin(tauri_plugin_store::Builder::default().build()) // <--- Registro crucial
+        .plugin(tauri_plugin_store::Builder::default().build())
+        // 🚀 LIGA O PLUGIN DE PROCESSOS (Para reiniciar o app)
+        .plugin(tauri_plugin_process::init()) 
+        // 🚀 LIGA O PLUGIN DO UPDATER (Para baixar a nova versão)
+        .plugin(tauri_plugin_updater::Builder::new().build()) 
         .setup(|app| {
             Ok(())
         })

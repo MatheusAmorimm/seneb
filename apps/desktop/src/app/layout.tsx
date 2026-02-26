@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from 'sonner';
 import { AuthProvider } from "../components/auth_provider";
 import { ReportsProvider } from "../context/reports_context";
+import { UpdateScreen } from "../components/update_screen";
 
 const nunito = Nunito_Sans({
   subsets: ["latin"],
@@ -39,11 +40,13 @@ export default function RootLayout({
       <body
         className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased bg-brand-cream text-zinc-800 font-sans`}
       >
-        <AuthProvider>
-          <ReportsProvider>
-          {children}
-          </ReportsProvider>
-        </AuthProvider>
+        <UpdateScreen>
+          <AuthProvider>
+            <ReportsProvider>
+            {children}
+            </ReportsProvider>
+          </AuthProvider>
+        </UpdateScreen>
         <Toaster richColors position="top-right" />
       </body>
     </html>

@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "finance-control",
+  "productName": "Seneb", 
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "br.com.seneb.desktop", 
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "Controle Financeiro",
-        "width": 800,
-        "height": 600,
+        "title": "Seneb - Controle Financeiro",
+        "width": 1024, 
+        "height": 768,
         "resizable": true,
         "fullscreen": false
       }
@@ -33,5 +33,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/update.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNDRTQ0QjkzRjVDOTY4RjQKUldUMGFNbjFrMHZrUE8yWFRJTllOQWxYVHR1MjFMZWN1bWxmdW0vRSt6Tmxxb2FHUTM3bVYzRFoK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
