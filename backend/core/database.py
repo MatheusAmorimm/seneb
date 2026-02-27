@@ -1,16 +1,22 @@
 import logging
+import certifi # 🚀 Nova importação
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from typing import Optional
 from backend.core.configs import settings
 
 logger = logging.getLogger("__name__")
+
 class Database:
     client: Optional[AsyncIOMotorClient] = None
 
     async def connect_to_mongo(self):
         logger.info("Initializing database connection...")
         try:
-            self.client = AsyncIOMotorClient(settings.MONGO_URI)
+            # 🚀 A MÁGICA AQUI: tlsCAFile ensina o Docker a confiar no MongoDB Atlas
+            self.client = AsyncIOMotorClient(
+                settings.MONGO_URI,
+                tlsCAFile=certifi.where()
+            )
             await self.client.admin.command('ping')
             logger.info("Database connection established successfully.")
         except Exception as e:
