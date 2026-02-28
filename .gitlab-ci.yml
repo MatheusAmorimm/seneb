@@ -14,10 +14,9 @@ deploy_vps_hostinger:
     - chmod 700 ~/.ssh
   script:
     - echo "🚀 Iniciando deploy na VPS..."
-    
-    # 🚀 A MÁGICA AQUI: Adicionado -p $SERVER_PORT
+ 
     - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
-        cd /var/www/seneb &&
+        cd /var/www/seneb/finance_control_saas &&
         echo '⬇️ Baixando código...' &&
         git pull origin main &&
         
