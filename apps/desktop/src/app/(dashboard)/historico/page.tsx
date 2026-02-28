@@ -105,12 +105,12 @@ export default function HistoricoPage() {
         <p className="text-slate-500 max-w-md">
           Você ainda não fechou nenhum mês. Vá em &quot;Lançamentos&quot; e finalize seu planejamento.
         </p>
-        <Link 
-          href="/lancamentos"
-          className="bg-[#00988D] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#007f76] transition-colors"
+        <button 
+          onClick={() => router.push('/lancamentos')}
+          className="bg-[#00988D] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#007f76] transition-colors cursor-pointer"
         >
           Ir para Lançamentos
-        </Link>
+        </button>
       </div>
     );
   }
@@ -133,9 +133,9 @@ export default function HistoricoPage() {
       <div className="flex items-end justify-between mb-6 animate-in slide-in-from-top-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-              <Link href="/" className="p-1.5 -ml-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+              <button onClick={() => router.push('/')} className="p-1.5 -ml-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors cursor-pointer">
                   <ArrowLeft size={20} />
-              </Link>
+              </button>
               <span className="text-xs font-bold text-[#00988D] uppercase tracking-wider">
                   Relatório Fechado
               </span>
