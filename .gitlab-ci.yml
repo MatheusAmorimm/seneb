@@ -5,37 +5,31 @@ deploy_vps_hostinger:
   stage: deploy
   image: alpine:latest
   rules:
-    # 🚀 O robô só trabalha quando o código chega na branch principal
     - if: '$CI_COMMIT_BRANCH == "main"' 
   before_script:
-    # Prepara o ambiente instalando o cliente SSH
     - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
-    # Adiciona sua chave privada (cadastrada nas variáveis do GitLab)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    # Escaneia a chave do servidor para evitar a pergunta de (yes/no) no terminal
-    - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
   script:
-    - echo "Iniciando deploy na VPS Hostinger..."
-    # 🚀 Conecta no servidor e executa a esteira de atualização
-    - ssh $SERVER_USER@$SERVER_IP "
+    - echo "🚀 Iniciando deploy na VPS Hostinger via GitLab Ultimate..."
+    
+    - ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
         cd /var/www/seneb &&
         echo '⬇️ Baixando código mais recente...' &&
         git pull origin main &&
         
-        echo '🐳 Atualizando Backend (FastAPI / Docker)...' &&
+        echo '🐳 Atualizando Backend (Docker)...' &&
         cd backend &&
         docker compose up -d --build &&
         
-        echo '🌐 Atualizando Landing Page (Next.js / PM2)...' &&
+        echo '🌐 Atualizando Landing Page (PM2)...' &&
         cd ../apps/web &&
         npm install &&
         npm run build &&
         
-        echo '🔄 Reiniciando serviço Web...' &&
+        echo '🔄 Reiniciando Web...' &&
         cd ../.. &&
         pm2 reload seneb-web --update-env
       "
