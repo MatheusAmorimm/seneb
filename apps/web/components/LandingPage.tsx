@@ -19,7 +19,7 @@ export default function LandingPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   // 🚀 URL DEFINITIVA DO INSTALADOR NO GITLAB
-  const DOWNLOAD_URL = "https://finance-control-saas-1efccb.gitlab.io/Seneb-Setup.exe";
+  const DOWNLOAD_URL = "/Seneb-Setup.exe";
 
   // 🚀 DETECÇÃO DE DISPOSITIVO AO CARREGAR A PÁGINA (Com tipagem e fluxo corrigidos)
   useEffect(() => {

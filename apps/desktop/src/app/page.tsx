@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PlusCircle, History, BarChart3, ArrowRight } from "lucide-react";
 import { Navbar } from "../components/navbar";
 import { getStorageItem, setStorageItem } from "../lib/storage"; 
@@ -9,6 +9,7 @@ import { UserData } from "../types/index";
 import api from "../services/api"; // Instância do Axios [cite: 858]
 
 export default function HomePage() {
+  const router = useRouter();
   const [userName, setUserName] = useState("Investidor");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -67,9 +68,9 @@ export default function HomePage() {
       {/* Grid de Navegação - Mantido Conforme o Original */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
         {/* ... Seus cards de Lançamentos, Histórico e Analytics ... */}
-        <Link 
-          href="/lancamentos"
-          className="group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-expense-start shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
+        <div 
+          onClick={() => router.push("/lancamentos")}
+          className="cursor-pointer group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-expense-start shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-[#fff0e6] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="relative z-10">
@@ -83,14 +84,14 @@ export default function HomePage() {
             <span>Acessar</span>
             <ArrowRight size={18} />
           </div>
-        </Link>
+        </div>
 
         {/* ... Card Histórico ... */}
-        <Link 
-          href="/historico"
-          className="group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-[#cceae8] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
+        <div 
+          onClick={() => router.push("/historico")}
+          className="cursor-pointer group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-[#cceae8] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-[#e0f7fa] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+           <div className="absolute inset-0 bg-gradient-to-br from-[#e0f7fa] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-brand-turquoise/10 flex items-center justify-center mb-6 group-hover:bg-brand-turquoise transition-colors duration-300">
               <History className="w-8 h-8 text-brand-turquoise group-hover:text-white transition-colors" />
@@ -102,14 +103,15 @@ export default function HomePage() {
             <span>Visualizar</span>
             <ArrowRight size={18} />
           </div>
-        </Link>
+        </div>
 
         {/* ... Card Analytics ... */}
-        <Link 
-          href="/analytics"
-          className="group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-[#bfdbfe] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
+        <div 
+          onClick={() => router.push("/analytics")}
+          className="cursor-pointer group relative bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-[#bfdbfe] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+           
+           <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-brand-deepBlue/10 flex items-center justify-center mb-6 group-hover:bg-brand-deepBlue transition-colors duration-300">
               <BarChart3 className="w-8 h-8 text-brand-deepBlue group-hover:text-white transition-colors" />
@@ -121,7 +123,7 @@ export default function HomePage() {
             <span>Explorar</span>
             <ArrowRight size={18} />
           </div>
-        </Link>
+        </div>
       </div>
 
       <footer className="mt-16 text-center text-slate-400 text-sm">

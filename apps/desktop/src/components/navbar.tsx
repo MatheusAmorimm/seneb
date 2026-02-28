@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-// Remova o useRouter, não vamos mais precisar dele para o logout
-// import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation"; 
 import { LogOut, UserCircle } from "lucide-react";
 import { removeStorageItem } from "../lib/storage";
 import { toast } from "sonner";
 import api from "../services/api"; // Importe sua instância do Axios para limpar o header
 
 export function Navbar() {
-  // const router = useRouter(); // Não use router para logout
+  const router = useRouter();
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -48,13 +47,13 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Link 
-          href="/perfil"
-          className="flex items-center gap-2 px-4 py-2 text-[#013750] font-medium hover:bg-white/50 rounded-lg transition-all text-sm group" 
+        <button 
+          onClick={() => router.push("/perfil")}
+          className="flex items-center gap-2 px-4 py-2 text-[#013750] font-medium hover:bg-white/50 rounded-lg transition-all text-sm group cursor-pointer" 
         >
           <UserCircle size={20} className="text-[#013750] group-hover:text-[#F23E02] transition-colors" /> 
           <span>Meu Perfil</span>
-        </Link>
+        </button>
 
         <div className="h-6 w-px bg-slate-300 mx-1"></div>
 

@@ -4,15 +4,14 @@ services:
       context: ./backend # Aponta para onde está o Dockerfile
     container_name: finance_backend
     ports:
-      - "8000:8000" # Porta PC : Porta Container
-    volumes:
-      - ./backend:/app/backend
+      # 🚀 SEGURANÇA: Exposto apenas para o localhost (Nginx)
+      - "127.0.0.1:8000:8000" 
     env_file:
-      - ./backend/.env # Lê as senhas do arquivo .env
+      - ./backend/.env
     networks:
       - finance_network
-    # Reinicia se cair (bom para dev)
-    restart: on-failure
+    # 🚀 RESILIÊNCIA: Reinicia automaticamente, a menos que você pare manualmente
+    restart: unless-stopped 
 
 networks:
   finance_network:

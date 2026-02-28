@@ -129,12 +129,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             const Icon = item.icon;
             
             return (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
-                onClick={onClose}
+                onClick={() => {
+                  router.push(item.href);
+                  onClose();
+                }}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium",
+                  "w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium cursor-pointer",
                   "text-gray-500",
                   item.hoverClass,
                   isActive && cn(item.activeClass, "font-bold shadow-sm")
@@ -142,7 +144,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <Icon size={20} className="transition-colors" />
                 <span>{item.label}</span>
-              </Link>
+              </button>
             );
           })}
 
@@ -208,11 +210,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           </div>
 
-          <Link
-            href="/analytics"
-            onClick={onClose}
+          <button
+            onClick={() => {
+              router.push('/analytics');
+              onClose();
+            }}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium",
+              "w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium cursor-pointer",
               "text-gray-500",
               analyticsStyles.hover,
               analyticsActive && cn(analyticsStyles.active, "font-bold shadow-sm")
@@ -220,7 +224,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <PieChart size={20} className="transition-colors" />
             <span>Analytics</span>
-          </Link>
+          </button>
 
         </nav>
       </aside>
