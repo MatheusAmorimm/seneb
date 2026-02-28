@@ -14,11 +14,14 @@ deploy_vps_hostinger:
     - chmod 700 ~/.ssh
   script:
     - echo "🚀 Iniciando deploy na VPS..."
- 
+    
+    # 🚀 A MÁGICA: A primeira linha do SSH agora carrega o NVM à força!
     - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+        export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\" &&
+        
         cd /var/www/seneb/finance_control_saas &&
         echo '⬇️ Baixando código...' &&
-        git fetch --all && git reset --hard origin/main &&
+        git pull origin main &&
         
         echo '🐳 Atualizando Backend...' &&
         cd backend &&
