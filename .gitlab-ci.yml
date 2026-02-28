@@ -13,24 +13,25 @@ deploy_vps_hostinger:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
   script:
-    - echo "🚀 Iniciando deploy na VPS Hostinger via GitLab Ultimate..."
+    - echo "🚀 Iniciando deploy na VPS..."
     
-    - ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+    # 🚀 A MÁGICA AQUI: Adicionado -p $SERVER_PORT
+    - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
         cd /var/www/seneb &&
-        echo '⬇️ Baixando código mais recente...' &&
+        echo '⬇️ Baixando código...' &&
         git pull origin main &&
         
-        echo '🐳 Atualizando Backend (Docker)...' &&
+        echo '🐳 Atualizando Backend...' &&
         cd backend &&
         docker compose up -d --build &&
         
-        echo '🌐 Atualizando Landing Page (PM2)...' &&
+        echo '🌐 Atualizando Web...' &&
         cd ../apps/web &&
         npm install &&
         npm run build &&
         
-        echo '🔄 Reiniciando Web...' &&
+        echo '🔄 Reiniciando PM2...' &&
         cd ../.. &&
         pm2 reload seneb-web --update-env
       "
-    - echo "✅ Deploy concluído com sucesso!"
+    - echo "✅ Deploy concluído!"
