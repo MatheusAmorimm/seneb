@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileSearch, ArrowLeft, UnlockKeyhole, AlertTriangle, X, RotateCcw } from "lucide-react"; // Novos ícones
-import Link from "next/link";
 
 import api from "../../../services/api";
 import { Transaction } from "../../../types";
