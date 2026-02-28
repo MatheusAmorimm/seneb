@@ -18,7 +18,7 @@ deploy_vps_hostinger:
     - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
         cd /var/www/seneb/finance_control_saas &&
         echo '⬇️ Baixando código...' &&
-        git pull origin main &&
+        git fetch --all && git reset --hard origin/main &&
         
         echo '🐳 Atualizando Backend...' &&
         cd backend &&
