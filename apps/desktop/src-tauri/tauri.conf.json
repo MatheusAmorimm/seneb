@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Seneb", 
+  "productName": "Seneb",
   "version": "0.1.0",
-  "identifier": "br.com.seneb.desktop", 
+  "identifier": "br.com.seneb.desktop",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "title": "Seneb - Controle Financeiro",
-        "width": 1024, 
+        "width": 1024,
         "height": 768,
         "resizable": true,
         "fullscreen": false
@@ -43,9 +43,6 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "windows": {
-      "signCommand": "pnpm tauri signer sign -k \"$TAURI_SIGNING_PRIVATE_KEY\" -p \"$TAURI_SIGNING_PRIVATE_KEY_PASSWORD\" \"%1\""
-    }
+    ]
   }
 }
