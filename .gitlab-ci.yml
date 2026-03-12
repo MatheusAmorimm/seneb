@@ -10,13 +10,12 @@ build_tauri:
     - if: '$CI_COMMIT_BRANCH == "main"'
   before_script:
     - cd apps/desktop
-    - pnpm config set auto-install-peers true
-    - pnpm install
+    - npm install
   script:
     - cd apps/desktop
     - $env:TAURI_PRIVATE_KEY = $env:TAURI_SIGNING_PRIVATE_KEY
     - $env:TAURI_KEY_PASSWORD = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
-    - pnpm run tauri build
+    - npx tauri build
     - $version = (Get-Content package.json | ConvertFrom-Json).version
     - $pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     - $sigFile = Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*.sig" | Select-Object -First 1
