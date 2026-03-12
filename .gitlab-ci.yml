@@ -12,7 +12,6 @@ build_tauri:
     - cd apps/desktop
     - npm install
   script:
-    - cd apps/desktop
     - $env:TAURI_PRIVATE_KEY = $env:TAURI_SIGNING_PRIVATE_KEY
     - $env:TAURI_KEY_PASSWORD = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
     - npx tauri build
