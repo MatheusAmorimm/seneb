@@ -78,10 +78,10 @@ export default function LandingPage() {
                 Sobre o Dev
               </Link>
               <Link 
-                href="#bugs" 
+                href="#changelogs" 
                 className="px-4 py-2 hover:text-white/80 transition-colors"
               >
-                Bugs e Atualizações
+                Changelogs
               </Link>
             </nav>
 
@@ -110,7 +110,7 @@ export default function LandingPage() {
               Download
             </Link>
             <Link href="#sobre-dev" className="text-sm px-3 py-1">Sobre o Dev</Link>
-            <Link href="#bugs" className="text-sm px-3 py-1">Bugs</Link>
+            <Link href="#changelogs" className="text-sm px-3 py-1">Changelogs</Link>
           </nav>
         </div>
       </header>
@@ -314,10 +314,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Bugs Section */}
-        <section id="bugs" className="py-20 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'rgba(254, 245, 200, 0.3)' }}>
+        {/* Changelogs Section */}
+        <section id="changelogs" className="py-20 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'rgba(254, 245, 200, 0.3)' }}>
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-4 text-slate-800">Bugs e Atualizações</h2>
+            <h2 className="text-4xl font-bold mb-4 text-slate-800">Changelogs</h2>
             <p className="text-xl text-slate-600 mb-8">
               Encontrou um bug? Tem uma sugestão? Adoraríamos ouvir você!
             </p>

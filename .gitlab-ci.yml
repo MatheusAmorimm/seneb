@@ -1,5 +1,51 @@
 stages:
+  - build
   - deploy
+
+build_tauri:
+  stage: build
+  image: rust:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - apt-get update
+    - apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+    - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    - apt-get install -y nodejs
+    - npm install -g pnpm
+  script:
+    - cd apps/desktop
+    - pnpm install
+    # Ensure rust target for windows if we are cross compiling, or just build for linux if that's what we want.
+    # Typically GitLab runners are linux. To build windows .msi/.exe on linux requires mingw and special setup.
+    # Assuming for this project either we run on a windows runner, or we just want standard tauri build that uses the TAURI_SIGN_KEY.
+    # Since we need .msi/.exe, ideally we need a Windows runner. Here we set it up generally.
+    - npm run tauri build
+    # After build, the updater signature and binaries are generated.
+    # We create the update.json with the generated signature.
+    - version=$(node -p "require('./package.json').version")
+    - pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    - signature=$(cat src-tauri/target/release/bundle/msi/*.msi.sig) # Example path
+    - |
+      cat <<EOF > update.json
+      {
+        "version": "v$version",
+        "notes": "Nova versão disponível",
+        "pub_date": "$pub_date",
+        "platforms": {
+          "windows-x86_64": {
+            "signature": "$signature",
+            "url": "https://seneb.com.br/downloads/Seneb-Setup.exe"
+          }
+        }
+      }
+      EOF
+  artifacts:
+    paths:
+      - apps/desktop/update.json
+      - apps/desktop/src-tauri/target/release/bundle/msi/*.msi
+      - apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+    expire_in: 1 week
 
 deploy_vps_hostinger:
   stage: deploy
@@ -7,13 +53,17 @@ deploy_vps_hostinger:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"' 
   before_script:
-    - apk add --no-cache openssh-client
+    - apk add --no-cache openssh-client rsync # Added rsync to easily upload update.json
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
   script:
     - echo "🚀 Iniciando deploy na VPS..."
+    
+    # Upload update.json to VPS
+    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/update.json $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/update.json
+    # Assuming seneb.com.br serves the apps/web/public directory as its root or similar.
     
     # 🚀 A MÁGICA: A primeira linha do SSH agora carrega o NVM à força!
     - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "

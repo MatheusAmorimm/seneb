@@ -109,7 +109,7 @@ export default function LoginPage() {
               {/* Campo Email */}
               <div>
                 <label htmlFor="email" className="text-slate-700 font-medium text-sm">
-                  E-MAIL
+                  E-MAIL <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   {/* ÍCONE COM POSICIONAMENTO ABSOLUTO (Mantido vazio conforme pedido) */}
@@ -143,7 +143,7 @@ export default function LoginPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label htmlFor="password" className="text-slate-700 font-medium text-sm">
-                    SENHA
+                    SENHA <span className="text-red-500">*</span>
                   </label>
                 </div>
                 

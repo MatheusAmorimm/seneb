@@ -148,7 +148,7 @@ export default function CadastroPage() {
                 
                 {/* Nome */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">NOME COMPLETO</label>
+                  <label className="block mb-2 text-slate-700 font-medium text-sm">NOME COMPLETO <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="text"
@@ -179,7 +179,7 @@ export default function CadastroPage() {
 
                 {/* Email */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">E-MAIL</label>
+                  <label className="block mb-2 text-slate-700 font-medium text-sm">E-MAIL <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="email"
@@ -195,7 +195,7 @@ export default function CadastroPage() {
 
                 {/* Senha */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">SENHA</label>
+                  <label className="block mb-2 text-slate-700 font-medium text-sm">SENHA <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="password"
@@ -210,7 +210,7 @@ export default function CadastroPage() {
 
                 {/* Confirmar Senha */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">CONFIRMAR SENHA</label>
+                  <label className="block mb-2 text-slate-700 font-medium text-sm">CONFIRMAR SENHA <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="password"

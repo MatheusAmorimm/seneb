@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_serializer
 from datetime import datetime
 
 # --- USER SCHEMAS ---
@@ -12,6 +12,18 @@ class UserSchema(BaseModel):
     nickname: Optional[str] = None
     created_at: Optional[datetime] = None
     custom_banks: List[str] = []
+
+    @field_serializer('created_at')
+    def serialize_datetime(self, created_at: Optional[datetime], _info):
+        if created_at is not None:
+            # Converter para America/Sao_Paulo se for UTC
+            from pytz import timezone
+            import pytz
+            sp_tz = timezone('America/Sao_Paulo')
+            if created_at.tzinfo is None:
+                created_at = pytz.utc.localize(created_at)
+            return created_at.astimezone(sp_tz).isoformat()
+        return None
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -40,6 +52,15 @@ class ReportSchema(BaseModel):
     balance: float
     
     created_at: datetime = Field(default_factory=datetime.now)
+
+    @field_serializer('created_at')
+    def serialize_datetime(self, created_at: datetime, _info):
+        from pytz import timezone
+        import pytz
+        sp_tz = timezone('America/Sao_Paulo')
+        if created_at.tzinfo is None:
+            created_at = pytz.utc.localize(created_at)
+        return created_at.astimezone(sp_tz).isoformat()
 
 class BankAdd(BaseModel):
     bank_name: str

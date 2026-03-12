@@ -130,6 +130,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  a, button, input[type="submit"], input[type="button"], input[type="checkbox"], input[type="radio"], select, label {
+    cursor: pointer;
+  }
 }
 
 /**
