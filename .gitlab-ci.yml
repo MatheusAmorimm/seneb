@@ -78,8 +78,8 @@ deploy_vps_hostinger:
         npm install &&
         npm run build &&
         
-        echo '🔄 Reiniciando PM2...' &&
-        cd ../.. &&
-        pm2 reload seneb-web --update-env
+        echo '🔄 Reiniciando ou Iniciando PM2...' &&
+        # Se o reload falhar (||), ele executa o start nativo do Next.js
+        pm2 reload seneb-web --update-env || pm2 start npm --name "seneb-web" -- start
       "
     - echo "✅ Deploy concluído!"
