@@ -12,8 +12,7 @@ build_tauri:
     - cd apps/desktop
     - npm install
   script:
-    - $env:TAURI_PRIVATE_KEY = $env:TAURI_SIGNING_PRIVATE_KEY
-    - $env:TAURI_KEY_PASSWORD = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+    - if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { Write-Error "🚨 A chave privada não chegou no Runner! Verifique as variáveis no GitLab."; exit 1 }
     - npx tauri build
     - $version = (Get-Content package.json | ConvertFrom-Json).version
     - $pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
