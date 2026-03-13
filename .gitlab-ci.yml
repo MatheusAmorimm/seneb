@@ -12,8 +12,11 @@ build_tauri:
     - cd apps/desktop
     - npm install
   script:
-    - if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { Write-Error "🚨 A chave privada não chegou no Runner! Verifique as variáveis no GitLab."; exit 1 }
+    - if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { Write-Error "🚨 A variável da chave ta vazia no Runner!"; exit 1 }
+    - Write-Host "✅ A chave chegou no Windows e tem $($env:TAURI_SIGNING_PRIVATE_KEY.Length) caracteres."
     - npx tauri build
+    - $sigFile = Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*.sig" | Select-Object -First 1
+    - if (-not $sigFile) { Write-Error "🚨 O Tauri buildou, mas não gerou o .sig! A chave foi rejeitada."; exit 1 }
     - $version = (Get-Content package.json | ConvertFrom-Json).version
     - $pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     - $sigFile = Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*.sig" | Select-Object -First 1
