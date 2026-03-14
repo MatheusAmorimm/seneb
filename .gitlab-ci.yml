@@ -49,7 +49,7 @@ deploy_vps_hostinger:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"' 
   before_script:
-    - apk add --no-cache openssh-client rsync # Added rsync to easily upload update.json
+    - apk add --no-cache openssh-client rsync
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
@@ -57,28 +57,30 @@ deploy_vps_hostinger:
   script:
     - echo "🚀 Iniciando deploy na VPS..."
     
-    # Upload update.json to VPS
+    # 1. Envia o update.json (Roda no GitLab)
     - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/update.json $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/update.json
-    # Assuming seneb.com.br serves the apps/web/public directory as its root or similar.
     
-    # 🚀 A MÁGICA: A primeira linha do SSH agora carrega o NVM à força!
+    # 2. Envia o MSI fresco (Roda no GitLab, FORA DO SSH!)
+    - echo "📦 Enviando o instalador MSI para a VPS..."
+    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/src-tauri/target/release/bundle/msi/*.msi $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/Seneb-Setup.msi
+    
+    # 3. Executa os comandos de build DENTRO da VPS
     - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
         export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\" &&
         
         cd /var/www/seneb/finance_control_saas &&
         echo '⬇️ Baixando código...' &&
-        git pull origin main &&
+        git fetch origin main &&
+        git reset --hard origin/main &&
+        git clean -fd &&
         
         echo '🐳 Atualizando Backend...' &&
         cd backend &&
         docker compose up -d --build &&
 
-        echo '📦 Copiando o instalador fresco para a Landing Page...'
-        rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/src-tauri/target/release/bundle/msi/*.msi $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/Seneb-Setup.msi
-
         echo '🌐 Atualizando Web...' &&
         cd ../apps/web &&
-        rm -rf .next
+        rm -rf .next &&
         npm install &&
         npm run build &&
         
