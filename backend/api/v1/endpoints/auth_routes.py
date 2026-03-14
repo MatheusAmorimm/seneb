@@ -5,7 +5,8 @@ from backend.schemas import UserCreate, UserLogin, UserSignupResponse
 from backend.core.database import db
 from backend.repositories.user_repository import UserRepository
 from backend.services.user_service import UserService
-from backend.core.mail import send_verification_code
+from backend.core.mail import send_verification_code, send_password_reset_code
+from backend.schemas import ResetPasswordSchema
 import random
 import re
 
@@ -49,8 +50,8 @@ def get_user_service():
 
 @router.post("/send-code")
 async def send_code(data: EmailSchema):
-    # 1. Gera código de 4 dígitos
-    code = str(random.randint(1000, 9999))
+    # 1. Gera código de 8 dígitos
+    code = str(random.randint(10000000, 99999999))
 
     try:
         # 2. Salva no MongoDB (Usando db.db conforme seu padrão)
@@ -139,3 +140,73 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         )
     
     return auth_result
+
+# --- FORGOT PASSWORD ---
+
+@router.post("/forgot-password")
+async def forgot_password(data: EmailSchema):
+    # 1. Verifica se o usuário existe
+    service = get_user_service()
+    user = await service.repository.get_by_email(data.email)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="E-mail não encontrado.")
+
+    # 2. Gera código de 8 dígitos
+    code = str(random.randint(10000000, 99999999))
+
+    try:
+        # 3. Salva no MongoDB (coleção separada para reset)
+        await db.db.password_reset_codes.update_one(
+            {"email": data.email},
+            {"$set": {"code": code, "email": data.email}},
+            upsert=True
+        )
+
+        # 4. Envia o e-mail com template de reset
+        await send_password_reset_code(data.email, code)
+
+        return {"message": "Código de redefinição enviado com sucesso."}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro ao processar solicitação.")
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordSchema):
+    # 1. Valida que as senhas coincidem
+    if data.new_password != data.confirm_password:
+        raise HTTPException(status_code=400, detail="Senhas não conferem.")
+
+    # 2. Valida senha forte
+    if len(data.new_password) < 8:
+        raise HTTPException(status_code=400, detail="A senha deve ter no mínimo 8 caracteres.")
+    if not re.search(r'[A-Z]', data.new_password):
+        raise HTTPException(status_code=400, detail="A senha deve conter pelo menos uma letra maiúscula.")
+    if not re.search(r'[a-z]', data.new_password):
+        raise HTTPException(status_code=400, detail="A senha deve conter pelo menos uma letra minúscula.")
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', data.new_password):
+        raise HTTPException(status_code=400, detail="A senha deve conter pelo menos um caractere especial.")
+
+    # 3. Busca e valida o código no MongoDB
+    stored_data = await db.db.password_reset_codes.find_one({"email": data.email})
+
+    if not stored_data:
+        raise HTTPException(status_code=400, detail="Nenhum código solicitado para este e-mail.")
+
+    if stored_data["code"] != data.code:
+        raise HTTPException(status_code=400, detail="Código de verificação inválido.")
+
+    # 4. Atualiza a senha no banco
+    from backend.core.security import get_password_hash
+    hashed = get_password_hash(data.new_password)
+
+    repository = UserRepository(db.db)
+    updated = await repository.update_password(data.email, hashed)
+
+    if not updated:
+        raise HTTPException(status_code=500, detail="Erro ao atualizar a senha.")
+
+    # 5. Limpa o código usado
+    await db.db.password_reset_codes.delete_one({"email": data.email})
+
+    return {"message": "Senha redefinida com sucesso."}

@@ -27,7 +27,7 @@ class UserSchema(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     confirm_password: str  # <--- O NOVO CAMPO (Obrigatório)
     full_name: str
     nickname: Optional[str] = None
@@ -102,3 +102,9 @@ class TransactionUpdate(BaseModel):
     current_installment: Optional[int] = None
     total_installments: Optional[int] = None
     installment_identifier: Optional[str] = None
+
+class ResetPasswordSchema(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str = Field(..., min_length=8)
+    confirm_password: str

@@ -23,6 +23,13 @@ class UserRepository:
             all_users = await self.collection.find().to_list(length=10)
             return None
 
+    async def update_password(self, email: str, hashed_password: str) -> bool:
+        result = await self.collection.update_one(
+            {"email": email},
+            {"$set": {"password_hash": hashed_password}}
+        )
+        return result.modified_count > 0
+
     async def get_by_id(self, user_id: str) -> Optional[UserModel]:
         from bson import ObjectId
         try:

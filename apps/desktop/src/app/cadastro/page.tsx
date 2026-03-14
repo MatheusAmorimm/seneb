@@ -78,8 +78,8 @@ export default function CadastroPage() {
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (inputCode.length < 4) {
-      toast.warning("Digite o código de 4 dígitos.");
+    if (inputCode.length < 8) {
+      toast.warning("Digite o código de 8 dígitos.");
       return;
     }
 
@@ -264,22 +264,22 @@ export default function CadastroPage() {
             {step === 2 && (
               <form onSubmit={handleFinalSubmit} className="space-y-6">
                 <div className="text-center">
-                  <p className="text-slate-600 mb-4">Insira o código de 4 dígitos enviado para <strong>{email}</strong>.</p>
+                  <p className="text-slate-600 mb-4">Insira o código de 8 dígitos enviado para <strong>{email}</strong>.</p>
                   
                   <input
                     type="text"
-                    maxLength={4}
+                    maxLength={8}
                     value={inputCode}
                     onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ''))} // Só aceita números
                     className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
-                    placeholder="0000"
+                    placeholder="00000000"
                     autoFocus
                   />
                 </div>
                 
                 <button
                   type="submit"
-                  disabled={loading || inputCode.length < 4}
+                  disabled={loading || inputCode.length < 8}
                   className="w-full py-3 rounded-lg text-white font-bold transition-transform hover:scale-[1.02] shadow-lg disabled:opacity-70"
                   style={{ backgroundColor: '#00988D' }}
                 >

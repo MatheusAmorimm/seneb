@@ -199,7 +199,7 @@ export default function LoginPage() {
                     Manter-me conectado
                   </span>
                 </button>
-                  <button type="button" className="text-xs text-brand-orange hover:underline cursor-pointer">
+                  <button type="button" onClick={() => router.push('/recuperar-senha')} className="text-xs text-brand-orange hover:underline cursor-pointer">
                     <strong>Esqueceu a senha?</strong>
                   </button>
               </div>

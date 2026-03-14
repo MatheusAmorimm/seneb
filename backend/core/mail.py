@@ -39,3 +39,28 @@ async def send_verification_code(email: EmailStr, code: str):
 
     fm = FastMail(conf)
     await fm.send_message(message)
+
+
+async def send_password_reset_code(email: EmailStr, code: str):
+    html = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+        <h1 style="color: #F23E02;">Redefinição de Senha</h1>
+        <p>Olá,</p>
+        <p>Recebemos uma solicitação para redefinir sua senha. Use o código abaixo:</p>
+        <div style="background: #f4f4f4; padding: 15px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; border-radius: 8px;">
+            {code}
+        </div>
+        <p style="margin-top: 16px; color: #666;">Este código expira em 15 minutos.</p>
+        <p>Se você não solicitou a redefinição, ignore este e-mail. Sua senha permanecerá inalterada.</p>
+    </div>
+    """
+
+    message = MessageSchema(
+        subject="Redefinição de Senha - Seneb",
+        recipients=[email], #type: ignore
+        body=html,
+        subtype=MessageType.html
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)
