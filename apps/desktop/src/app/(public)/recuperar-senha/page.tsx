@@ -173,7 +173,7 @@ export default function RecuperarSenhaPage() {
                     value={inputCode}
                     onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ''))}
                     className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
-                    placeholder="00000000"
+                    placeholder="0000-0000"
                     autoFocus
                   />
                 </div>
