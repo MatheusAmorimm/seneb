@@ -74,7 +74,7 @@ deploy_vps_hostinger:
         docker compose up -d --build &&
 
         echo '📦 Copiando o instalador fresco para a Landing Page...'
-        cp "apps/desktop/src-tauri/target/release/bundle/msi/*.msi" "apps/web/public/Seneb-Setup.msi"
+        rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/src-tauri/target/release/bundle/msi/*.msi $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/Seneb-Setup.msi
 
         echo '🌐 Atualizando Web...' &&
         cd ../apps/web &&
