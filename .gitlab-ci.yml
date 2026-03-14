@@ -15,12 +15,19 @@ build_tauri:
     - if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { Write-Error "🚨 A variável da chave ta vazia no Runner!"; exit 1 }
     - Write-Host "✅ A chave chegou no Windows e tem $($env:TAURI_SIGNING_PRIVATE_KEY.Length) caracteres."
     - npx tauri build
-    - $sigFile = Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*.sig" | Select-Object -First 1
+    
+    # 🔍 BUSCA UNIVERSAL: Vasculha qualquer subpasta dentro de bundle atrás da assinatura
+    - $sigFile = Get-ChildItem -Path "src-tauri\target\release\bundle" -Recurse -Filter "*.sig" | Select-Object -First 1
     - if (-not $sigFile) { Write-Error "🚨 O Tauri buildou, mas não gerou o .sig! A chave foi rejeitada."; exit 1 }
+    
     - $version = (Get-Content package.json | ConvertFrom-Json).version
     - $pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    - $sigFile = Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*.sig" | Select-Object -First 1
     - $signature = Get-Content $sigFile.FullName -Raw
+    
+    # 🧠 INTELIGÊNCIA: Descobre se o instalador é .msi ou .exe baseado na assinatura gerada
+    - $ext = if ($sigFile.Name -match "\.msi\.sig$") { ".msi" } else { ".exe" }
+    
+    # 📝 GERAÇÃO DO JSON DINÂMICO
     - |
       $UpdateData = @{
         version = "v$version"
@@ -29,11 +36,12 @@ build_tauri:
         platforms = @{
           "windows-x86_64" = @{
             signature = $signature.Trim()
-            url = "https://seneb.com.br/downloads/Seneb-Setup.exe"
+            url = "https://seneb.com.br/Seneb-Setup$ext"
           }
         }
       }
       $UpdateData | ConvertTo-Json -Depth 10 | Out-File -FilePath "update.json" -Encoding utf8
+      
   artifacts:
     paths:
       - apps/desktop/update.json
@@ -57,22 +65,24 @@ deploy_vps_hostinger:
   script:
     - echo "🚀 Iniciando deploy na VPS..."
     
-    # 1. Envia o update.json (Roda no GitLab)
-    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/update.json $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/update.json
-    
-    # 2. Envia o MSI fresco (Roda no GitLab, FORA DO SSH!)
-    - echo "📦 Enviando o instalador MSI para a VPS..."
-    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/src-tauri/target/release/bundle/msi/*.msi $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/Seneb-Setup.msi
-    
-    # 3. Executa os comandos de build DENTRO da VPS
+    # 1. PRIMEIRO: Limpamos a casa e baixamos o código novo da VPS.
+    # Fazemos isso antes do rsync para o git clean não apagar nossos artefatos!
     - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
-        export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\" &&
-        
         cd /var/www/seneb/finance_control_saas &&
-        echo '⬇️ Baixando código...' &&
         git fetch origin main &&
         git reset --hard origin/main &&
-        git clean -fd &&
+        git clean -fd
+      "
+    
+    # 2. AGORA SIM: Enviamos os arquivos soltos (update.json e MSI) para a pasta já limpa
+    - echo "📦 Enviando artefatos para a VPS..."
+    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/update.json $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/update.json
+    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/src-tauri/target/release/bundle/msi/*.msi $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/Seneb-Setup.msi
+    
+    # 3. POR ÚLTIMO: Buildamos o Next.js (que agora vai enxergar o MSI e o JSON lá dentro) e reiniciamos
+    - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+        export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\" &&
+        cd /var/www/seneb/finance_control_saas &&
         
         echo '🐳 Atualizando Backend...' &&
         cd backend &&
