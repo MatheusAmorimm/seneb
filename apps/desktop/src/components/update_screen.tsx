@@ -40,16 +40,10 @@ export function UpdateScreen({ children }: { children: React.ReactNode }) {
                 break;
               case 'Finished':
                 setProgress(100);
+                setIsFinalizing(true);
                 break;
             }
           });
-
-          // Etapa FAKE de finalização para deixar "bonito" conforme pedido
-          setIsFinalizing(true);
-          setProgress(100);
-          await new Promise(resolve => setTimeout(resolve, 3500));
-
-          await relaunch();
         }
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
