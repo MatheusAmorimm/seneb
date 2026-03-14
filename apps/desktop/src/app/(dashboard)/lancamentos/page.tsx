@@ -61,6 +61,47 @@ export default function LancamentosPage() {
     fetchTransactions();
   }, [fetchTransactions]);
 
+  // 🚀 PREVENÇÃO DE FUGA: Bloqueia a saída da página sem finalizar caso seja um Mês Reaberto
+  useEffect(() => {
+    if (!editingReportId) return;
+
+    // A. Bloqueia fechamento da aba ou F5 (Exibe alerta nativo do Navegador)
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    // B. Intercepta clics em links (React Router, Next Link ou tags A nativas) na Fase de Captura
+    const handleClickCapture = (e: MouseEvent) => {
+      let target = e.target as HTMLElement | null;
+      while (target && target.tagName !== 'A') {
+        target = target.parentElement;
+      }
+      
+      if (target && target.tagName === 'A') {
+        const href = target.getAttribute('href');
+        // Se for um link e não para a própria página de lançamentos
+        if (href && !href.startsWith('/lancamentos')) {
+          e.preventDefault();
+          e.stopPropagation();
+          toast.error("Obrigatório: Finalize o mês reaberto antes de sair desta aba.", {
+            duration: 4000,
+            icon: <AlertTriangle className="text-red-500" />
+          });
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    // document.addEventListener pega *antes* que o next/link decida navegar
+    document.addEventListener('click', handleClickCapture, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClickCapture, true);
+    };
+  }, [editingReportId]);
+
   const handleSaveTransaction = async (transaction: Transaction) => {
     try {
       const rawPayload = {
@@ -73,6 +114,7 @@ export default function LancamentosPage() {
         payment_method: transaction.payment_method || null,
         bank: transaction.bank || null,
         is_installment: transaction.is_installment,
+        current_installment: transaction.current_installment,
         total_installments: transaction.total_installments,
         installment_identifier: transaction.installment_identifier || null,
         // 🚀 5. Corrigido de 'editingTransaction' (Objeto) para 'editingReportId' (String da URL)

@@ -183,13 +183,14 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   }, [category, isInstallment]);
 
   // --- EFEITOS DE LIMPEZA ---
-  useEffect(() => {
+  const handleTypeChange = (newType: TransactionType) => {
+    setType(newType);
     if (!initialData) {
        setCategory(''); setDescription(''); setAmount(''); setPaymentMethod('');
        setBank(''); setDueDate(''); setIsInstallment(false); setIsCustomBankMode(false);
        setErrors({ category: false, description: false, amount: false });
     }
-  }, [type]);
+  };
 
   useEffect(() => {
     if (initialData && category === initialData.category) return;
@@ -281,6 +282,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
       await onAddTransaction(payload);
       
       if (!initialData) {
+        setCategory(''); // FIX BUG DE RESET
         if (category !== "Fatura do Cartão") setDescription('');
         setAmount(''); setPaymentMethod(''); setBank(''); setDueDate('');
         setIsInstallment(false); setTotalInstallments(1); setCurrentInstallment(1); setIsCustomBankMode(false);
@@ -317,9 +319,9 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
         </div>
         
         <div className="flex bg-slate-100 p-1 rounded-lg">
-          <button type="button" onClick={() => setType('income')}
+          <button type="button" onClick={() => handleTypeChange('income')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'income' ? 'bg-white text-[#00988D] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Receita</button>
-          <button type="button" onClick={() => setType('expense')}
+          <button type="button" onClick={() => handleTypeChange('expense')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'expense' ? 'bg-white text-[#F23E02] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Despesa</button>
         </div>
       </div>

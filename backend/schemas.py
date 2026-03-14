@@ -14,14 +14,14 @@ class UserSchema(BaseModel):
     custom_banks: List[str] = []
 
     @field_serializer('created_at')
-    def serialize_datetime(self, created_at: Optional[datetime], _info):
+    def serialize_datetime(self, created_at: Optional[datetime]):
         if created_at is not None:
-            # Converter para America/Sao_Paulo se for UTC
-            from pytz import timezone
-            import pytz
-            sp_tz = timezone('America/Sao_Paulo')
+            # Converter para America/Sao_Paulo if UTC
+            from zoneinfo import ZoneInfo
+            from datetime import timezone
+            sp_tz = ZoneInfo('America/Sao_Paulo')
             if created_at.tzinfo is None:
-                created_at = pytz.utc.localize(created_at)
+                created_at = created_at.replace(tzinfo=timezone.utc)
             return created_at.astimezone(sp_tz).isoformat()
         return None
 
@@ -54,12 +54,12 @@ class ReportSchema(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
 
     @field_serializer('created_at')
-    def serialize_datetime(self, created_at: datetime, _info):
-        from pytz import timezone
-        import pytz
-        sp_tz = timezone('America/Sao_Paulo')
+    def serialize_datetime(self, created_at: datetime):
+        from zoneinfo import ZoneInfo
+        from datetime import timezone
+        sp_tz = ZoneInfo('America/Sao_Paulo')
         if created_at.tzinfo is None:
-            created_at = pytz.utc.localize(created_at)
+            created_at = created_at.replace(tzinfo=timezone.utc)
         return created_at.astimezone(sp_tz).isoformat()
 
 class BankAdd(BaseModel):
@@ -96,3 +96,9 @@ class TransactionUpdate(BaseModel):
     due_date: Optional[str] = None
     payment_method: Optional[str] = None
     bank: Optional[str] = None
+    
+    # Controle de Parcelas
+    is_installment: Optional[bool] = None
+    current_installment: Optional[int] = None
+    total_installments: Optional[int] = None
+    installment_identifier: Optional[str] = None
