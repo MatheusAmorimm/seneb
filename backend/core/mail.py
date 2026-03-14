@@ -64,3 +64,53 @@ async def send_password_reset_code(email: EmailStr, code: str):
 
     fm = FastMail(conf)
     await fm.send_message(message)
+
+
+async def send_email_change_code(email: EmailStr, code: str):
+    html = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+        <h1 style="color: #013750;">Alteração de E-mail</h1>
+        <p>Olá,</p>
+        <p>Recebemos uma solicitação para alterar o e-mail da sua conta. Use o código abaixo para confirmar:</p>
+        <div style="background: #f4f4f4; padding: 15px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; border-radius: 8px;">
+            {code}
+        </div>
+        <p style="margin-top: 16px; color: #666;">Este código expira em 15 minutos.</p>
+        <p>Se você não solicitou essa alteração, ignore este e-mail e altere sua senha imediatamente.</p>
+    </div>
+    """
+
+    message = MessageSchema(
+        subject="Alteração de E-mail - Seneb",
+        recipients=[email], #type: ignore
+        body=html,
+        subtype=MessageType.html
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+
+async def send_email_confirmation_code(email: EmailStr, code: str):
+    html = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+        <h1 style="color: #00988D;">Confirme seu novo e-mail</h1>
+        <p>Olá,</p>
+        <p>Use o código abaixo para confirmar que este é o seu novo endereço de e-mail:</p>
+        <div style="background: #f4f4f4; padding: 15px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; border-radius: 8px;">
+            {code}
+        </div>
+        <p style="margin-top: 16px; color: #666;">Este código expira em 15 minutos.</p>
+        <p>Se você não reconhece esta ação, ignore este e-mail.</p>
+    </div>
+    """
+
+    message = MessageSchema(
+        subject="Confirme seu novo e-mail - Seneb",
+        recipients=[email], #type: ignore
+        body=html,
+        subtype=MessageType.html
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)

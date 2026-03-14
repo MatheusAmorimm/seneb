@@ -108,3 +108,23 @@ class ResetPasswordSchema(BaseModel):
     code: str
     new_password: str = Field(..., min_length=8)
     confirm_password: str
+
+# --- PROFILE SECURITY SCHEMAS ---
+
+class ChangePasswordInitSchema(BaseModel):
+    current_password: str
+
+class ChangePasswordConfirmSchema(BaseModel):
+    code: str
+    new_password: str = Field(..., min_length=8)
+    confirm_password: str
+
+class ChangeEmailInitSchema(BaseModel):
+    current_password: str
+
+class ChangeEmailVerifyCurrentSchema(BaseModel):
+    code: str
+
+class ChangeEmailConfirmSchema(BaseModel):
+    new_email: EmailStr
+    code: str

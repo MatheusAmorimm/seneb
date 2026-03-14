@@ -30,6 +30,22 @@ class UserRepository:
         )
         return result.modified_count > 0
 
+    async def update_email(self, user_id: str, new_email: str) -> bool:
+        from bson import ObjectId
+        from datetime import datetime, timezone
+        result = await self.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "email": new_email,
+                "last_email_change": datetime.now(timezone.utc)
+            }}
+        )
+        return result.modified_count > 0
+
+    async def check_email_exists(self, email: str) -> bool:
+        document = await self.collection.find_one({"email": email})
+        return document is not None
+
     async def get_by_id(self, user_id: str) -> Optional[UserModel]:
         from bson import ObjectId
         try:

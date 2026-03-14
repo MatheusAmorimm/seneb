@@ -21,5 +21,7 @@ class UserModel(BaseModel):
     is_active: bool = True
     is_superuser: bool = False
     
+    last_email_change: Optional[datetime] = None
+    
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
