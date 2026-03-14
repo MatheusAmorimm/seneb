@@ -74,7 +74,7 @@ deploy_vps_hostinger:
         docker compose up -d --build &&
 
         echo '📦 Copiando o instalador fresco para a Landing Page...'
-        Copy-Item "apps\desktop\src-tauri\target\release\bundle\msi\*.msi" -Destination "apps\web\public\Seneb-Setup.msi"
+        cp "apps/desktop/src-tauri/target/release/bundle/msi/*.msi" "apps/web/public/Seneb-Setup.msi"
 
         echo '🌐 Atualizando Web...' &&
         cd ../apps/web &&
