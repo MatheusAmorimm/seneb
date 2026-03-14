@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileSearch, ArrowLeft, UnlockKeyhole, AlertTriangle, X, RotateCcw } from "lucide-react"; // Novos ícones
+import { FileSearch, Calendar, ChevronRight, FileText, Trash2, ArrowLeft, Download, Eye, RefreshCcw, UnlockKeyhole, AlertTriangle, X, RotateCcw, User } from 'lucide-react'; // Novos ícones
 
 import api from "../../../../services/api";
 import { Transaction } from "../../../../types";
 import { TransactionList } from "../../../../components/transaction_list";
+import { TransactionFilters } from "../../../../components/transaction_filters";
 import { BalanceCard } from "../../../../components/balance_card";
 import { useReports } from "../../../../hooks/use_reports"; 
 
@@ -21,6 +22,7 @@ export default function HistoricoPage() {
 
   // 2. Estados locais
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
   
   // 3. Estados do Modal e UX
@@ -36,6 +38,7 @@ export default function HistoricoPage() {
       try {
         const response = await api.get(`/reports/${reportId}/transactions`);
         setTransactions(response.data);
+        setFilteredTransactions(response.data);
       } catch (error) {
         console.error(error);
         toast.error("Erro ao carregar detalhes do mês.");
@@ -97,11 +100,23 @@ export default function HistoricoPage() {
   if (reports.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4 animate-in fade-in">
-        <div className="bg-slate-100 p-6 rounded-full">
-          <FileSearch size={48} className="text-slate-400" />
+        <div className="flex justify-between items-center mb-8 animate-in slide-in-from-top-4">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.push('/')}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-[#013750] dark:hover:text-slate-100"
+              title="Voltar para Home"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h1 className="text-3xl font-serif font-bold text-[#013750] dark:text-slate-100 transition-colors">Meu Histórico</h1>
+          </div>
         </div>
-        <h2 className="text-2xl font-serif font-bold text-[#013750]">Histórico Vazio</h2>
-        <p className="text-slate-500 max-w-md">
+        <div className="bg-slate-100 dark:bg-slate-900 p-6 rounded-full border border-slate-200 dark:border-slate-800">
+          <FileSearch size={48} className="text-slate-400 dark:text-slate-600" />
+        </div>
+        <h2 className="text-2xl font-serif font-bold text-[#013750] dark:text-slate-100">Histórico Vazio</h2>
+        <p className="text-slate-500 dark:text-slate-400 max-w-md">
           Você ainda não fechou nenhum mês. Vá em &quot;Lançamentos&quot; e finalize seu planejamento.
         </p>
         <button 
@@ -141,11 +156,11 @@ export default function HistoricoPage() {
           </div>
           
           {currentReport ? (
-              <h1 className="text-4xl font-serif font-bold text-[#013750]">
+              <h1 className="text-4xl font-serif font-bold text-[#013750] dark:text-slate-100 transition-colors">
                   {currentReport.name}
               </h1>
           ) : (
-              <div className="h-10 w-64 bg-slate-200 rounded animate-pulse" />
+              <div className="h-10 w-64 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
           )}
         </div>
 
@@ -174,58 +189,61 @@ export default function HistoricoPage() {
 
       {/* LISTA */}
       <section className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
-        <h3 className="text-lg font-bold text-[#013750] mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-bold text-[#013750] dark:text-slate-100 mb-4 flex items-center gap-2 transition-colors">
             Detalhamento
-            {loadingDetails && <span className="text-xs font-normal text-slate-400">(Carregando...)</span>}
+            {loadingDetails && <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(Carregando...)</span>}
         </h3>
         
         {loadingDetails ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <TransactionList 
-            transactions={transactions} 
-            onDeleteTransaction={async () => toast.info("Histórico é imutável! Reabra o mês se precisar editar.")}
-          />
-        )}
+           <div className="space-y-3">
+             {[1, 2, 3].map(i => (
+               <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />
+             ))}
+           </div>
+         ) : (
+           <>
+            <TransactionFilters transactions={transactions} onFilter={setFilteredTransactions} />
+            <TransactionList 
+              transactions={filteredTransactions} 
+              onDeleteTransaction={async () => toast.info("Histórico é imutável! Reabra o mês se precisar editar.")}
+            />
+           </>
+         )}
       </section>
 
       {/* --- MODAL DE CONFIRMAÇÃO (Substitui o window.confirm) --- */}
       {showReopenModal && currentReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100">
+          <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100 border border-slate-100 dark:border-slate-800">
             
             {/* Header Amarelo (Atenção) */}
-            <div className="bg-amber-50 p-6 flex items-center gap-4 border-b border-amber-100">
-              <div className="bg-amber-100 p-3 rounded-full">
-                <AlertTriangle className="text-amber-600 w-6 h-6" />
+            <div className="bg-amber-50 dark:bg-amber-950/20 p-6 flex items-center gap-4 border-b border-amber-100 dark:border-amber-900/30">
+              <div className="bg-amber-100 dark:bg-amber-900/40 p-3 rounded-full">
+                <AlertTriangle className="text-amber-600 dark:text-amber-400 w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-serif font-bold text-brand-deepBlue">Reabrir este mês?</h3>
-                <p className="text-sm text-slate-500">Os dados voltarão para a tela de lançamentos.</p>
+                <h3 className="text-lg font-serif font-bold text-brand-deepBlue dark:text-slate-100">Reabrir este mês?</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Os dados voltarão para a tela de lançamentos.</p>
               </div>
               <button 
                 onClick={() => setShowReopenModal(false)}
-                className="ml-auto text-slate-400 hover:text-slate-600"
+                className="ml-auto text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Conteúdo Explicativo */}
-            <div className="px-6 py-4 bg-white text-sm text-slate-600">
+            <div className="px-6 py-4 bg-white dark:bg-[#012a3d] text-sm text-slate-600 dark:text-slate-400">
               <p>Ao reabrir <strong>{currentReport.name}</strong>, você poderá editar ou excluir as transações novamente na aba de Planejamento.</p>
-              <p className="mt-2 text-xs text-slate-400">Nota: O relatório sairá do histórico até ser finalizado novamente.</p>
+              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Nota: O relatório sairá do histórico até ser finalizado novamente.</p>
             </div>
 
             {/* Footer */}
-            <div className="p-6 bg-white flex justify-end gap-3 pt-2">
+            <div className="p-6 bg-white dark:bg-[#012a3d] flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowReopenModal(false)}
-                className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 Cancelar
               </button>

@@ -3,6 +3,7 @@ import { Nunito_Sans, Tinos, Karla } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import { UpdateScreen } from "../components/update_screen";
+import { ThemeProvider } from "../components/theme_provider";
 
 const nunito = Nunito_Sans({
   subsets: ["latin"],
@@ -35,13 +36,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased bg-brand-cream text-zinc-800 font-sans`}>
-          
-          <UpdateScreen>
-            {children}
-          </UpdateScreen>
-          
-        <Toaster richColors position="top-right" />
+      <body className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased`}>
+          <ThemeProvider>
+            <UpdateScreen>
+              {children}
+            </UpdateScreen>
+            <Toaster richColors position="top-right" />
+          </ThemeProvider>
       </body>
     </html>
   );

@@ -90,9 +90,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
-      <div className="max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 transition-colors" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
+      <div className="max-w-md w-full">
+        <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl overflow-hidden transition-colors border border-transparent dark:border-slate-800">
           <div className="p-8 text-center" style={{ background: 'linear-gradient(to right, #013750, #2C6B74)' }}>
             <div className="flex justify-center mb-4">
               <div className="bg-white/10 p-4 rounded-full backdrop-blur-sm">
@@ -108,7 +108,7 @@ export default function LoginPage() {
               
               {/* Campo Email */}
               <div>
-                <label htmlFor="email" className="text-slate-700 font-medium text-sm">
+                <label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium text-sm transition-colors">
                   E-MAIL <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -120,7 +120,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all"
+                    className="w-full pr-4 py-3 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 transition-all dark:bg-slate-900 dark:text-white"
                     style={{ 
                       borderColor: '#e2e8f0',
                       paddingLeft: '20px' 
@@ -142,7 +142,7 @@ export default function LoginPage() {
               {/* Campo Senha */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="password" className="text-slate-700 font-medium text-sm">
+                  <label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium text-sm transition-colors">
                     SENHA <span className="text-red-500">*</span>
                   </label>
                 </div>
@@ -153,7 +153,7 @@ export default function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all text-slate-700"
+                    className="w-full px-4 pr-12 py-3 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 transition-all text-slate-700 dark:text-white dark:bg-slate-900"
                     style={{ borderColor: '#e2e8f0' }}
                     onFocus={(e) => {
                       e.target.style.borderColor = '#00988D';
@@ -195,7 +195,7 @@ export default function LoginPage() {
                       strokeWidth={3}
                       />
                     </div>
-                  <span className="text-sm text-slate-600 font-medium group-hover:text-brand-turquoise transition-colors select-none pointer-events-none">
+                  <span className="text-sm text-slate-600 dark:text-slate-400 font-medium group-hover:text-brand-turquoise transition-colors select-none pointer-events-none">
                     Manter-me conectado
                   </span>
                 </button>
@@ -215,12 +215,12 @@ export default function LoginPage() {
               </button>
 
               <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-300"></div></div>
-                <div className="relative flex justify-center text-sm"><span className="px-4 bg-white text-slate-500">Ou</span></div>
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-300 dark:border-slate-800"></div></div>
+                <div className="relative flex justify-center text-sm"><span className="px-4 bg-white dark:bg-[#012a3d] text-slate-500 transition-colors">Ou</span></div>
               </div>
 
               <div className="text-center">
-                <span className="text-slate-600">Não tem uma conta? </span>
+                <span className="text-slate-600 dark:text-slate-400">Não tem uma conta? </span>
                 <Link href="/cadastro" className="transition-colors" style={{ color: '#F23E02' }}><strong>Criar conta</strong></Link>
               </div>
             </form>

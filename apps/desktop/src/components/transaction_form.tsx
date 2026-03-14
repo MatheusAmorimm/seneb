@@ -6,6 +6,23 @@ import api from '../services/api';
 import { Transaction, TransactionType, PaymentMethod } from '../types';
 import { toast } from 'sonner';
 
+const MAX_AMOUNT = 1_000_000_000; // 1 bilhão
+
+function formatCurrencyInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  const capped = digits.length > 12 ? digits.slice(0, 12) : digits;
+  const num = parseInt(capped, 10);
+  const formatted = (num / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatted;
+}
+
+function parseCurrencyToNumber(masked: string): number {
+  if (!masked) return 0;
+  const cleaned = masked.replace(/\./g, '').replace(',', '.');
+  return parseFloat(cleaned) || 0;
+}
+
 // --- CONSTANTES ---
 const CATEGORIES = {
   income: ["Salário", "Férias", "Décimo Terceiro", "Investimentos", "Outros"],
@@ -13,8 +30,8 @@ const CATEGORIES = {
 };
 
 const DESCRIPTION_SUGGESTIONS: Record<string, string[]> = {
-  "Conta Fixa": ["Aluguel", "Luz", "Internet", "Água", "Gás", "Condomínio"],
-  "Empréstimo": ["FGTS", "Pessoal", "Consignado"],
+  "Conta Fixa": ["Aluguel", "Luz", "Internet", "Água", "Gás", "Condomínio", "Prestação do Carro", "Plano de Saúde"],
+  "Empréstimo": ["Pessoal", "Consignado"],
   "Impostos": ["IPVA", "IPTU", "Imposto de Renda"],
 };
 
@@ -85,7 +102,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
       setType(initialData.type);
       setCategory(initialData.category);
       setDescription(initialData.description || '');
-      setAmount(initialData.amount.toString());
+      setAmount(formatCurrencyInput(Math.round(initialData.amount * 100).toString()));
       setPaymentMethod(initialData.payment_method || '');
       setDueDate(initialData.due_date || '');
       setBank(initialData.bank || '');
@@ -247,7 +264,8 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     // 1. Definição clara dos erros
     const hasCategoryError = !category;
     // O valor é erro se for vazio ou se for 0/negativo
-    const hasAmountError = !amount || parseFloat(amount) <= 0;
+    const parsedAmount = parseCurrencyToNumber(amount);
+    const hasAmountError = !amount || parsedAmount <= 0 || parsedAmount > MAX_AMOUNT;
     const hasDescriptionError = type === 'expense' && category !== "Fatura do Cartão" && !description;
 
     const newErrors = {
@@ -269,7 +287,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
       
       const payload: Transaction = {
         id: initialData?.id,
-        type, category, description: finalDescription, amount: parseFloat(amount),
+        type, category, description: finalDescription, amount: parsedAmount,
         date: initialData?.date || new Date().toISOString().split('T')[0],
         due_date: showDueDateField && dueDate ? dueDate : undefined,
         payment_method: showPaymentField ? (paymentMethod as PaymentMethod) : undefined,
@@ -293,8 +311,9 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   };
 
   const installmentPreview = useMemo(() => {
-    if (!amount || totalInstallments <= 1) return null;
-    const value = parseFloat(amount) / totalInstallments;
+    const parsed = parseCurrencyToNumber(amount);
+    if (!parsed || totalInstallments <= 1) return null;
+    const value = parsed / totalInstallments;
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }, [amount, totalInstallments]);
 
@@ -302,27 +321,27 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   const getInputClass = (hasError: boolean) => 
     `w-full h-11 px-3 border rounded-lg focus:outline-none transition-all ${
         hasError 
-        ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-400 ring-1 ring-red-500' // Ring força a borda vermelha
-        : 'border-slate-200 focus:border-[#F23E02] bg-white text-slate-700'
+        ? 'border-red-500 bg-red-50 dark:bg-red-950/20 text-red-900 dark:text-red-200 placeholder-red-400 ring-1 ring-red-500' // Ring força a borda vermelha
+        : 'border-slate-200 dark:border-slate-700 focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200'
     }`;
 
   return (
-    <form onSubmit={handleSubmit} className={`bg-white p-6 rounded-xl shadow-sm border mb-8 transition-colors ${initialData ? 'border-orange-200 bg-orange-50/10' : 'border-slate-100'}`}>
+    <form onSubmit={handleSubmit} className={`bg-white dark:bg-[#012a3d] p-6 rounded-xl shadow-sm border mb-8 transition-colors ${initialData ? 'border-orange-200 dark:border-orange-900/50 bg-orange-50/10 dark:bg-orange-950/10' : 'border-slate-100 dark:border-slate-800'}`}>
       
       {/* HEADER TIPO */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
-            <h2 className="text-lg font-serif font-bold text-[#013750]">
+            <h2 className="text-lg font-serif font-bold text-[#013750] dark:text-slate-100">
                 {initialData ? 'Editar Movimentação' : 'Nova Movimentação'}
             </h2>
             {initialData && <PenLine size={16} className="text-orange-500"/>}
         </div>
         
-        <div className="flex bg-slate-100 p-1 rounded-lg">
+        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
           <button type="button" onClick={() => handleTypeChange('income')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'income' ? 'bg-white text-[#00988D] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Receita</button>
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'income' ? 'bg-white dark:bg-slate-800 text-[#00988D] dark:text-teal-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>Receita</button>
           <button type="button" onClick={() => handleTypeChange('expense')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'expense' ? 'bg-white text-[#F23E02] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Despesa</button>
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'expense' ? 'bg-white dark:bg-slate-800 text-[#F23E02] dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>Despesa</button>
         </div>
       </div>
       
@@ -331,7 +350,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
           
           <div className="md:col-span-3">
-            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.category ? 'text-red-600' : 'text-[#2C6B74]'}`}>Categoria *</label>
+            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.category ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Categoria *</label>
             <select 
               value={category} 
               onChange={(e) => {
@@ -340,15 +359,22 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
               }}
               className={getInputClass(errors.category)}
             >
-              <option value="">Selecione...</option>
-              {CATEGORIES[type].map(cat => (<option key={cat} value={cat}>{cat}</option>))}
+              <option value="" className="dark:bg-slate-900">Selecione...</option>
+              {CATEGORIES[type].map(cat => (<option key={cat} value={cat} className="dark:bg-slate-900">{cat}</option>))}
             </select>
           </div>
 
           <div className="md:col-span-5">
-            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.description ? 'text-red-600' : 'text-[#2C6B74]'}`}>
-                Descrição {type === 'expense' && category !== "Fatura do Cartão" ? "*" : ""}
-            </label>
+            <div className="flex justify-between items-center mb-1.5 ml-1">
+              <label className={`block text-xs font-bold uppercase ${errors.description ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>
+                  Descrição {type === 'expense' && category !== "Fatura do Cartão" ? "*" : ""}
+              </label>
+              {!hasDescriptionOptions && category !== "Fatura do Cartão" && (
+                <span className={`text-[10px] font-medium ${description.length >= 90 ? 'text-orange-500 font-bold' : 'text-slate-400 dark:text-slate-500'}`}>
+                  {description.length}/100
+                </span>
+              )}
+            </div>
             {hasDescriptionOptions ? (
               <div className="relative">
                 <select 
@@ -372,7 +398,8 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
                     if(e.target.value) setErrors(prev => ({...prev, description: false}));
                 }}
                 disabled={(!category && type === 'expense') || category === "Fatura do Cartão"}
-                className={`${getInputClass(errors.description)} disabled:bg-slate-50 disabled:border-slate-200 disabled:text-slate-400`}
+                maxLength={100}
+                className={`${getInputClass(errors.description)} disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:border-slate-200 dark:disabled:border-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600`}
                 placeholder={category === "Fatura do Cartão" ? "Automático" : (type === 'income' ? "Opcional" : "Ex: Supermercado")} 
               />
             )}
@@ -380,7 +407,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
 
           <div className="md:col-span-4 relative">
             <div className="flex items-center gap-1.5 mb-1.5 ml-1">
-              <label className={`block text-xs font-bold uppercase ${errors.amount ? 'text-red-600' : 'text-[#2C6B74]'}`}>Valor Total (R$) *</label>
+              <label className={`block text-xs font-bold uppercase ${errors.amount ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Valor Total (R$) *</label>
               {showTotalValueWarning && (
                 <div className="group relative flex items-center justify-center cursor-help">
                   <Info size={14} className="text-orange-500 hover:text-orange-600 transition-colors" />
@@ -392,11 +419,14 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
               )}
             </div>
             <input 
-                type="number" step="0.01" 
+                type="text" inputMode="numeric"
                 value={amount} 
                 onChange={(e) => {
-                    setAmount(e.target.value);
-                    if(e.target.value) setErrors(prev => ({...prev, amount: false}));
+                    const formatted = formatCurrencyInput(e.target.value);
+                    const parsed = parseCurrencyToNumber(formatted);
+                    if (parsed > MAX_AMOUNT) return;
+                    setAmount(formatted);
+                    if(formatted) setErrors(prev => ({...prev, amount: false}));
                 }}
                 className={getInputClass(errors.amount)}
                 placeholder="0,00" 
@@ -409,32 +439,32 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start animate-in fade-in slide-in-from-top-1 duration-300">
             {showPaymentField && (
               <div className={`${showDueDateField ? 'md:col-span-4' : 'md:col-span-6'}`}>
-                <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">Meio de Pagamento</label>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-teal-400 uppercase mb-1.5 ml-1">Meio de Pagamento</label>
                 <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                  className="w-full h-11 px-3 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white text-slate-700">
-                  <option value="">Selecione...</option>
-                  {currentPaymentOptions.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                  className="w-full h-11 px-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                  <option value="" className="dark:bg-slate-900">Selecione...</option>
+                  {currentPaymentOptions.map(opt => (<option key={opt.value} value={opt.value} className="dark:bg-slate-900">{opt.label}</option>))}
                 </select>
               </div>
             )}
 
             {showBankField && (
               <div className={`${showDueDateField ? 'md:col-span-4' : 'md:col-span-6'}`}>
-                <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">Banco / Origem</label>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-teal-400 uppercase mb-1.5 ml-1">Banco / Origem</label>
                 {!isCustomBankMode ? (
                   <select value={bank} onChange={(e) => handleBankChange(e.target.value)} disabled={isLoadingBanks}
-                    className="w-full h-11 px-3 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white text-slate-700 disabled:opacity-70">
-                    <option value="">{isLoadingBanks ? "Carregando..." : "Selecione..."}</option>
-                    {bankList.map(b => (<option key={b} value={b}>{b}</option>))}
-                    <option value="other_custom_option" className="font-bold text-[#F23E02] border-t border-slate-200">+ Outro</option>
+                    className="w-full h-11 px-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 disabled:opacity-70">
+                    <option value="" className="dark:bg-slate-900">{isLoadingBanks ? "Carregando..." : "Selecione..."}</option>
+                    {bankList.map(b => (<option key={b} value={b} className="dark:bg-slate-900">{b}</option>))}
+                    <option value="other_custom_option" className="font-bold text-[#F23E02] dark:text-orange-400 border-t border-slate-200 dark:border-slate-700 dark:bg-slate-900">+ Outro</option>
                   </select>
                 ) : (
                   <div className="flex gap-2 animate-in fade-in slide-in-from-left-1">
                     <input value={bank} onChange={(e) => setBank(e.target.value)} autoFocus
-                      className="w-full h-11 px-4 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02]" placeholder="Nome do banco..." />
+                      className="w-full h-11 px-4 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200" placeholder="Nome do banco..." />
                     {bank && (
                       <button type="button" onClick={handleAddNewBank} title="Salvar banco"
-                        className="h-11 px-3 bg-teal-50 text-[#00988D] border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"><Save size={18} /></button>
+                        className="h-11 px-3 bg-teal-50 dark:bg-teal-950/20 text-[#00988D] dark:text-teal-400 border border-teal-200 dark:border-teal-900/50 rounded-lg hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"><Save size={18} /></button>
                     )}
                   </div>
                 )}
@@ -443,9 +473,9 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
 
             {showDueDateField && (
               <div className="md:col-span-4">
-                <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1 flex items-center gap-1"><CalendarClock size={12} /> Vencimento</label>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-teal-400 uppercase mb-1.5 ml-1 flex items-center gap-1"><CalendarClock size={12} /> Vencimento</label>
                 <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full h-11 px-4 border border-slate-200 rounded-lg focus:outline-none focus:border-[#F23E02] text-slate-600 font-sans" />
+                  className="w-full h-11 px-4 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-sans" />
               </div>
             )}
           </div>
@@ -453,12 +483,12 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
 
         {/* LINHA 3: Parcelamento */}
         {showInstallmentField && (
-          <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-100 animate-in fade-in slide-in-from-top-2">
+          <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10 rounded-xl border border-orange-100 dark:border-orange-900/30 animate-in fade-in slide-in-from-top-2">
             <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="installments" checked={isInstallment} onChange={(e) => setIsInstallment(e.target.checked)}
                   className="w-5 h-5 accent-[#F23E02] rounded cursor-pointer" />
-                <label htmlFor="installments" className="text-sm font-bold text-slate-700 cursor-pointer select-none">
+                <label htmlFor="installments" className="text-sm font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none">
                   {category === "Empréstimo" ? "Empréstimo Parcelado?" : "Compra Parcelada?"}
                 </label>
               </div>
@@ -466,22 +496,22 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
               {isInstallment && (
                 <div className="flex-1 flex flex-wrap items-end gap-4 animate-in fade-in slide-in-from-left-2">
                   <div>
-                    <label className="block text-[10px] font-bold text-[#F23E02] uppercase mb-1 flex items-center gap-1"><CreditCard size={12} /> Total</label>
+                    <label className="block text-[10px] font-bold text-[#F23E02] dark:text-orange-400 uppercase mb-1 flex items-center gap-1"><CreditCard size={12} /> Total</label>
                     <select value={totalInstallments} onChange={(e) => setTotalInstallments(parseInt(e.target.value))}
-                      className="w-24 h-10 px-2 border border-orange-200 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white text-sm">
-                      {[...Array(12)].map((_, i) => (<option key={i} value={i + 1}>{i + 1}x</option>))}
-                      <option value="18">18x</option><option value="24">24x</option><option value="36">36x</option><option value="48">48x</option>
+                      className="w-24 h-10 px-2 border border-orange-200 dark:border-orange-900/50 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-sm dark:text-slate-200">
+                      {[...Array(12)].map((_, i) => (<option key={i} value={i + 1} className="dark:bg-slate-900">{i + 1}x</option>))}
+                      <option value="18" className="dark:bg-slate-900">18x</option><option value="24" className="dark:bg-slate-900">24x</option><option value="36" className="dark:bg-slate-900">36x</option><option value="48" className="dark:bg-slate-900">48x</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-[#F23E02] uppercase mb-1 flex items-center gap-1"><Hash size={12} /> Atual</label>
+                    <label className="block text-[10px] font-bold text-[#F23E02] dark:text-orange-400 uppercase mb-1 flex items-center gap-1"><Hash size={12} /> Atual</label>
                     <select value={currentInstallment} onChange={(e) => setCurrentInstallment(parseInt(e.target.value))}
-                      className="w-24 h-10 px-2 border border-orange-200 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white text-sm">
-                      {[...Array(totalInstallments)].map((_, i) => (<option key={i} value={i + 1}>{i + 1}ª</option>))}
+                      className="w-24 h-10 px-2 border border-orange-200 dark:border-orange-900/50 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-sm dark:text-slate-200">
+                      {[...Array(totalInstallments)].map((_, i) => (<option key={i} value={i + 1} className="dark:bg-slate-900">{i + 1}ª</option>))}
                     </select>
                   </div>
                   {installmentPreview && (
-                    <div className="ml-auto flex items-center gap-1.5 text-xs font-medium text-orange-700 bg-orange-100 px-3 py-1.5 rounded-full mt-2 md:mt-0">
+                    <div className="ml-auto flex items-center gap-1.5 text-xs font-medium text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/40 px-3 py-1.5 rounded-full mt-2 md:mt-0 border border-orange-200 dark:border-orange-900/50">
                       <AlertCircle size={14} /><span>{totalInstallments}x de <strong>{installmentPreview}</strong></span>
                     </div>
                   )}
@@ -496,7 +526,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
             <button
               type="button"
               onClick={onCancelEdit}
-              className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2"
+              className="px-6 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2"
             >
               <X size={20} /> Cancelar
             </button>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "../../../components/sidebar";
 import { Header } from "../../../components/header";
+import { useTheme } from "../../../components/theme_provider";
 
 export default function DashboardLayout({
   children,
@@ -10,6 +11,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { setIsHome } = useTheme();
+
+  useEffect(() => {
+    setIsHome(false);
+  }, [setIsHome]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -24,7 +30,7 @@ export default function DashboardLayout({
 
       {/* Conteúdo Principal */}
       <main className="flex-1 p-4 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-[1400px] mx-auto space-y-8">
           {children}
         </div>
       </main>

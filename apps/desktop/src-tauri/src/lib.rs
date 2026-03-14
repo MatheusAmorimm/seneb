@@ -7,6 +7,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init()) 
         // 🚀 LIGA O PLUGIN DO UPDATER (Para baixar a nova versão)
         .plugin(tauri_plugin_updater::Builder::new().build()) 
+        .plugin(tauri_plugin_shell::init()) 
         .setup(|app| {
             Ok(())
         })

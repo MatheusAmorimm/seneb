@@ -1,19 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Mail, Lock, Save, Crown, ShieldAlert, X, ArrowRight, KeyRound } from "lucide-react";
+import { User, Mail, Lock, Save, Crown, ShieldAlert, X, ArrowRight, KeyRound, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useTheme } from "../../../../components/theme_provider";
+import { Palette, Moon, Sun } from "lucide-react";
 import api from "../../../../services/api";
 import { setStorageItem } from "../../../../lib/storage";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
   const [fullName, setFullName] = useState("");
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
+
+  const { theme, setTheme } = useTheme();
 
   // --- Modal States ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -234,64 +241,100 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto pb-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-serif font-bold text-[#013750]">Meu Perfil</h1>
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/"
+          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-[#013750] dark:hover:text-slate-100 cursor-pointer"
+          title="Voltar para Home"
+        >
+          <ArrowLeft size={24} />
+        </Link>
+        <h1 className="text-2xl font-serif font-bold text-[#013750] dark:text-slate-100 transition-colors">Meu Perfil</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* COLUNA 1: DADOS PESSOAIS */}
         <div className="md:col-span-2 space-y-6">
-          <form onSubmit={handleUpdateProfile} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h2 className="text-lg font-bold text-[#013750] mb-6 flex items-center gap-2">
-              <User size={20} className="text-[#00988D]" /> 
+          <form onSubmit={handleUpdateProfile} className="bg-white dark:bg-[#012a3d] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+            <h2 className="text-lg font-bold text-[#013750] dark:text-slate-100 mb-6 flex items-center gap-2">
+              <User size={20} className="text-[#00988D] dark:text-teal-400" /> 
               Informações Pessoais
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">Nome Completo</label>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5 ml-1">Nome Completo</label>
                 <input value={fullName} onChange={(e) => setFullName(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all" placeholder="Seu nome" />
+                  className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all" placeholder="Seu nome" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">Apelido (Como quer ser chamado)</label>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5 ml-1">Apelido (Como quer ser chamado)</label>
                 <input value={nickname} onChange={(e) => setNickname(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all" placeholder="Ex: Matheus" />
+                  className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all" placeholder="Ex: Matheus" />
               </div>
             </div>
             <div className="mt-6 flex justify-end">
               <button type="submit" disabled={isSaving}
-                className="bg-[#013750] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#024a6a] transition-colors flex items-center gap-2 disabled:opacity-70">
+                className="bg-[#013750] dark:bg-slate-100 text-white dark:text-[#013750] px-6 py-2.5 rounded-xl font-bold hover:bg-[#024a6a] dark:hover:bg-white transition-colors flex items-center gap-2 disabled:opacity-70 cursor-pointer">
                 {isSaving ? "Salvando..." : <><Save size={18} /> Salvar Alterações</>}
               </button>
             </div>
           </form>
 
           {/* Card Segurança */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h2 className="text-lg font-bold text-[#013750] mb-6 flex items-center gap-2">
-              <ShieldAlert size={20} className="text-orange-500" /> Segurança
+          <div className="bg-white dark:bg-[#012a3d] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+            <h2 className="text-lg font-bold text-[#013750] dark:text-slate-100 mb-6 flex items-center gap-2">
+              <ShieldAlert size={20} className="text-orange-500 dark:text-orange-400" /> Segurança
             </h2>
             <div className="space-y-5">
               <div className="relative">
-                <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">E-mail</label>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5 ml-1">E-mail</label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input value={email} readOnly className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed" />
+                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                    <input value={email} readOnly className="w-full pl-10 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 cursor-not-allowed" />
                   </div>
-                  <button type="button" onClick={() => setShowEmailModal(true)} className="px-4 text-sm font-bold text-[#00988D] hover:bg-teal-50 rounded-xl transition-colors cursor-pointer">Alterar</button>
+                  <button type="button" onClick={() => setShowEmailModal(true)} className="px-4 text-sm font-bold text-[#00988D] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/20 rounded-xl transition-colors cursor-pointer">Alterar</button>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5 ml-1">Senha</label>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5 ml-1">Senha</label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="password" value="********" readOnly className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed" />
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                    <input type="password" value="********" readOnly className="w-full pl-10 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 cursor-not-allowed" />
                   </div>
-                  <button type="button" onClick={() => setShowPasswordModal(true)} className="px-4 text-sm font-bold text-[#00988D] hover:bg-teal-50 rounded-xl transition-colors cursor-pointer">Redefinir</button>
+                  <button type="button" onClick={() => setShowPasswordModal(true)} className="px-4 text-sm font-bold text-[#00988D] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/20 rounded-xl transition-colors cursor-pointer">Redefinir</button>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2 ml-1">* Alterações de e-mail e senha exigem confirmação via código enviado ao seu e-mail atual.</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 ml-1 transition-colors">* Alterações de e-mail e senha exigem confirmação via código enviado ao seu e-mail atual.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Aparência */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 dark:bg-[#012a3d] dark:border-slate-800 transition-colors">
+            <h2 className="text-lg font-bold text-[#013750] dark:text-white mb-6 flex items-center gap-2">
+              <Palette size={20} className="text-[#00988D]" /> Aparência
+            </h2>
+            
+            <div className="space-y-6">
+              {/* Tema */}
+              <div>
+                <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-3 ml-1">Tema do Sistema</label>
+                <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl w-64">
+                  <button 
+                    onClick={() => setTheme("light")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${theme === 'light' ? 'bg-white text-[#013750] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    <Sun size={16} /> Claro
+                  </button>
+                  <button 
+                    onClick={() => setTheme("dark")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${theme === 'dark' ? 'bg-[#013750] text-white shadow-sm' : 'text-slate-500 hover:text-slate-400'}`}
+                  >
+                    <Moon size={16} /> Escuro
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2 ml-1">O modo escuro será aplicado em todas as telas.</p>
               </div>
             </div>
           </div>
@@ -317,7 +360,7 @@ export default function ProfilePage() {
       {/* ============================================ */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
             
             {/* Header */}
             <div className="bg-gradient-to-r from-[#013750] to-[#2C6B74] p-6 flex items-center gap-4">
@@ -340,7 +383,7 @@ export default function ProfilePage() {
             {/* Steps indicator */}
             <div className="flex gap-1 px-6 pt-4">
               {[1, 2, 3].map(s => (
-                <div key={s} className={`h-1 flex-1 rounded-full transition-all ${s <= pwStep ? 'bg-[#00988D]' : 'bg-slate-200'}`} />
+                <div key={s} className={`h-1 flex-1 rounded-full transition-all ${s <= pwStep ? 'bg-[#00988D]' : 'bg-slate-200 dark:bg-slate-800'}`} />
               ))}
             </div>
 
@@ -349,9 +392,9 @@ export default function ProfilePage() {
               {pwStep === 1 && (
                 <form onSubmit={handlePwInit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Senha Atual</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Senha Atual</label>
                     <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
-                      className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all"
                       placeholder="Digite sua senha atual" autoFocus required />
                   </div>
                   <button type="submit" disabled={pwLoading}
@@ -365,9 +408,9 @@ export default function ProfilePage() {
               {pwStep === 2 && (
                 <form onSubmit={handlePwVerifyCode} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Código de verificação</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Código de verificação</label>
                     <input type="text" maxLength={8} value={pwCode} onChange={e => setPwCode(e.target.value.replace(/\D/g, ''))}
-                      className="w-full text-center text-2xl font-bold tracking-widest p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full text-center text-2xl font-bold tracking-widest p-3 border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all font-mono"
                       placeholder="0000-0000" autoFocus />
                   </div>
                   <button type="submit" disabled={pwCode.length < 8}
@@ -381,15 +424,15 @@ export default function ProfilePage() {
               {pwStep === 3 && (
                 <form onSubmit={handlePwConfirm} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Nova Senha</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Nova Senha</label>
                     <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                      className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all"
                       placeholder="Mínimo 8 caracteres" autoFocus />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Confirmar Nova Senha</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Confirmar Nova Senha</label>
                     <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                      className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all"
                       placeholder="Digite novamente" />
                   </div>
                   <button type="submit" disabled={pwLoading}
@@ -408,7 +451,7 @@ export default function ProfilePage() {
       {/* ============================================ */}
       {showEmailModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
             
             {/* Header */}
             <div className="bg-gradient-to-r from-[#013750] to-[#2C6B74] p-6 flex items-center gap-4">
@@ -432,7 +475,7 @@ export default function ProfilePage() {
             {/* Steps indicator */}
             <div className="flex gap-1 px-6 pt-4">
               {[1, 2, 3, 4].map(s => (
-                <div key={s} className={`h-1 flex-1 rounded-full transition-all ${s <= emStep ? 'bg-[#00988D]' : 'bg-slate-200'}`} />
+                <div key={s} className={`h-1 flex-1 rounded-full transition-all ${s <= emStep ? 'bg-[#00988D]' : 'bg-slate-200 dark:bg-slate-800'}`} />
               ))}
             </div>
 
@@ -441,9 +484,9 @@ export default function ProfilePage() {
               {emStep === 1 && (
                 <form onSubmit={handleEmInit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Senha Atual</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Senha Atual</label>
                     <input type="password" value={emCurrentPassword} onChange={e => setEmCurrentPassword(e.target.value)}
-                      className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all font-mono"
                       placeholder="Digite sua senha atual" autoFocus required />
                   </div>
                   <button type="submit" disabled={emLoading}
@@ -456,11 +499,11 @@ export default function ProfilePage() {
               {/* Step 2: Verify code from current email */}
               {emStep === 2 && (
                 <form onSubmit={handleEmVerifyCurrent} className="space-y-4">
-                  <p className="text-sm text-slate-500">Enviamos um código de 8 dígitos para <strong>{email}</strong>.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Enviamos um código de 8 dígitos para <strong>{email}</strong>.</p>
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Código</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Código</label>
                     <input type="text" maxLength={8} value={emCode} onChange={e => setEmCode(e.target.value.replace(/\D/g, ''))}
-                      className="w-full text-center text-2xl font-bold tracking-widest p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full text-center text-2xl font-bold tracking-widest p-3 border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all font-mono"
                       placeholder="0000-0000" autoFocus />
                   </div>
                   <button type="submit" disabled={emLoading || emCode.length < 8}
@@ -474,9 +517,9 @@ export default function ProfilePage() {
               {emStep === 3 && (
                 <form onSubmit={handleEmSetNew} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Novo E-mail</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Novo E-mail</label>
                     <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)}
-                      className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all"
                       placeholder="novo@email.com" autoFocus required />
                   </div>
                   <button type="submit" disabled={emLoading}
@@ -489,11 +532,11 @@ export default function ProfilePage() {
               {/* Step 4: Verify code from new email */}
               {emStep === 4 && (
                 <form onSubmit={handleEmConfirm} className="space-y-4">
-                  <p className="text-sm text-slate-500">Enviamos um código para <strong>{newEmail}</strong>.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Enviamos um código para <strong>{newEmail}</strong>.</p>
                   <div>
-                    <label className="block text-xs font-bold text-[#2C6B74] uppercase mb-1.5">Código do novo e-mail</label>
+                    <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Código do novo e-mail</label>
                     <input type="text" maxLength={8} value={emNewCode} onChange={e => setEmNewCode(e.target.value.replace(/\D/g, ''))}
-                      className="w-full text-center text-2xl font-bold tracking-widest p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] transition-all"
+                      className="w-full text-center text-2xl font-bold tracking-widest p-3 border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all font-mono"
                       placeholder="0000-0000" autoFocus />
                   </div>
                   <button type="submit" disabled={emLoading || emNewCode.length < 8}

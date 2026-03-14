@@ -8,8 +8,9 @@ import { Transaction } from "../../../../types";
 import { BalanceCard } from "../../../../components/balance_card";
 import { TransactionForm } from "../../../../components/transaction_form";
 import { TransactionList } from "../../../../components/transaction_list";
+import { TransactionFilters } from "../../../../components/transaction_filters";
 import { toast } from "sonner";
-import { AlertTriangle, X, Trash2, Save, Pencil, FileEdit } from "lucide-react"; 
+import { AlertTriangle, X, Trash2, Save, Pencil, FileEdit, ArrowLeft, Plus, Calendar, FileText, ChevronDown, CheckCircle2, AlertCircle, Info, Calculator, User } from "lucide-react"; 
 import { useReports } from "../../../../hooks/use_reports";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -21,6 +22,7 @@ export default function LancamentosPage() {
   const editingReportId = searchParams.get('reopenedId'); 
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Estados de Hover dos botões
@@ -48,6 +50,7 @@ export default function LancamentosPage() {
         
       const response = await api.get(url); 
       setTransactions(response.data);
+      setFilteredTransactions(response.data);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
       toast.error("Não foi possível carregar o histórico.");
@@ -196,7 +199,11 @@ export default function LancamentosPage() {
     if (!transactionToDelete) return;
     try {
       const id = transactionToDelete;
-      setTransactions((prev) => prev.filter((t) => t.id !== id)); 
+      setTransactions((prev) => {
+        const updated = prev.filter((t) => t.id !== id);
+        setFilteredTransactions(updated);
+        return updated;
+      }); 
       setTransactionToDelete(null); 
       
       await api.delete(`/transactions/${id}`);
@@ -260,7 +267,16 @@ export default function LancamentosPage() {
   return (
     <div className="space-y-8 pb-10 relative">
       <div className="flex justify-between items-center animate-in slide-in-from-top-4">
-        <h1 className="text-3xl font-serif font-bold text-[#013750]">Planejamento</h1>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.push('/')}
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-[#013750] dark:hover:text-slate-100"
+            title="Voltar para Home"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-3xl font-serif font-bold text-[#013750] dark:text-slate-50 transition-colors">Planejamento</h1>
+        </div>
         
         <button
           onClick={() => setShowFinalizeModal(true)}
@@ -284,8 +300,9 @@ export default function LancamentosPage() {
       </section>
 
       <section className="animate-in slide-in-from-bottom-4 duration-700 delay-200">
+        <TransactionFilters transactions={transactions} onFilter={setFilteredTransactions} />
         <TransactionList 
-          transactions={transactions} 
+          transactions={filteredTransactions} 
           onDeleteTransaction={requestDelete} 
           onEditTransaction={handleEditClick} 
         />
@@ -294,17 +311,17 @@ export default function LancamentosPage() {
       {/* --- MODAL FINALIZAR --- */}
       {showFinalizeModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-2xl w-[400px] shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-serif font-bold text-[#013750] mb-2">Fechar Planejamento</h2>
-            <p className="text-slate-500 mb-6 text-sm">
+          <div className="bg-white dark:bg-[#012a3d] p-8 rounded-2xl w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
+            <h2 className="text-xl font-serif font-bold text-[#013750] dark:text-slate-100 mb-2">Fechar Planejamento</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
               Isso salvará os dados atuais no Histórico e preparará a tela para o próximo mês.
             </p>
             <input 
               autoFocus value={reportName} onChange={(e) => setReportName(e.target.value)}
-              placeholder="Ex: Fevereiro 2026" className="w-full p-3 border border-slate-300 rounded-lg mb-6 focus:outline-none focus:border-[#F23E02]"
+              placeholder="Ex: Fevereiro 2026" className="w-full p-3 border border-slate-300 dark:border-slate-700 rounded-lg mb-6 focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200"
             />
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setShowFinalizeModal(false)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
+              <button onClick={() => setShowFinalizeModal(false)} className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-medium">Cancelar</button>
               <button onClick={handleFinalize} className="px-6 py-2 bg-[#F23E02] text-white rounded-lg font-bold hover:bg-[#d93602]">Confirmar</button>
             </div>
           </div>
@@ -314,14 +331,14 @@ export default function LancamentosPage() {
       {/* --- MODAL DE EXCLUSÃO --- */}
       {transactionToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100">
-            <div className="bg-red-50 p-6 flex items-center gap-4 border-b border-red-100">
-              <div className="bg-red-100 p-3 rounded-full"><AlertTriangle className="text-brand-orange w-6 h-6" /></div>
-              <div><h3 className="text-lg font-serif font-bold text-brand-deepBlue">Excluir Transação?</h3><p className="text-sm text-slate-500">Essa ação não poderá ser desfeita.</p></div>
-              <button onClick={() => setTransactionToDelete(null)} className="ml-auto text-slate-400 hover:text-slate-600"><X size={20} /></button>
+          <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100 border border-slate-100 dark:border-slate-800">
+            <div className="bg-red-50 dark:bg-red-950/20 p-6 flex items-center gap-4 border-b border-red-100 dark:border-red-900/30">
+              <div className="bg-red-100 dark:bg-red-900/40 p-3 rounded-full"><AlertTriangle className="text-brand-orange w-6 h-6" /></div>
+              <div><h3 className="text-lg font-serif font-bold text-brand-deepBlue dark:text-slate-100">Excluir Transação?</h3><p className="text-sm text-slate-500 dark:text-slate-400">Essa ação não poderá ser desfeita.</p></div>
+              <button onClick={() => setTransactionToDelete(null)} className="ml-auto text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={20} /></button>
             </div>
-            <div className="p-6 bg-white flex justify-end gap-3">
-              <button onClick={() => setTransactionToDelete(null)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancelar</button>
+            <div className="p-6 bg-white dark:bg-[#012a3d] flex justify-end gap-3">
+              <button onClick={() => setTransactionToDelete(null)} className="px-4 py-2 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">Cancelar</button>
               <button onClick={confirmDelete} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
                 className="px-4 py-2 text-white font-bold rounded-lg shadow-md flex items-center gap-2 transition-all duration-200 active:scale-95"
                 style={{ backgroundColor: isHovered ? '#d63802' : '#F23E02', cursor: 'pointer' }}>
@@ -335,14 +352,14 @@ export default function LancamentosPage() {
       {/* --- MODAL DE CONFIRMAÇÃO DE EDIÇÃO --- */}
       {transactionToEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100">
-            <div className="bg-blue-50 p-6 flex items-center gap-4 border-b border-blue-100">
-              <div className="bg-blue-100 p-3 rounded-full"><FileEdit className="text-blue-600 w-6 h-6" /></div>
-              <div><h3 className="text-lg font-serif font-bold text-brand-deepBlue">Editar Lançamento?</h3><p className="text-sm text-slate-500">Os dados serão carregados no formulário acima.</p></div>
-              <button onClick={() => setTransactionToEdit(null)} className="ml-auto text-slate-400 hover:text-slate-600"><X size={20} /></button>
+          <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100 border border-slate-100 dark:border-slate-800">
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-6 flex items-center gap-4 border-b border-blue-100 dark:border-blue-900/30">
+              <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-full"><FileEdit className="text-blue-600 dark:text-blue-400 w-6 h-6" /></div>
+              <div><h3 className="text-lg font-serif font-bold text-brand-deepBlue dark:text-slate-100">Editar Lançamento?</h3><p className="text-sm text-slate-500 dark:text-slate-400">Os dados serão carregados no formulário acima.</p></div>
+              <button onClick={() => setTransactionToEdit(null)} className="ml-auto text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={20} /></button>
             </div>
-            <div className="p-6 bg-white flex justify-end gap-3">
-              <button onClick={() => setTransactionToEdit(null)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancelar</button>
+            <div className="p-6 bg-white dark:bg-[#012a3d] flex justify-end gap-3">
+              <button onClick={() => setTransactionToEdit(null)} className="px-4 py-2 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">Cancelar</button>
               <button onClick={confirmEdit} onMouseEnter={() => setIsEditHovered(true)} onMouseLeave={() => setIsEditHovered(false)}
                 className="px-4 py-2 text-white font-bold rounded-lg shadow-md flex items-center gap-2 transition-all duration-200 active:scale-95"
                 style={{ backgroundColor: isEditHovered ? '#007f76' : '#00988D', cursor: 'pointer' }}>

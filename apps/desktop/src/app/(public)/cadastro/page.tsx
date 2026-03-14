@@ -7,6 +7,7 @@ import api from '../../../services/api';
 import { DollarSign } from 'lucide-react';
 import { toast } from 'sonner'; 
 import { setStorageItem } from '@/src/lib/storage';
+import { open } from '@tauri-apps/plugin-shell';
 
 export default function CadastroPage() {
   const [loading, setLoading] = useState(false);
@@ -233,9 +234,23 @@ export default function CadastroPage() {
                   />
                   <label htmlFor="terms" className="ml-2 text-sm text-slate-600">
                       Eu concordo com os{' '}
-                    <button type="button" className="transition-colors font-bold hover:underline" style={{ color: '#00988D' }}>Termos de Uso</button>
+                    <button 
+                      type="button"
+                      onClick={() => open('https://seneb.com.br/termos')}
+                      className="transition-all cursor-pointer font-bold hover:underline" 
+                      style={{ color: '#00988D' }}
+                    >
+                      Termos de Uso
+                    </button>
                     {' '}e{' '}
-                    <button type="button" className="transition-colors font-bold hover:underline" style={{ color: '#00988D' }}>Política de Privacidade</button>
+                    <button 
+                      type="button"
+                      onClick={() => open('https://seneb.com.br/privacidade')}
+                      className="transition-all cursor-pointer font-bold hover:underline" 
+                      style={{ color: '#00988D' }}
+                    >
+                      Política de Privacidade
+                    </button>
                   </label>
                 </div>
 

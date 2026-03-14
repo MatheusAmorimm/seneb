@@ -17,48 +17,36 @@ export function BalanceCard({ totalIncome, totalExpense, balance }: BalanceCardP
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       {/* Receitas */}
-      <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105" style={{ 
-        background: 'linear-gradient(to bottom right, #d1f4f0, #b3ede7)',
-        borderWidth: '1px',
-        borderColor: '#00d4a8'
-      }}>
+      <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105 bg-gradient-to-br from-[#d1f4f0] to-[#b3ede7] dark:from-emerald-900/40 dark:to-emerald-950/40 border border-[#00d4a8] dark:border-emerald-800/50">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#10b981' }}>
+          <div className="p-2 rounded-lg bg-[#10b981]">
             <ArrowUpCircle className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-medium" style={{ color: '#047857' }}>Receitas</h3>
+          <h3 className="font-medium text-[#047857] dark:text-emerald-300">Receitas</h3>
         </div>
-        <p className="text-2xl font-bold" style={{ color: '#065f46' }}>{formatCurrency(totalIncome)}</p>
+        <p className="text-2xl font-bold text-[#065f46] dark:text-white">{formatCurrency(totalIncome)}</p>
       </div>
 
       {/* Despesas */}
-      <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105" style={{ 
-        background: 'linear-gradient(to bottom right, #ffe4d6, #ffd4ba)',
-        borderWidth: '1px',
-        borderColor: '#ffb088'
-      }}>
+      <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105 bg-gradient-to-br from-[#ffe4d6] to-[#ffd4ba] dark:from-rose-900/40 dark:to-rose-950/40 border border-[#ffb088] dark:border-rose-800/50">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#ff9966' }}>
+          <div className="p-2 rounded-lg bg-[#ff9966]">
             <ArrowDownCircle className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-medium" style={{ color: '#c4511d' }}>Despesas</h3>
+          <h3 className="font-medium text-[#c4511d] dark:text-rose-300">Despesas</h3>
         </div>
-        <p className="text-2xl font-bold" style={{ color: '#994010' }}>{formatCurrency(totalExpense)}</p>
+        <p className="text-2xl font-bold text-[#994010] dark:text-white">{formatCurrency(totalExpense)}</p>
       </div>
 
       {/* Saldo Final */}
-      <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105" style={{ 
-        background: 'linear-gradient(to bottom right, #dbeafe, #bfdbfe)',
-        borderWidth: '1px',
-        borderColor: '#60a5fa'
-      }}>
+      <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105 bg-gradient-to-br from-[#dbeafe] to-[#bfdbfe] dark:from-blue-900/40 dark:to-blue-950/40 border border-[#60a5fa] dark:border-blue-800/50">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#2C6B74' }}>
+          <div className="p-2 rounded-lg bg-[#2C6B74] dark:bg-slate-700">
             <DollarSign className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-medium" style={{ color: '#1e40af' }}>Saldo Final</h3>
+          <h3 className="font-medium text-[#1e40af] dark:text-blue-300">Saldo Final</h3>
         </div>
-        <p className={`text-2xl font-bold`} style={{ color: balance >= 0 ? '#1e3a8a' : '#991b1b' }}>
+        <p className={`text-2xl font-bold ${balance >= 0 ? 'text-[#1e3a8a] dark:text-white' : 'text-[#991b1b] dark:text-rose-400'}`}>
           {formatCurrency(balance)}
         </p>
       </div>

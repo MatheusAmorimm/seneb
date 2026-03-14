@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
+@custom-variant dark (&:where(.dark, .dark *));
 @theme {
   /* Fontes */
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui;
@@ -93,11 +94,48 @@
     --ring: #013750;
 
     --radius: 0.75rem;
+    --body-bg: linear-gradient(to bottom right, #FEF5C8, #e8f0ef);
+  }
+
+  .dark {
+    --background: #011c29;
+    --foreground: #f8fafc;
+
+    --card: #012a3d;
+    --card-foreground: #f8fafc;
+
+    --popover: #012a3d;
+    --popover-foreground: #f8fafc;
+
+    --primary: #f8fafc;
+    --primary-foreground: #011c29;
+
+    --secondary: #F23E02;
+    --secondary-foreground: #FFFFFF;
+
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+
+    --accent: #00988D;
+    --accent-foreground: #FFFFFF;
+
+    --destructive: #7f1d1d;
+    --destructive-foreground: #f8fafc;
+
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #cbd5e1;
+
+    --body-bg: #011c29;
   }
 
   body {
-    background: linear-gradient(to bottom right, #FEF5C8, #e8f0ef);
-    @apply min-h-screen bg-no-repeat bg-fixed text-foreground font-sans;
+  background: var(--body-bg);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   }
 }
 
@@ -107,7 +145,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
   }
 }
 
