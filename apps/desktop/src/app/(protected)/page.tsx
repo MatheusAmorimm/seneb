@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PlusCircle, History, BarChart3, ArrowRight } from "lucide-react";
-import { Navbar } from "../components/navbar";
-import { getStorageItem, setStorageItem } from "../lib/storage"; 
-import { UserData } from "../types/index";
-import api from "../services/api"; // Instância do Axios [cite: 858]
+import { Navbar } from "../../components/navbar";
+import { getStorageItem, setStorageItem } from "../../lib/storage"; 
+import { UserData } from "../../types/index";
+import api from "../../services/api"; // Instância do Axios [cite: 858]
 
 export default function HomePage() {
   const router = useRouter();

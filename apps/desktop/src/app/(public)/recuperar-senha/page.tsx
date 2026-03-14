@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AxiosError } from 'axios';
-import api from '../../services/api';
+import api from '../../../services/api';
 import { DollarSign, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';

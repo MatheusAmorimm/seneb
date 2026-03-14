@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { DollarSign, Check } from 'lucide-react'; // Mantive apenas o que você já tinha
 import { useRouter } from 'next/navigation';
-import api from '../../services/api'; // Certifique-se que o caminho está certo
+import api from '../../../services/api'; // Certifique-se que o caminho está certo
 import { setStorageItem, removeFromDiskOnly } from '@/src/lib/storage';
 import { toast } from 'sonner';
 

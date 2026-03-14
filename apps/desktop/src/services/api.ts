@@ -12,7 +12,7 @@ const api = axios.create({
 api.interceptors.request.use(async (config) => {
   try {
     const token = await getStorageItem<string>('token');
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,16 +29,16 @@ api.interceptors.response.use(
     // Se o backend disser "Quem é você?" (401)
     if (error.response?.status === 401) {
       console.warn("🔒 Sessão expirada ou inválida. Realizando logout automático...");
-      
+
       try {
         // 1. Limpa o token podre do disco/memória
         await removeStorageItem('token');
         await removeStorageItem('user');
-        
+
         // 2. Força o redirecionamento para o login
         // Usamos window.location para garantir que estados antigos do React sejam zerados
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-           window.location.href = '/login';
+          window.location.href = '/login';
         }
       } catch (logoutError) {
         console.error("Erro crítico no auto-logout:", logoutError);
