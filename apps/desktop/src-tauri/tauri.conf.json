@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Seneb",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "identifier": "br.com.seneb.desktop",
   "build": {
     "frontendDist": "../out",
@@ -30,7 +30,7 @@
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU4M0ZENDNFMjg2RkNBOUYKUldTZnltOG9QdFEvV0xTelFUTFlITGhFSlJKRU10a1RwNTdWeSs3T0k4bkk3NTFabWNNNzVRUmIK",
       "windows": {
-        "installMode": "passive"
+        "installMode": "quiet"
       }
     }
   },
