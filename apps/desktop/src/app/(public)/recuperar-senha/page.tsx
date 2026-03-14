@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { AxiosError } from 'axios';
 import api from '../../../services/api';
 import { DollarSign, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 
 export default function RecuperarSenhaPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
 
@@ -86,7 +83,7 @@ export default function RecuperarSenhaPage() {
       toast.success("Senha redefinida com sucesso! Faça login.");
 
       setTimeout(() => {
-        router.push('/login');
+        window.location.href = '/login';
       }, 1500);
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -157,9 +154,9 @@ export default function RecuperarSenhaPage() {
                 </button>
 
                 <div className="text-center">
-                  <Link href="/login" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors">
+                  <button type="button" onClick={() => window.location.href = '/login'} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">
                     <ArrowLeft size={14} /> Voltar para o login
-                  </Link>
+                  </button>
                 </div>
               </form>
             )}

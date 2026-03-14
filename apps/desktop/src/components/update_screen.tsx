@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { DownloadCloud } from "lucide-react";
+import { toast } from "sonner";
 
 export function UpdateScreen({ children }: { children: React.ReactNode }) {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -12,45 +13,41 @@ export function UpdateScreen({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function checkForUpdates() {
-      // Garante que só rode dentro do Tauri (ignora no navegador comum)
       if (typeof window === "undefined" || !window.__TAURI_INTERNALS__) return;
 
       try {
         const update = await check();
         
         if (update) {
+          toast.info(`Atualização v${update.version} encontrada. Baixando...`);
           setIsUpdating(true);
           setVersion(update.version);
           
           let downloaded = 0;
-          let contentLength = 0; // 🚀 Nova variável para guardar o tamanho
+          let contentLength = 0;
 
           await update.downloadAndInstall((event) => {
             switch (event.event) {
               case 'Started':
-                // 🚀 Pega o tamanho total assim que o download inicia
                 contentLength = event.data.contentLength || 0;
                 break;
               case 'Progress':
-                // 🚀 Soma os chunks (pedaços) que estão chegando
                 downloaded += event.data.chunkLength;
                 if (contentLength > 0) {
                   setProgress(Math.round((downloaded / contentLength) * 100));
                 }
                 break;
               case 'Finished':
-                // 🚀 Garante que a barra bata 100% no fim
                 setProgress(100);
                 break;
             }
           });
 
-          // Reinicia o app com a versão nova magicamente
           await relaunch();
         }
       } catch (error) {
-        console.error("Erro ao atualizar OTA:", error);
-        // Se der erro (ex: sem internet), apenas ignora e deixa o app abrir normalmente
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        toast.error(`Erro ao atualizar: ${errorMsg}`);
         setIsUpdating(false); 
       }
     }
@@ -68,7 +65,6 @@ export function UpdateScreen({ children }: { children: React.ReactNode }) {
       <h1 className="text-3xl font-serif font-bold mb-2">Atualizando o Seneb</h1>
       <p className="text-white/80 mb-8">Baixando versão {version}... Por favor, não feche o aplicativo.</p>
 
-      {/* Barra de Progresso Customizada */}
       <div className="w-64 h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner">
         <div 
           className="h-full bg-[#00988D] transition-all duration-300 ease-out"
