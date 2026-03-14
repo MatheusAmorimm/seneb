@@ -72,13 +72,17 @@ deploy_vps_hostinger:
         echo '🐳 Atualizando Backend...' &&
         cd backend &&
         docker compose up -d --build &&
-        
+
+        echo '📦 Copiando o instalador fresco para a Landing Page...'
+        cp "apps/desktop/src-tauri/target/release/bundle/msi/*.msi" "apps/web/public/Seneb-Setup.msi"
+
         echo '🌐 Atualizando Web...' &&
         cd ../apps/web &&
+        rm -rf .next
         npm install &&
         npm run build &&
         
         echo '🔄 Reiniciando PM2...' &&
-        pm2 reload seneb-web --update-env || pm2 start npm --name 'seneb-web' -- start
+        pm2 reload seneb-web --update-env
       "
     - echo "✅ Deploy concluído!"
