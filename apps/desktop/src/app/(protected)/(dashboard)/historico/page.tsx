@@ -5,11 +5,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileSearch, ArrowLeft, UnlockKeyhole, AlertTriangle, X, RotateCcw } from "lucide-react"; // Novos ícones
 
-import api from "../../../services/api";
-import { Transaction } from "../../../types";
-import { TransactionList } from "../../../components/transaction_list";
-import { BalanceCard } from "../../../components/balance_card";
-import { useReports } from "../../../hooks/use_reports"; 
+import api from "../../../../services/api";
+import { Transaction } from "../../../../types";
+import { TransactionList } from "../../../../components/transaction_list";
+import { BalanceCard } from "../../../../components/balance_card";
+import { useReports } from "../../../../hooks/use_reports"; 
 
 export default function HistoricoPage() {
   const searchParams = useSearchParams();

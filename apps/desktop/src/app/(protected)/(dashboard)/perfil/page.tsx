@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { User, Mail, Lock, Save, Crown, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import api from "../../../services/api";
-import { setStorageItem } from "../../../lib/storage"; // <--- 1. Importe isso
+import api from "../../../../services/api";
+import { setStorageItem } from "../../../../lib/storage"; // <--- 1. Importe isso
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);

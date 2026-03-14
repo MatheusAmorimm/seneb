@@ -3,14 +3,14 @@
 // 🚀 1. Importado useCallback
 import { useState, useEffect, useCallback } from "react";
 import { AxiosError } from "axios";
-import api from "../../../services/api"; 
-import { Transaction } from "../../../types";
-import { BalanceCard } from "../../../components/balance_card";
-import { TransactionForm } from "../../../components/transaction_form";
-import { TransactionList } from "../../../components/transaction_list";
+import api from "../../../../services/api"; 
+import { Transaction } from "../../../../types";
+import { BalanceCard } from "../../../../components/balance_card";
+import { TransactionForm } from "../../../../components/transaction_form";
+import { TransactionList } from "../../../../components/transaction_list";
 import { toast } from "sonner";
 import { AlertTriangle, X, Trash2, Save, Pencil, FileEdit } from "lucide-react"; 
-import { useReports } from "../../../hooks/use_reports";
+import { useReports } from "../../../../hooks/use_reports";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LancamentosPage() {
