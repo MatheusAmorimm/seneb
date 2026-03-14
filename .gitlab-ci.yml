@@ -14,6 +14,7 @@ build_tauri:
   script:
     - if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { Write-Error "🚨 A variável da chave ta vazia no Runner!"; exit 1 }
     - Write-Host "✅ A chave chegou no Windows e tem $($env:TAURI_SIGNING_PRIVATE_KEY.Length) caracteres."
+    - $env:NEXT_PUBLIC_API_URL = "https://api.seneb.com.br/api/v1"
     - npx tauri build
     
     # 🔍 BUSCA UNIVERSAL: Vasculha qualquer subpasta dentro de bundle atrás da assinatura
