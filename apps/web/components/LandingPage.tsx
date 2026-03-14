@@ -19,7 +19,7 @@ export default function LandingPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   // 🚀 URL DEFINITIVA DO INSTALADOR NO GITLAB
-  const DOWNLOAD_URL = "/Seneb-Setup.exe";
+  const DOWNLOAD_URL = "/Seneb-Setup.msi";
 
   // 🚀 DETECÇÃO DE DISPOSITIVO AO CARREGAR A PÁGINA (Com tipagem e fluxo corrigidos)
   useEffect(() => {
@@ -284,7 +284,7 @@ export default function LandingPage() {
                 {isMounted && isMobile ? (
                   <><MonitorSmartphone className="w-6 h-6" /> Acesse pelo Computador</>
                 ) : (
-                  <><Download className="w-6 h-6 cursor-pointer" /> Baixar Instalador (.exe)</>
+                  <><Download className="w-6 h-6 cursor-pointer" /> Baixar Instalador (.msi)</>
                 )}
               </button>
             </div>
