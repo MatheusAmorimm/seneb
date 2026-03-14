@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "../../../components/sidebar";
 import { Header } from "../../../components/header";
 import { useTheme } from "../../../components/theme_provider";
+import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({
   children,
@@ -11,10 +12,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { setIsHome, isSidebarOpen, setIsSidebarOpen } = useTheme();
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsHome(false);
   }, [setIsHome]);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname, setIsSidebarOpen]);
 
   return (
     <div className="min-h-screen flex flex-col">

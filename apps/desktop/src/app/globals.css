@@ -130,12 +130,18 @@
   }
 
   body {
-  background: var(--body-bg);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  min-height: 100vh;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+    background: var(--body-bg);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  /* Esconde os botões nativos do Windows/Edge nos campos de senha */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
   }
 }
 

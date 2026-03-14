@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 export function UpdateScreen({ children }: { children: React.ReactNode }) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [version, setVersion] = useState("");
 
@@ -43,6 +44,11 @@ export function UpdateScreen({ children }: { children: React.ReactNode }) {
             }
           });
 
+          // Etapa FAKE de finalização para deixar "bonito" conforme pedido
+          setIsFinalizing(true);
+          setProgress(100);
+          await new Promise(resolve => setTimeout(resolve, 3500));
+
           await relaunch();
         }
       } catch (error) {
@@ -62,8 +68,14 @@ export function UpdateScreen({ children }: { children: React.ReactNode }) {
       <div className="bg-white/10 p-4 rounded-full backdrop-blur-sm animate-pulse mb-6">
         <DownloadCloud className="w-12 h-12 text-[#F2B705]" />
       </div>
-      <h1 className="text-3xl font-serif font-bold mb-2">Atualizando o Seneb</h1>
-      <p className="text-white/80 mb-8">Baixando versão {version}... Por favor, não feche o aplicativo.</p>
+      <h1 className="text-3xl font-serif font-bold mb-2">
+        {isFinalizing ? "Tudo pronto!" : "Atualizando o Seneb"}
+      </h1>
+      <p className="text-white/80 mb-8 px-4 text-center max-w-md">
+        {isFinalizing 
+          ? "Instalação concluída com sucesso. Reiniciando o aplicativo..." 
+          : `Baixando versão ${version}... Por favor, não feche o aplicativo.`}
+      </p>
 
       <div className="w-64 h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner">
         <div 

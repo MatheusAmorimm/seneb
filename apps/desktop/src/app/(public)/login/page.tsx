@@ -3,7 +3,7 @@
 import { AxiosError } from 'axios';
 import { useState } from 'react';
 import Link from 'next/link';
-import { DollarSign, Check } from 'lucide-react'; // Mantive apenas o que você já tinha
+import { DollarSign, Check, Eye, EyeOff } from 'lucide-react'; // Mantive apenas o que você já tinha
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api'; // Certifique-se que o caminho está certo
 import { setStorageItem, removeFromDiskOnly } from '@/src/lib/storage';
@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [keepLogged, setKeepLogged] = useState(false);
@@ -166,6 +166,14 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-[#00988D] hover:bg-[#007A71] text-white transition-all cursor-pointer z-10 shadow-sm active:scale-95"
+                    title={showPassword ? "Esconder senha" : "Mostrar senha"}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
               
