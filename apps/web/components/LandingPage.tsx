@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  PieChart, 
-  Calendar, 
-  Download, 
-  CheckCircle, 
-  ArrowRight, 
+import {
+  DollarSign,
+  TrendingUp,
+  PieChart,
+  Calendar,
+  Download,
+  CheckCircle,
+  ArrowRight,
   Sparkles,
-  MonitorSmartphone 
+  MonitorSmartphone
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -26,11 +26,11 @@ export default function LandingPage() {
     const timer = setTimeout(() => {
       const customWindow = window as typeof window & { opera?: string };
       const userAgent = navigator.userAgent || navigator.vendor || customWindow.opera || "";
-      
+
       if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
         setIsMobile(true);
       }
-      
+
       setIsMounted(true);
     }, 0);
 
@@ -61,8 +61,8 @@ export default function LandingPage() {
 
             {/* Menu Navigation */}
             <nav className="hidden md:flex items-center gap-6">
-              <Link 
-                href="#download" 
+              <Link
+                href="#download"
                 className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
                 style={{ backgroundColor: 'rgba(0, 152, 141, 0.2)' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 152, 141, 0.4)'}
@@ -71,14 +71,14 @@ export default function LandingPage() {
                 <Download className="w-4 h-4" />
                 Download
               </Link>
-              <Link 
-                href="#sobre-dev" 
+              <Link
+                href="#sobre-dev"
                 className="px-4 py-2 hover:text-white/80 transition-colors"
               >
                 Sobre o Dev
               </Link>
-              <Link 
-                href="#changelogs" 
+              <Link
+                href="#changelogs"
                 className="px-4 py-2 hover:text-white/80 transition-colors"
               >
                 Changelogs
@@ -126,16 +126,16 @@ export default function LandingPage() {
                   <Sparkles className="w-4 h-4" />
                   <span className="text-sm font-medium">100% Gratuito e Fácil de Usar</span>
                 </div>
-                
+
                 <h1 className="text-5xl md:text-6xl mb-6 text-slate-800 font-bold leading-tight">
                   Controle suas finanças com{' '}
                   <span className="relative inline-block">
                     <span className="relative z-10" style={{ color: '#F23E02' }}>simplicidade</span>
                   </span>
                 </h1>
-                
+
                 <p className="text-xl text-slate-600 mb-8">
-                  Gerencie suas receitas e despesas de forma intuitiva. 
+                  Gerencie suas receitas e despesas de forma intuitiva.
                   Interface limpa, recursos poderosos, resultados imediatos.
                 </p>
 
@@ -176,7 +176,7 @@ export default function LandingPage() {
                     <DollarSign className="w-6 h-6" style={{ color: '#00988D' }} />
                     <span className="text-slate-800 font-bold">Painel de Controle</span>
                   </div>
-                  
+
                   <div className="space-y-4">
                     {/* Mock Balance Cards */}
                     <div className="grid grid-cols-3 gap-3">
@@ -233,7 +233,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-800">Interface Intuitiva</h3>
                 <p className="text-slate-600">
-                  Design limpo e moderno. Adicione transações em segundos, sem complicação. 
+                  Design limpo e moderno. Adicione transações em segundos, sem complicação.
                   Tudo que você precisa, nada que você não precisa.
                 </p>
               </div>
@@ -245,7 +245,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-800">Visualização Clara</h3>
                 <p className="text-slate-600">
-                  Cards coloridos mostram suas receitas, despesas e saldo em tempo real. 
+                  Cards coloridos mostram suas receitas, despesas e saldo em tempo real.
                   Entenda suas finanças de um só olhar.
                 </p>
               </div>
@@ -257,7 +257,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-800">Histórico Completo</h3>
                 <p className="text-slate-600">
-                  Navegue pelo histórico mês a mês. Veja padrões, acompanhe seu progresso 
+                  Navegue pelo histórico mês a mês. Veja padrões, acompanhe seu progresso
                   e tome decisões financeiras melhores.
                 </p>
               </div>
@@ -305,7 +305,7 @@ export default function LandingPage() {
                     Aluno do terceiro semestre de Ciência de Dados e IA da PUC e Analista de Infraestrutura e Projetos de TI.
                   </p>
                   <p className="text-slate-600">
-                    Desenvolvido com React, TypeScript e Tailwind CSS. 
+                    Desenvolvido com React, TypeScript e Tailwind CSS.
                     Focado em proporcionar a melhor experiência de usuário possível.
                   </p>
                 </div>
@@ -321,7 +321,7 @@ export default function LandingPage() {
             <p className="text-xl text-slate-600 mb-8">
               Encontrou um bug? Tem uma sugestão? Adoraríamos ouvir você!
             </p>
-            
+
             <div className="bg-white rounded-2xl shadow-lg p-8 text-left">
               <h3 className="text-xl font-bold mb-4 text-slate-800">Últimas Atualizações</h3>
               <div className="space-y-4">
@@ -376,9 +376,9 @@ export default function LandingPage() {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
               >
                 {isMounted && isMobile ? (
-                  <><MonitorSmartphone className="w-6 h-6" /> Acesse pelo PC</>
+                  <><MonitorSmartphone className="w-6 h-6 cursor pointer" /> Acesse pelo PC</>
                 ) : (
-                  <><Download className="w-6 h-6" /> Baixar Agora</>
+                  <><Download className="w-6 h-6 cursor-pointer" /> Baixar Agora</>
                 )}
               </button>
             </div>
@@ -400,7 +400,7 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-          
+
           <div className="border-t border-white/20 pt-8 text-center text-sm text-white/70">
             © {new Date().getFullYear()} Seneb. Todos os direitos reservados.
           </div>
