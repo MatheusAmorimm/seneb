@@ -10,6 +10,8 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
   isHome: boolean;
   setIsHome: (isHome: boolean) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -17,6 +19,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [isHome, setIsHome] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -65,7 +68,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme, isLoaded]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isHome, setIsHome }}>
+    <ThemeContext.Provider value={{ theme, setTheme, isHome, setIsHome, isSidebarOpen, setIsSidebarOpen }}>
       {children}
     </ThemeContext.Provider>
   );

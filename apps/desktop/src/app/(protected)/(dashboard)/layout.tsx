@@ -10,8 +10,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { setIsHome } = useTheme();
+  const { setIsHome, isSidebarOpen, setIsSidebarOpen } = useTheme();
 
   useEffect(() => {
     setIsHome(false);

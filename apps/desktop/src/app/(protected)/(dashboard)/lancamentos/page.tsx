@@ -10,9 +10,10 @@ import { TransactionForm } from "../../../../components/transaction_form";
 import { TransactionList } from "../../../../components/transaction_list";
 import { TransactionFilters } from "../../../../components/transaction_filters";
 import { toast } from "sonner";
-import { AlertTriangle, X, Trash2, Save, Pencil, FileEdit, ArrowLeft, Plus, Calendar, FileText, ChevronDown, CheckCircle2, AlertCircle, Info, Calculator, User } from "lucide-react"; 
+import { ArrowLeft, Save, Plus, Trash2, Calendar, FileText, ChevronDown, CheckCircle2, AlertCircle, Info, Calculator as CalculatorIcon, User, AlertTriangle, X, Pencil, FileEdit } from "lucide-react"; 
 import { useReports } from "../../../../hooks/use_reports";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Calculator } from "../../../../components/calculator";
 
 export default function LancamentosPage() {
   const router = useRouter();
@@ -307,6 +308,9 @@ export default function LancamentosPage() {
           onEditTransaction={handleEditClick} 
         />
       </section>
+
+      {/* Calculadora Flutuante */}
+      <Calculator />
 
       {/* --- MODAL FINALIZAR --- */}
       {showFinalizeModal && (
