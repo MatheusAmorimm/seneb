@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initStore = async () => {
       try {
-        const store = await load("settings.json", { autoSave: true });
+        const store = await load("settings.json", { autoSave: true, defaults: {} });
         
         const savedTheme = await store.get<Theme>("theme");
 
@@ -42,7 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = async (newTheme: Theme) => {
     setThemeState(newTheme);
     try {
-      const store = await load("settings.json", { autoSave: true });
+      const store = await load("settings.json", { autoSave: true, defaults: {} });
       await store.set("theme", newTheme);
     } catch (e) {
       localStorage.setItem("theme", newTheme);
