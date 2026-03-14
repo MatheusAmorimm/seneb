@@ -106,7 +106,7 @@ export default function LandingPage() {
           {/* Mobile Menu */}
           <nav className="md:hidden flex items-center gap-4 mt-4 flex-wrap">
             <Link href="#download" className="text-sm px-3 py-1 rounded-lg flex items-center" style={{ backgroundColor: 'rgba(0, 152, 141, 0.2)' }}>
-              <Download className="w-4 h-4 inline mr-1" />
+              <Download className="w-4 h-4 inline mr-1 cursor-pointer" />
               Download
             </Link>
             <Link href="#sobre-dev" className="text-sm px-3 py-1">Sobre o Dev</Link>
@@ -142,7 +142,7 @@ export default function LandingPage() {
                 <div className="flex flex-wrap gap-4">
                   <button
                     onClick={handleCTAClick}
-                    className="flex items-center gap-2 px-8 py-4 rounded-xl text-white text-lg font-semibold transition-all shadow-xl transform hover:scale-105"
+                    className="flex items-center gap-2 px-8 py-4 rounded-xl text-white text-lg font-semibold transition-all shadow-xl transform hover:scale-105 cursor-pointer"
                     style={{ backgroundColor: '#F23E02' }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d63802'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
@@ -284,7 +284,7 @@ export default function LandingPage() {
                 {isMounted && isMobile ? (
                   <><MonitorSmartphone className="w-6 h-6" /> Acesse pelo Computador</>
                 ) : (
-                  <><Download className="w-6 h-6" /> Baixar Instalador (.exe)</>
+                  <><Download className="w-6 h-6 cursor-pointer" /> Baixar Instalador (.exe)</>
                 )}
               </button>
             </div>
@@ -302,10 +302,10 @@ export default function LandingPage() {
                 <div className="flex-1 text-center md:text-left">
                   <h2 className="text-3xl font-bold mb-4 text-slate-800">Sobre o Desenvolvedor</h2>
                   <p className="text-slate-600 mb-4">
-                    Aluno do terceiro semestre de Ciência de Dados e IA da PUC e Analista de Infraestrutura e Projetos de TI.
+                    Olá! Tudo bem? Sou o Matheus Amorim, criador do Seneb. Sou estudante de Ciência de Dados e IA na PUCSP, formado em Análise e Desenvolvimento de Sistemas e Analista de Infraestrutura e Projetos de TI.
                   </p>
                   <p className="text-slate-600">
-                    Desenvolvido com React, TypeScript e Tailwind CSS.
+                    Desenvolvido com Tauri, React, TypeScript e Tailwind CSS.
                     Focado em proporcionar a melhor experiência de usuário possível.
                   </p>
                 </div>
@@ -328,6 +328,13 @@ export default function LandingPage() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
                   <div>
+                    <div className="text-slate-800 font-semibold">Auto Update</div>
+                    <div className="text-sm text-slate-500">App atualiza sozinho no seu computador</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <div>
                     <div className="text-slate-800 font-semibold">v1.0.0 - Interface inicial</div>
                     <div className="text-sm text-slate-500">Lançamento com funcionalidades essenciais</div>
                   </div>
@@ -337,13 +344,6 @@ export default function LandingPage() {
                   <div>
                     <div className="text-slate-800 font-semibold">Sistema de histórico por mês</div>
                     <div className="text-sm text-slate-500">Navegue pelas transações de cada mês</div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
-                  <div>
-                    <div className="text-slate-800 font-semibold">Design responsivo</div>
-                    <div className="text-sm text-slate-500">Funciona perfeitamente em todos os dispositivos</div>
                   </div>
                 </div>
               </div>
@@ -376,7 +376,7 @@ export default function LandingPage() {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F23E02'}
               >
                 {isMounted && isMobile ? (
-                  <><MonitorSmartphone className="w-6 h-6 cursor pointer" /> Acesse pelo PC</>
+                  <><MonitorSmartphone className="w-6 h-6" /> Acesse pelo PC</>
                 ) : (
                   <><Download className="w-6 h-6 cursor-pointer" /> Baixar Agora</>
                 )}
