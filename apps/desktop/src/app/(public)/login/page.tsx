@@ -207,7 +207,7 @@ export default function LoginPage() {
                     Manter-me conectado
                   </span>
                 </button>
-                  <button type="button" onClick={() => router.push('/recuperar-senha')} className="text-xs text-brand-orange hover:underline cursor-pointer">
+                  <button type="button" onClick={() => router.push('/recuperar-senha/')} className="text-xs text-brand-orange hover:underline cursor-pointer">
                     <strong>Esqueceu a senha?</strong>
                   </button>
               </div>
@@ -229,7 +229,7 @@ export default function LoginPage() {
 
               <div className="text-center">
                 <span className="text-slate-600 dark:text-slate-400">Não tem uma conta? </span>
-                <Link href="/cadastro" className="transition-colors" style={{ color: '#F23E02' }}><strong>Criar conta</strong></Link>
+                <Link href="/cadastro/" className="transition-colors" style={{ color: '#F23E02' }}><strong>Criar conta</strong></Link>
               </div>
             </form>
           </div>

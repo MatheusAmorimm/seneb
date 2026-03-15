@@ -47,7 +47,7 @@ export function Navbar() {
 
       <div className="flex items-center gap-3">
         <button 
-          onClick={() => router.push("/perfil")}
+          onClick={() => router.push("/perfil/")}
           className="flex items-center gap-2 px-4 py-2 text-[#013750] dark:text-slate-300 font-medium hover:bg-white/50 dark:hover:bg-slate-800 rounded-lg transition-all text-sm group cursor-pointer" 
         >
           <UserCircle size={20} className="text-[#013750] dark:text-slate-400 group-hover:text-[#F23E02] dark:group-hover:text-orange-400 transition-colors" /> 

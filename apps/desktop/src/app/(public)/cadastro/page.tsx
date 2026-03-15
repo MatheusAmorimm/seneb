@@ -270,7 +270,7 @@ export default function CadastroPage() {
 
                 <div className="text-center">
                   <span className="text-slate-600">Já tem uma conta? </span>
-                  <Link href="/login" className="transition-colors font-bold hover:underline" style={{ color: '#F23E02' }}>Fazer login</Link>
+                  <Link href="/login/" className="transition-colors font-bold hover:underline" style={{ color: '#F23E02' }}>Fazer login</Link>
                 </div>
               </form>
             )}
