@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AxiosError } from 'axios';
-import api from '../../../services/api'; 
+import api from '../../../services/api';
 import { DollarSign } from 'lucide-react';
-import { toast } from 'sonner'; 
+import { toast } from 'sonner';
 import { setStorageItem } from '@/src/lib/storage';
 import { open } from '@tauri-apps/plugin-shell';
 
@@ -14,7 +14,7 @@ export default function CadastroPage() {
 
   // Controle de Etapas: 1 = Cadastro, 2 = Código
   const [step, setStep] = useState(1);
-  
+
   // inputCode é o que o usuário digita na tela 2
   const [inputCode, setInputCode] = useState('');
 
@@ -57,7 +57,7 @@ export default function CadastroPage() {
       // 2. CHAMA O BACKEND REAL
       // Essa rota vai salvar o código no Mongo e enviar o E-mail
       await api.post('auth/send-code', { email });
-      
+
       setLoading(false);
       setStep(2); // Muda para tela de código
 
@@ -107,7 +107,7 @@ export default function CadastroPage() {
       toast.success("Conta criada com sucesso! Redirecionando...");
 
       setTimeout(() => {
-          window.location.href = '/'; 
+        window.location.href = '/';
       }, 1500);
 
     } catch (error) {
@@ -125,10 +125,10 @@ export default function CadastroPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
-      
+
       <div className="w-112.5">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          
+
           <div className="p-8 text-center" style={{ background: 'linear-gradient(to right, #013750, #2C6B74)' }}>
             <div className="flex justify-center mb-4">
               <div className="bg-white/10 p-4 rounded-full backdrop-blur-sm">
@@ -142,11 +142,11 @@ export default function CadastroPage() {
           </div>
 
           <div className="p-8">
-            
+
             {/* --- ETAPA 1: DADOS --- */}
             {step === 1 && (
               <form onSubmit={handlePreSubmit} className="space-y-6">
-                
+
                 {/* Nome */}
                 <div>
                   <label className="block mb-2 text-slate-700 font-medium text-sm">NOME COMPLETO <span className="text-red-500">*</span></label>
@@ -233,20 +233,20 @@ export default function CadastroPage() {
                     required
                   />
                   <label htmlFor="terms" className="ml-2 text-sm text-slate-600">
-                      Eu concordo com os{' '}
-                    <button 
+                    Eu concordo com os{' '}
+                    <button
                       type="button"
                       onClick={() => open('https://seneb.com.br/termos')}
-                      className="transition-all cursor-pointer font-bold hover:underline" 
+                      className="transition-all cursor-pointer font-bold hover:underline"
                       style={{ color: '#00988D' }}
                     >
                       Termos de Uso
                     </button>
                     {' '}e{' '}
-                    <button 
+                    <button
                       type="button"
                       onClick={() => open('https://seneb.com.br/privacidade')}
-                      className="transition-all cursor-pointer font-bold hover:underline" 
+                      className="transition-all cursor-pointer font-bold hover:underline"
                       style={{ color: '#00988D' }}
                     >
                       Política de Privacidade
@@ -280,7 +280,7 @@ export default function CadastroPage() {
               <form onSubmit={handleFinalSubmit} className="space-y-6">
                 <div className="text-center">
                   <p className="text-slate-600 mb-4">Insira o código de 8 dígitos enviado para <strong>{email}</strong>.</p>
-                  
+
                   <input
                     type="text"
                     maxLength={8}
@@ -291,7 +291,7 @@ export default function CadastroPage() {
                     autoFocus
                   />
                 </div>
-                
+
                 <button
                   type="submit"
                   disabled={loading || inputCode.length < 8}
@@ -300,15 +300,15 @@ export default function CadastroPage() {
                 >
                   {loading ? 'Validando...' : 'Confirmar e Criar'}
                 </button>
-                
+
                 <div className="text-center">
-                   <button 
-                    type="button" 
-                    onClick={() => setStep(1)} 
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
                     className="text-sm text-slate-500 hover:text-slate-800 underline"
-                   >
-                     Voltar e corrigir e-mail
-                   </button>
+                  >
+                    Voltar e corrigir e-mail
+                  </button>
                 </div>
               </form>
             )}
@@ -317,7 +317,7 @@ export default function CadastroPage() {
         </div>
 
         <div className="text-center mt-8">
-          <p className="text-white text-sm">© {new Date().getFullYear()} Controle Financeiro Pessoal. Todos os direitos reservados.</p>
+          <p className="text-white text-sm">© {new Date().getFullYear()} Seneb Controle Financeiro Pessoal. Todos os direitos reservados.</p>
         </div>
       </div>
     </div>
