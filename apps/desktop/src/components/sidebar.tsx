@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { 
   Home, 
@@ -25,6 +25,14 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  return (
+    <Suspense fallback={null}>
+      <SidebarContent isOpen={isOpen} onClose={onClose} />
+    </Suspense>
+  );
+}
+
+function SidebarContent({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -74,28 +82,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: Home, 
       label: "Início", 
       href: "/", 
-      activeClass: "bg-[#FEF5C8] text-[#013750]",
-      hoverClass: "hover:bg-[#FEF5C8] hover:text-[#013750]"
+      activeClass: "bg-[#FEF5C8] text-[#013750] dark:bg-slate-800 dark:text-slate-100",
+      hoverClass: "hover:bg-[#FEF5C8] hover:text-[#013750] dark:hover:bg-slate-800 dark:hover:text-slate-200"
     },
     { 
       icon: PlusCircle, 
       label: "Lançamentos", 
       href: "/lancamentos", 
-      activeClass: "bg-[#fff0e6] text-[#F23E02]", 
-      hoverClass: "hover:bg-[#fff0e6] hover:text-[#F23E02]"
+      activeClass: "bg-[#fff0e6] text-[#F23E02] dark:bg-orange-950/30 dark:text-orange-400", 
+      hoverClass: "hover:bg-[#fff0e6] hover:text-[#F23E02] dark:hover:bg-orange-950/20 dark:hover:text-orange-300"
     },
   ];
 
   const historyActive = pathname.includes("/historico");
   const historyStyles = {
-    active: "bg-[#e0f7fa] text-[#00988D]",
-    hover: "hover:bg-[#e0f7fa] hover:text-[#00988D]"
+    active: "bg-[#e0f7fa] text-[#00988D] dark:bg-teal-950/30 dark:text-teal-400",
+    hover: "hover:bg-[#e0f7fa] hover:text-[#00988D] dark:hover:bg-teal-950/20 dark:hover:text-teal-300"
   };
 
   const analyticsActive = pathname === "/analytics";
   const analyticsStyles = {
-    active: "bg-[#eef2ff] text-[#013750]",
-    hover: "hover:bg-[#eef2ff] hover:text-[#013750]"
+    active: "bg-[#eef2ff] text-[#013750] dark:bg-indigo-950/30 dark:text-indigo-400",
+    hover: "hover:bg-[#eef2ff] hover:text-[#013750] dark:hover:bg-indigo-950/20 dark:hover:text-indigo-300"
   };
 
   return (
@@ -110,11 +118,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside 
         className={cn(
-          "fixed top-0 left-0 bottom-0 w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col",
+          "fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-r border-transparent dark:border-slate-800",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="h-16 flex items-center justify-between px-6 border-b bg-brand-deepBlue border-gray-100">
+        <div className="h-16 flex items-center justify-between px-6 border-b bg-brand-deepBlue dark:bg-slate-950 border-gray-100 dark:border-slate-800">
           <span className="font-serif font-bold text-xl text-white">Menu</span>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={24} />
@@ -131,12 +139,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <button
                 key={item.href}
                 onClick={() => {
+                  const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+                  if (isLocked && item.href !== '/lancamentos') {
+                    toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                      duration: 5000,
+                      icon: <AlertTriangle className="text-red-500" />
+                    });
+                    return;
+                  }
                   router.push(item.href);
                   onClose();
                 }}
                 className={cn(
                   "w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium cursor-pointer",
-                  "text-gray-500",
+                  "text-gray-500 dark:text-slate-400",
                   item.hoverClass,
                   isActive && cn(item.activeClass, "font-bold shadow-sm")
                 )}
@@ -153,7 +169,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => setIsHistoryOpen(!isHistoryOpen)}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium",
-                "text-gray-500", 
+                "text-gray-500 dark:text-slate-400", 
                 historyStyles.hover,
                 historyActive && cn(historyStyles.active, "font-bold shadow-sm")
               )}
@@ -180,10 +196,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         className={cn(
                             "group/item flex items-center justify-between pr-2 pl-8 py-2 text-sm transition-colors border-l-2 cursor-pointer",
                             isActiveReport 
-                              ? "text-[#00988D] font-bold border-[#00988D] bg-teal-50/50" 
-                              : "text-slate-500 border-transparent hover:text-[#00988D] hover:border-[#00988D] hover:bg-teal-50"
+                              ? "text-[#00988D] dark:text-teal-400 font-bold border-[#00988D] dark:border-teal-400 bg-teal-50/50 dark:bg-teal-950/30" 
+                              : "text-slate-500 dark:text-slate-400 border-transparent hover:text-[#00988D] dark:hover:text-teal-300 hover:border-[#00988D] dark:hover:border-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/20"
                         )}
                         onClick={() => {
+                            const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+                            if (isLocked) {
+                              toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                                duration: 5000,
+                                icon: <AlertTriangle className="text-red-500" />
+                              });
+                              return;
+                            }
                             router.push(`/historico?id=${report.id}`);
                             onClose();
                         }}
@@ -211,12 +235,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <button
             onClick={() => {
+              const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+              if (isLocked) {
+                toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                  duration: 5000,
+                  icon: <AlertTriangle className="text-red-500" />
+                });
+                return;
+              }
               router.push('/analytics');
               onClose();
             }}
             className={cn(
               "w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-sans font-medium cursor-pointer",
-              "text-gray-500",
+              "text-gray-500 dark:text-slate-400",
               analyticsStyles.hover,
               analyticsActive && cn(analyticsStyles.active, "font-bold shadow-sm")
             )}
@@ -231,23 +263,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* --- MODAL DE CONFIRMAÇÃO --- */}
       {reportToDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 scale-100">
+          <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 scale-100 border border-slate-100 dark:border-slate-800">
             
-            <div className="bg-red-50 p-6 flex flex-col items-center text-center gap-4 border-b border-red-100">
-              <div className="bg-red-100 p-4 rounded-full">
+            <div className="bg-red-50 dark:bg-red-950/20 p-6 flex flex-col items-center text-center gap-4 border-b border-red-100 dark:border-red-900/30">
+              <div className="bg-red-100 dark:bg-red-900/40 p-4 rounded-full">
                 <AlertTriangle className="text-brand-orange w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl font-serif font-bold text-brand-deepBlue">Excluir Histórico?</h3>
-                <p className="text-sm text-slate-500 mt-2">
+                <h3 className="text-xl font-serif font-bold text-brand-deepBlue dark:text-slate-100">Excluir Histórico?</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
                   Você está prestes a apagar <strong>&quot;{reportToDelete.name}&quot;</strong>.
                   <br/>
-                  <span className="text-red-600 font-bold text-xs mt-1 block">ISSO NÃO PODE SER DESFEITO.</span>
+                  <span className="text-red-600 dark:text-red-400 font-bold text-xs mt-1 block">ISSO NÃO PODE SER DESFEITO.</span>
                 </p>
               </div>
             </div>
 
-            <div className="p-6 bg-white flex flex-col gap-3">
+            <div className="p-6 bg-white dark:bg-[#012a3d] flex flex-col gap-3">
               <button
                 onClick={confirmDelete}
                 disabled={isDeleting}

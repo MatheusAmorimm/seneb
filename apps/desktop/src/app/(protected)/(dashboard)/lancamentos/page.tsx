@@ -1,7 +1,7 @@
 "use client";
 
 // 🚀 1. Importado useCallback
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { AxiosError } from "axios";
 import api from "../../../../services/api"; 
 import { Transaction } from "../../../../types";
@@ -16,6 +16,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Calculator } from "../../../../components/calculator";
 
 export default function LancamentosPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-turquoise"></div>
+      </div>
+    }>
+      <LancamentosContent />
+    </Suspense>
+  );
+}
+
+function LancamentosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -67,29 +79,48 @@ export default function LancamentosPage() {
 
   // 🚀 PREVENÇÃO DE FUGA: Bloqueia a saída da página sem finalizar caso seja um Mês Reaberto
   useEffect(() => {
-    if (!editingReportId) return;
+    // 🚀 LÓGICA DE TRAVA GLOBAL: Salva no sessionStorage para que Sidebar/Header possam ler
+    if (editingReportId) {
+      sessionStorage.setItem('seneb_edition_lock', 'true');
+      sessionStorage.setItem('seneb_active_reopened_id', editingReportId);
+    } else {
+      sessionStorage.removeItem('seneb_edition_lock');
+    }
 
     // A. Bloqueia fechamento da aba ou F5 (Exibe alerta nativo do Navegador)
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
+      if (editingReportId) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
     };
 
     // B. Intercepta clics em links (React Router, Next Link ou tags A nativas) na Fase de Captura
     const handleClickCapture = (e: MouseEvent) => {
+      if (!editingReportId) return;
+
       let target = e.target as HTMLElement | null;
-      while (target && target.tagName !== 'A') {
-        target = target.parentElement;
+      // Sobe na árvore DOM para encontrar se o clique foi em um Link ou Botão que navega
+      while (target && target.tagName !== 'A' && target.tagName !== 'BUTTON') {
+        if (target.parentElement) {
+            target = target.parentElement;
+        } else {
+            break;
+        }
       }
       
-      if (target && target.tagName === 'A') {
-        const href = target.getAttribute('href');
-        // Se for um link e não para a própria página de lançamentos
-        if (href && !href.startsWith('/lancamentos')) {
+      const isSidebarLink = target?.closest('aside');
+      const isHeaderLink = target?.closest('header');
+
+      if (target && (target.tagName === 'A' || isSidebarLink || isHeaderLink)) {
+        const href = target.getAttribute('href') || (target as any).href || '';
+        const isInternalLancamento = href.includes('/lancamentos') || href.includes('reopenedId');
+        
+        if (href && !isInternalLancamento) {
           e.preventDefault();
           e.stopPropagation();
-          toast.error("Obrigatório: Finalize o mês reaberto antes de sair desta aba.", {
-            duration: 4000,
+          toast.error("Ateção: Finalize o planejamento reaberto antes de sair desta tela.", {
+            duration: 5000,
             icon: <AlertTriangle className="text-red-500" />
           });
         }
@@ -97,10 +128,10 @@ export default function LancamentosPage() {
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    // document.addEventListener pega *antes* que o next/link decida navegar
     document.addEventListener('click', handleClickCapture, true);
 
     return () => {
+      sessionStorage.removeItem('seneb_edition_lock');
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('click', handleClickCapture, true);
     };
@@ -112,6 +143,7 @@ export default function LancamentosPage() {
         description: transaction.description,
         amount: transaction.amount,
         category: transaction.category,
+        subcategory: transaction.subcategory || null,
         type: transaction.type,
         date: transaction.date,
         due_date: transaction.due_date || null,
@@ -135,12 +167,16 @@ export default function LancamentosPage() {
         setTransactions((prev) => 
           prev.map((t) => (t.id === transaction.id ? response.data : t))
         );
+        setFilteredTransactions((prev) =>
+          prev.map((t) => (t.id === transaction.id ? response.data : t))
+        );
         
         toast.success("Lançamento atualizado!");
         setEditingTransaction(null);
       } else {
         const response = await api.post('/transactions', rawPayload); 
         setTransactions((prev) => [response.data, ...prev]);
+        setFilteredTransactions((prev) => [response.data, ...prev]);
         toast.success("Lançamento salvo!");
       }
     } catch (error) {
@@ -180,6 +216,8 @@ export default function LancamentosPage() {
       setReportName("");
       await updateSidebar(); 
       if (editingReportId) {
+        sessionStorage.removeItem('seneb_active_reopened_id');
+        sessionStorage.removeItem('seneb_edition_lock');
         router.replace('/lancamentos');
       } else {
         fetchTransactions(); 
@@ -266,11 +304,40 @@ export default function LancamentosPage() {
   }
 
   return (
-    <div className="space-y-8 pb-10 relative">
-      <div className="flex justify-between items-center animate-in slide-in-from-top-4">
+    <div className="space-y-6 pb-20 relative">
+      {/* 🛑 BANNER DE MODO REABERTO (Visual Lock Indicator) */}
+      {editingReportId && (
+        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
+          <div className="bg-amber-100 p-2 rounded-full">
+            <AlertTriangle className="text-amber-600 w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-900">Modo de Edição Ativo</p>
+            <p className="text-xs text-amber-700">A navegação está restrita para garantir a integridade dos dados. Finalize o mês para liberar os botões do menu.</p>
+          </div>
+          <div className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+            Lock Ativo
+          </div>
+        </div>
+      )}
+
+      {/* Header com Nome do Relatório Reaberto */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top-4">
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => router.push('/')}
+            onClick={() => {
+              const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+              if (isLocked) {
+                import('sonner').then(({ toast }) => {
+                  toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                    duration: 5000,
+                    icon: <AlertTriangle className="text-red-500" />
+                  });
+                });
+                return;
+              }
+              router.push('/');
+            }}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-[#013750] dark:hover:text-slate-100"
             title="Voltar para Home"
           >

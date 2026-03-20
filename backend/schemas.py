@@ -71,6 +71,7 @@ class TransactionSchema(BaseModel):
     amount: float
     type: str     
     category: str 
+    subcategory: Optional[str] = None
     date: str
     due_date: Optional[str] = None
 
@@ -91,6 +92,7 @@ class TransactionUpdate(BaseModel):
     description: Optional[str] = None
     amount: Optional[float] = None
     category: Optional[str] = None
+    subcategory: Optional[str] = None
     type: Optional[str] = None
     date: Optional[str] = None
     due_date: Optional[str] = None

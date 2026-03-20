@@ -96,7 +96,9 @@ async def reopen_report(
                 "$or": [{"report_id": None}, {"report_id": ""}, {"report_id": {"$exists": False}}]
             })
 
-    # 🚀 PASSO 3: Volta os itens do histórico para edição (Mantendo o ID do lote!)
+    # 🚀 PASSO 3: Volta os itens do histórico para edição E limpa o report_id
+    # Sem limpar report_id, a query normal de lançamentos (que busca report_id: null)
+    # não encontraria esses itens, causando "desaparecimento" dos dados.
     await db.db.transactions.update_many(
         {"report_id": report_id, "user_id": str(current_user.id)},
         {"$set": {"status": "draft"}}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation"; 
-import { LogOut, UserCircle } from "lucide-react";
+import { LogOut, UserCircle, AlertTriangle } from "lucide-react";
 import { removeStorageItem } from "../lib/storage";
 import { toast } from "sonner";
 import api from "../services/api"; // Importe sua instância do Axios para limpar o header
@@ -47,7 +47,17 @@ export function Navbar() {
 
       <div className="flex items-center gap-3">
         <button 
-          onClick={() => router.push("/perfil/")}
+          onClick={() => {
+            const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+            if (isLocked) {
+              toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                duration: 5000,
+                icon: <AlertTriangle className="text-red-500" />
+              });
+              return;
+            }
+            router.push("/perfil/");
+          }}
           className="flex items-center gap-2 px-4 py-2 text-[#013750] dark:text-slate-300 font-medium hover:bg-white/50 dark:hover:bg-slate-800 rounded-lg transition-all text-sm group cursor-pointer" 
         >
           <UserCircle size={20} className="text-[#013750] dark:text-slate-400 group-hover:text-[#F23E02] dark:group-hover:text-orange-400 transition-colors" /> 
@@ -57,7 +67,18 @@ export function Navbar() {
         <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
 
         <button 
-          onClick={handleLogout}
+          onClick={(e) => {
+            const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+            if (isLocked) {
+              e.preventDefault();
+              toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                duration: 5000,
+                icon: <AlertTriangle className="text-red-500" />
+              });
+              return;
+            }
+            handleLogout(e);
+          }}
           className="flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all text-sm cursor-pointer" 
           title="Sair da conta"
         >

@@ -8,6 +8,7 @@ export interface Transaction {
   amount: number;
   type: TransactionType;
   category: string;
+  subcategory?: string;
   date: string;
   due_date?: string;
 

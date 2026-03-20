@@ -5,8 +5,9 @@ import { Plus, CreditCard, AlertCircle, Hash, CalendarClock, Save, Info, X, PenL
 import api from '../services/api';
 import { Transaction, TransactionType, PaymentMethod } from '../types';
 import { toast } from 'sonner';
+import { getCategoriesByType, getSubcategories } from '../constants/categories';
 
-const MAX_AMOUNT = 1_000_000_000; // 1 bilhão
+const MAX_AMOUNT = 1_000_000_000;
 
 function formatCurrencyInput(raw: string): string {
   const digits = raw.replace(/\D/g, '');
@@ -22,18 +23,6 @@ function parseCurrencyToNumber(masked: string): number {
   const cleaned = masked.replace(/\./g, '').replace(',', '.');
   return parseFloat(cleaned) || 0;
 }
-
-// --- CONSTANTES ---
-const CATEGORIES = {
-  income: ["Salário", "Férias", "Décimo Terceiro", "Investimentos", "Outros"],
-  expense: ["Compra", "Conta Fixa", "Empréstimo", "Impostos", "Fatura do Cartão"]
-};
-
-const DESCRIPTION_SUGGESTIONS: Record<string, string[]> = {
-  "Conta Fixa": ["Aluguel", "Luz", "Internet", "Água", "Gás", "Condomínio", "Prestação do Carro", "Plano de Saúde"],
-  "Empréstimo": ["Pessoal", "Consignado"],
-  "Impostos": ["IPVA", "IPTU", "Imposto de Renda"],
-};
 
 const DEFAULT_BANKS = [
   "Nubank", "Itaú", "Inter", "Bradesco", "Santander", "Caixa", "Banco do Brasil", "C6 Bank"
@@ -59,6 +48,11 @@ const PAYMENT_OPTIONS_FIXED = [
   { value: "credit_card", label: "Cartão de Crédito" }
 ];
 
+// Categorias que mostram campos especiais de despesas
+const CATEGORIES_WITH_PAYMENT = ["Moradia", "Transporte", "Saúde", "Educação", "Despesas Financeiras", "Compras Pessoais", "Alimentação", "Lazer e Estilo de Vida", "Família e Dependentes", "Impostos"];
+const CATEGORIES_WITH_DUE_DATE = ["Moradia", "Despesas Financeiras", "Impostos"];
+const CATEGORIES_WITH_INSTALLMENT = ["Compras Pessoais", "Despesas Financeiras", "Lazer e Estilo de Vida"];
+
 interface TransactionFormProps {
   onAddTransaction: (transaction: Transaction) => Promise<void>;
   initialData?: Transaction | null; 
@@ -68,9 +62,9 @@ interface TransactionFormProps {
 export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- STATE ---
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState('');
+  const [subcategory, setSubcategory] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('');
@@ -85,10 +79,9 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   const [totalInstallments, setTotalInstallments] = useState(1);
   const [currentInstallment, setCurrentInstallment] = useState(1);
 
-  // Estado de Erros Visual
   const [errors, setErrors] = useState({
     category: false,
-    description: false,
+    subcategory: false,
     amount: false
   });
 
@@ -96,11 +89,12 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     return name.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   };
 
-  // --- EFEITO: CARREGAR DADOS DE EDIÇÃO ---
+  // Load edit data
   useEffect(() => {
     if (initialData) {
       setType(initialData.type);
       setCategory(initialData.category);
+      setSubcategory(initialData.subcategory || '');
       setDescription(initialData.description || '');
       setAmount(formatCurrencyInput(Math.round(initialData.amount * 100).toString()));
       setPaymentMethod(initialData.payment_method || '');
@@ -117,7 +111,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
         setCurrentInstallment(1);
       }
       
-      setErrors({ category: false, description: false, amount: false });
+      setErrors({ category: false, subcategory: false, amount: false });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       resetForm();
@@ -127,6 +121,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   const resetForm = () => {
     setType('expense');
     setCategory('');
+    setSubcategory('');
     setDescription('');
     setAmount('');
     setPaymentMethod('');
@@ -136,10 +131,10 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     setIsCustomBankMode(false);
     setTotalInstallments(1);
     setCurrentInstallment(1);
-    setErrors({ category: false, description: false, amount: false });
+    setErrors({ category: false, subcategory: false, amount: false });
   };
 
-  // --- BUSCA BANCOS ---
+  // Fetch custom banks
   useEffect(() => {
     const fetchUserBanks = async () => {
       try {
@@ -158,74 +153,67 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     fetchUserBanks();
   }, []);
 
-  // --- MEMOS DE VISIBILIDADE ---
-  const descriptionOptions = useMemo(() => DESCRIPTION_SUGGESTIONS[category] || [], [category]);
-  const hasDescriptionOptions = descriptionOptions.length > 0;
+  // Categories filtered by type
+  const availableCategories = useMemo(() => getCategoriesByType(type), [type]);
+  const availableSubcategories = useMemo(() => getSubcategories(category), [category]);
 
+  // Field visibility
   const showPaymentField = useMemo(() => {
     if (type === 'income') return false;
-    return ["Compra", "Empréstimo", "Impostos", "Conta Fixa", "Fatura do Cartão"].includes(category);
+    return CATEGORIES_WITH_PAYMENT.includes(category);
   }, [type, category]);
 
   const currentPaymentOptions = useMemo(() => {
-    if (category === "Impostos" || category === "Fatura do Cartão" || category === "Empréstimo") return PAYMENT_OPTIONS_BILLS;
-    if (category === "Conta Fixa") return PAYMENT_OPTIONS_FIXED;
+    if (["Impostos", "Despesas Financeiras"].includes(category)) return PAYMENT_OPTIONS_BILLS;
+    if (["Moradia"].includes(category)) return PAYMENT_OPTIONS_FIXED;
     return PAYMENT_OPTIONS_DEFAULT;
   }, [category]);
 
   const showBankField = useMemo(() => {
     if (type === 'income') return false;
-    if (["Empréstimo", "Impostos", "Conta Fixa", "Fatura do Cartão"].includes(category)) return true;
-    if (category === "Compra" && paymentMethod && paymentMethod !== 'cash') return true;
+    if (["Moradia", "Despesas Financeiras", "Impostos"].includes(category)) return true;
+    if (paymentMethod && paymentMethod !== 'cash') return true;
     return false;
   }, [type, category, paymentMethod]);
 
   const showDueDateField = useMemo(() => {
     if (type === 'income') return false;
-    return ["Fatura do Cartão", "Empréstimo", "Conta Fixa", "Impostos"].includes(category);
+    return CATEGORIES_WITH_DUE_DATE.includes(category);
   }, [type, category]);
 
   const showInstallmentField = useMemo(() => {
     if (type === 'income') return false;
-    if (category === "Compra" && paymentMethod === "credit_card") return true;
-    if (category === "Empréstimo") return true;
-    if (category === "Impostos" && (description === "IPVA" || description === "IPTU")) return true;
+    if (CATEGORIES_WITH_INSTALLMENT.includes(category) && paymentMethod === "credit_card") return true;
+    if (["Despesas Financeiras"].includes(category)) return true;
     return false;
-  }, [type, category, paymentMethod, description]);
+  }, [type, category, paymentMethod]);
 
   const showTotalValueWarning = useMemo(() => {
-    if (category === "Empréstimo") return true;
-    if (isInstallment) return true;
-    return false;
-  }, [category, isInstallment]);
+    return isInstallment;
+  }, [isInstallment]);
 
-  // --- EFEITOS DE LIMPEZA ---
+  // Cleanup effects
   const handleTypeChange = (newType: TransactionType) => {
     setType(newType);
     if (!initialData) {
-       setCategory(''); setDescription(''); setAmount(''); setPaymentMethod('');
+       setCategory(''); setSubcategory(''); setDescription(''); setAmount(''); setPaymentMethod('');
        setBank(''); setDueDate(''); setIsInstallment(false); setIsCustomBankMode(false);
-       setErrors({ category: false, description: false, amount: false });
+       setErrors({ category: false, subcategory: false, amount: false });
     }
   };
 
   useEffect(() => {
     if (initialData && category === initialData.category) return;
-
+    setSubcategory('');
     setPaymentMethod(''); setBank(''); setDueDate('');
     setIsInstallment(false); setIsCustomBankMode(false);
-    if (category === "Fatura do Cartão") {
-      setDescription("Fatura do Cartão");
-    } else if (DESCRIPTION_SUGGESTIONS[category] && !DESCRIPTION_SUGGESTIONS[category].includes(description)) {
-      setDescription('');
-    }
   }, [category]);
 
   useEffect(() => {
     if (currentInstallment > totalInstallments) setCurrentInstallment(1);
   }, [totalInstallments, currentInstallment]);
 
-  // --- HANDLERS ---
+  // Bank handlers
   const handleBankChange = (val: string) => {
     if (val === 'other_custom_option') { setIsCustomBankMode(true); setBank(''); } 
     else { setIsCustomBankMode(false); setBank(val); }
@@ -261,21 +249,18 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Definição clara dos erros
     const hasCategoryError = !category;
-    // O valor é erro se for vazio ou se for 0/negativo
+    const hasSubcategoryError = !subcategory;
     const parsedAmount = parseCurrencyToNumber(amount);
     const hasAmountError = !amount || parsedAmount <= 0 || parsedAmount > MAX_AMOUNT;
-    const hasDescriptionError = type === 'expense' && category !== "Fatura do Cartão" && !description;
 
     const newErrors = {
         category: hasCategoryError,
-        amount: hasAmountError,
-        description: hasDescriptionError
+        subcategory: hasSubcategoryError,
+        amount: hasAmountError
     };
 
-    // 2. Bloqueia se houver erro
-    if (hasCategoryError || hasAmountError || hasDescriptionError) {
+    if (hasCategoryError || hasSubcategoryError || hasAmountError) {
         setErrors(newErrors);
         toast.error("Preencha os campos obrigatórios em vermelho.");
         return;
@@ -283,11 +268,12 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
 
     try {
       setIsSubmitting(true);
-      const finalDescription = category === "Fatura do Cartão" ? "Fatura do Cartão" : description;
       
       const payload: Transaction = {
         id: initialData?.id,
-        type, category, description: finalDescription, amount: parsedAmount,
+        type, category, subcategory,
+        description: description || '',
+        amount: parsedAmount,
         date: initialData?.date || new Date().toISOString().split('T')[0],
         due_date: showDueDateField && dueDate ? dueDate : undefined,
         payment_method: showPaymentField ? (paymentMethod as PaymentMethod) : undefined,
@@ -300,11 +286,12 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
       await onAddTransaction(payload);
       
       if (!initialData) {
-        setCategory(''); // FIX BUG DE RESET
-        if (category !== "Fatura do Cartão") setDescription('');
+        setCategory('');
+        setSubcategory('');
+        setDescription('');
         setAmount(''); setPaymentMethod(''); setBank(''); setDueDate('');
         setIsInstallment(false); setTotalInstallments(1); setCurrentInstallment(1); setIsCustomBankMode(false);
-        setErrors({ category: false, description: false, amount: false });
+        setErrors({ category: false, subcategory: false, amount: false });
       }
     } catch (error) { console.error(error); } 
     finally { setIsSubmitting(false); }
@@ -317,11 +304,10 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }, [amount, totalInstallments]);
 
-  // Função de estilo Agressiva para Erros (Usa ring para forçar visibilidade)
   const getInputClass = (hasError: boolean) => 
     `w-full h-11 px-3 border rounded-lg focus:outline-none transition-all ${
         hasError 
-        ? 'border-red-500 bg-red-50 dark:bg-red-950/20 text-red-900 dark:text-red-200 placeholder-red-400 ring-1 ring-red-500' // Ring força a borda vermelha
+        ? 'border-red-500 bg-red-50 dark:bg-red-950/20 text-red-900 dark:text-red-200 placeholder-red-400 ring-1 ring-red-500'
         : 'border-slate-200 dark:border-slate-700 focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200'
     }`;
 
@@ -346,7 +332,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
       </div>
       
       <div className="flex flex-col gap-5">
-        {/* LINHA 1 */}
+        {/* LINHA 1: Categoria + Subcategoria + Valor */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
           
           <div className="md:col-span-3">
@@ -360,52 +346,46 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
               className={getInputClass(errors.category)}
             >
               <option value="" className="dark:bg-slate-900">Selecione...</option>
-              {CATEGORIES[type].map(cat => (<option key={cat} value={cat} className="dark:bg-slate-900">{cat}</option>))}
+              {availableCategories.map(cat => (<option key={cat.name} value={cat.name} className="dark:bg-slate-900">{cat.name}</option>))}
             </select>
           </div>
 
-          <div className="md:col-span-5">
-            <div className="flex justify-between items-center mb-1.5 ml-1">
-              <label className={`block text-xs font-bold uppercase ${errors.description ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>
-                  Descrição {type === 'expense' && category !== "Fatura do Cartão" ? "*" : ""}
-              </label>
-              {!hasDescriptionOptions && category !== "Fatura do Cartão" && (
-                <span className={`text-[10px] font-medium ${description.length >= 90 ? 'text-orange-500 font-bold' : 'text-slate-400 dark:text-slate-500'}`}>
-                  {description.length}/100
-                </span>
-              )}
-            </div>
-            {hasDescriptionOptions ? (
-              <div className="relative">
-                <select 
-                  value={description} 
-                  onChange={(e) => {
-                    setDescription(e.target.value);
-                    if(e.target.value) setErrors(prev => ({...prev, description: false}));
-                  }} 
-                  disabled={!category}
-                  className={getInputClass(errors.description)}
-                >
-                  <option value="">{category ? "Selecione..." : "Escolha a categoria"}</option>
-                  {descriptionOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                </select>
-              </div>
-            ) : (
-              <input 
-                value={description} 
-                onChange={(e) => {
-                    setDescription(e.target.value);
-                    if(e.target.value) setErrors(prev => ({...prev, description: false}));
-                }}
-                disabled={(!category && type === 'expense') || category === "Fatura do Cartão"}
-                maxLength={100}
-                className={`${getInputClass(errors.description)} disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:border-slate-200 dark:disabled:border-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600`}
-                placeholder={category === "Fatura do Cartão" ? "Automático" : (type === 'income' ? "Opcional" : "Ex: Supermercado")} 
-              />
-            )}
+          <div className="md:col-span-3">
+            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.subcategory ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Subcategoria *</label>
+            <select 
+              value={subcategory} 
+              onChange={(e) => {
+                  setSubcategory(e.target.value);
+                  if(e.target.value) setErrors(prev => ({...prev, subcategory: false}));
+              }}
+              disabled={!category}
+              className={`${getInputClass(errors.subcategory)} disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:border-slate-200 dark:disabled:border-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600`}
+            >
+              <option value="" className="dark:bg-slate-900">{category ? "Selecione..." : "Escolha a categoria"}</option>
+              {availableSubcategories.map(sub => (<option key={sub} value={sub} className="dark:bg-slate-900">{sub}</option>))}
+            </select>
           </div>
 
-          <div className="md:col-span-4 relative">
+          <div className="md:col-span-3">
+            <div className="flex justify-between items-center mb-1.5 ml-1">
+              <label className="block text-xs font-bold uppercase text-[#2C6B74] dark:text-teal-400">
+                  Descrição
+              </label>
+              <span className={`text-[10px] font-medium ${description.length >= 90 ? 'text-orange-500 font-bold' : 'text-slate-400 dark:text-slate-500'}`}>
+                {description.length}/100
+              </span>
+            </div>
+            <input 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={!category}
+              maxLength={100}
+              className={`${getInputClass(false)} disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:border-slate-200 dark:disabled:border-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600`}
+              placeholder="Opcional — detalhe aqui" 
+            />
+          </div>
+
+          <div className="md:col-span-3 relative">
             <div className="flex items-center gap-1.5 mb-1.5 ml-1">
               <label className={`block text-xs font-bold uppercase ${errors.amount ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Valor Total (R$) *</label>
               {showTotalValueWarning && (
@@ -489,7 +469,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
                 <input type="checkbox" id="installments" checked={isInstallment} onChange={(e) => setIsInstallment(e.target.checked)}
                   className="w-5 h-5 accent-[#F23E02] rounded cursor-pointer" />
                 <label htmlFor="installments" className="text-sm font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none">
-                  {category === "Empréstimo" ? "Empréstimo Parcelado?" : "Compra Parcelada?"}
+                  Compra Parcelada?
                 </label>
               </div>
 
@@ -532,7 +512,6 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
             </button>
           )}
 
-          {/* O disabled agora é apenas para quando está carregando, para permitir o clique e a validação */}
           <button type="submit" disabled={isSubmitting}
             className={`text-white font-bold py-3 px-8 rounded-xl flex items-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95 disabled:bg-slate-300 disabled:cursor-not-allowed ${initialData ? 'bg-orange-500 hover:bg-orange-600' : 'bg-[#F23E02] hover:bg-[#d93602]'}`}>
             {isSubmitting ? 'Processando...' : initialData ? <><Save size={20} /> Salvar Edição</> : <><Plus size={20} /> Adicionar</>}

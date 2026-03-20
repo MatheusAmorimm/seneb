@@ -36,10 +36,16 @@ async def get_draft_transactions(
     current_user = Depends(get_current_user)
 ):
     if report_id:
-        # 🚀 MODO REABERTO: Busca tudo desse lote, ignorando se a chave existe ou não
+        # 🚀 MODO REABERTO: Busca itens do lote reaberto + itens "soltos" (drafts normais)
         query = {
             "user_id": str(current_user.id),
-            "report_id": report_id
+            "status": "draft",
+            "$or": [
+                {"report_id": report_id},
+                {"report_id": None}, 
+                {"report_id": ""}, 
+                {"report_id": {"$exists": False}}
+            ]
         }
     else:
         # 🚀 MODO NORMAL: Busca estritamente rascunhos sem vínculo (Blindado contra chaves inexistentes)
@@ -135,7 +141,13 @@ async def finalize_planning(
     if request.reopened_report_id:
         query_drafts = {
             "user_id": str(current_user.id),
-            "report_id": request.reopened_report_id
+            "status": "draft",
+            "$or": [
+                {"report_id": request.reopened_report_id},
+                {"report_id": None}, 
+                {"report_id": ""}, 
+                {"report_id": {"$exists": False}}
+            ]
         }
     else:
         query_drafts = {

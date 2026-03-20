@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileSearch, Calendar, ChevronRight, FileText, Trash2, ArrowLeft, Download, Eye, RefreshCcw, UnlockKeyhole, AlertTriangle, X, RotateCcw, User } from 'lucide-react'; // Novos ícones
@@ -13,6 +13,18 @@ import { BalanceCard } from "../../../../components/balance_card";
 import { useReports } from "../../../../hooks/use_reports"; 
 
 export default function HistoricoPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00988D]"></div>
+      </div>
+    }>
+      <HistoricoContent />
+    </Suspense>
+  );
+}
+
+function HistoricoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reportId = searchParams.get("id");
@@ -120,7 +132,14 @@ export default function HistoricoPage() {
           Você ainda não fechou nenhum mês. Vá em &quot;Lançamentos&quot; e finalize seu planejamento.
         </p>
         <button 
-          onClick={() => router.push('/lancamentos')}
+          onClick={() => {
+            const activeReopenedId = sessionStorage.getItem('seneb_active_reopened_id');
+            if (activeReopenedId) {
+              router.push(`/lancamentos?reopenedId=${activeReopenedId}`);
+            } else {
+              router.push('/lancamentos');
+            }
+          }}
           className="bg-[#00988D] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#007f76] transition-colors cursor-pointer"
         >
           Ir para Lançamentos
@@ -166,7 +185,7 @@ export default function HistoricoPage() {
 
         {currentReport && (
           <button 
-            onClick={handleRequestReopen} // Agora abre o modal
+            onClick={handleRequestReopen} 
             className="h-fit w-fit bg-[#F23E02] hover:bg-[#d93602] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
             title="Voltar itens para edição"
           >

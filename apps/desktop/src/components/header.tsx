@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, DollarSign, User } from "lucide-react";
+import { Menu, DollarSign, User, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 interface HeaderProps {
@@ -8,6 +8,21 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const handleLinkClick = (e: React.MouseEvent, href: string) => {
+    const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+    if (isLocked && !href.startsWith('/lancamentos')) {
+      e.preventDefault();
+      import('sonner').then(({ toast }) => {
+        toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+          duration: 5000,
+          icon: <AlertTriangle className="text-red-500" />
+        });
+      });
+      return;
+    }
+    // If not locked, allow navigation (if using buttons, we'd router.push here)
+  };
+
   return (
     <header 
       className="text-white p-4 shadow-lg flex items-center justify-between sticky top-0 z-40" 
@@ -16,7 +31,20 @@ export function Header({ onMenuClick }: HeaderProps) {
       <div className="flex items-center gap-4">
         {/* Botão Hambúrguer */}
         <button 
-          onClick={onMenuClick}
+          onClick={(e) => {
+            const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+            if (isLocked) {
+              e.preventDefault();
+              import('sonner').then(({ toast }) => {
+                toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                  duration: 5000,
+                  icon: <AlertTriangle className="text-red-500" />
+                });
+              });
+              return;
+            }
+            onMenuClick();
+          }}
           className="p-2 rounded-lg transition-colors hover:bg-white/10 active:bg-white/20"
         >
           <Menu className="w-6 h-6" />
@@ -25,6 +53,7 @@ export function Header({ onMenuClick }: HeaderProps) {
          {/* Logo e Título (Clicável para Home) */}
         <Link 
           href="/"
+          onClick={(e) => handleLinkClick(e, '/')}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-white no-underline"
         >
           <div className="bg-white/10 p-2 rounded-full">
@@ -39,6 +68,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       {/* Botão Perfil - No Header para maior visibilidade */}
       <Link 
         href="/perfil/"
+        onClick={(e) => handleLinkClick(e, '/perfil/')}
         className="p-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center gap-2 group cursor-pointer text-white no-underline"
         title="Meu Perfil"
       >
