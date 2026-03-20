@@ -67,8 +67,8 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       {/* Botão Perfil - No Header para maior visibilidade */}
       <Link 
-        href="/perfil/"
-        onClick={(e) => handleLinkClick(e, '/perfil/')}
+        href="/perfil"
+        onClick={(e) => handleLinkClick(e, '/perfil')}
         className="p-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center gap-2 group cursor-pointer text-white no-underline"
         title="Meu Perfil"
       >

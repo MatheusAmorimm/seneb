@@ -328,22 +328,29 @@ export default function LandingPage() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
                   <div>
-                    <div className="text-slate-800 font-semibold">Auto Update</div>
-                    <div className="text-sm text-slate-500">App atualiza sozinho no seu computador</div>
+                    <div className="text-slate-800 font-semibold">v0.2.8 - Temas, Categorias & Melhorias UI</div>
+                    <div className="text-sm text-slate-500">Adicionados novos temas (Claro e Escuro), mais categorias de controle de gastos, animações fluidas na atualização do desktop e correções de navegação.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
                   <div>
-                    <div className="text-slate-800 font-semibold">v1.0.0 - Interface inicial</div>
-                    <div className="text-sm text-slate-500">Lançamento com funcionalidades essenciais</div>
+                    <div className="text-slate-800 font-semibold">v0.2.7 - Auto Update</div>
+                    <div className="text-sm text-slate-500">App atualiza sozinho no seu computador sem que você precise baixar manualmente.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
                   <div>
                     <div className="text-slate-800 font-semibold">Sistema de histórico por mês</div>
-                    <div className="text-sm text-slate-500">Navegue pelas transações de cada mês</div>
+                    <div className="text-sm text-slate-500">Navegue pelas transações de cada mês, reabra meses encerrados com toda segurança.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <div>
+                    <div className="text-slate-800 font-semibold">Lançamento Inicial</div>
+                    <div className="text-sm text-slate-500">Lançamento com funcionalidades essenciais (Painel de Controle, Receitas e Despesas).</div>
                   </div>
                 </div>
               </div>
