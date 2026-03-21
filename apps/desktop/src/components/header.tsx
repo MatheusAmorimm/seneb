@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, DollarSign, User, AlertTriangle } from "lucide-react";
+import { Menu, DollarSign, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 interface HeaderProps {
@@ -65,18 +65,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </Link>
       </div>
 
-      {/* Botão Perfil - No Header para maior visibilidade */}
-      <Link 
-        href="/perfil"
-        onClick={(e) => handleLinkClick(e, '/perfil')}
-        className="p-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center gap-2 group cursor-pointer text-white no-underline"
-        title="Meu Perfil"
-      >
-        <span className="text-xs font-bold uppercase tracking-wider hidden md:block">Meu Perfil</span>
-        <div className="bg-white/20 p-1.5 rounded-lg group-hover:bg-[#00988D] transition-colors">
-          <User className="w-4 h-4 text-white" />
-        </div>
-      </Link>
+
     </header>
   );
 }
