@@ -10,7 +10,7 @@ interface TransactionListProps {
 
 export function TransactionList({ transactions, onDeleteTransaction, onEditTransaction }: TransactionListProps) {
   const { theme } = useTheme();
-  
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -51,13 +51,14 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
       <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
         <h2 className="text-lg font-bold font-serif text-[#013750] dark:text-slate-100">Histórico Recente</h2>
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-slate-50 dark:bg-slate-900/80">
             <tr>
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Data</th>
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Categoria</th>
+              <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Sub Categoria</th>
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Descrição</th>
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Tipo</th>
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Valor</th>
@@ -89,19 +90,26 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
 
                 return (
                   <tr key={transaction.id} className="group transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-900/40">
-                    
+
                     {/* 1. DATA */}
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                       <div className="flex items-center gap-1.5">
-                          <Calendar size={13} className="text-slate-300 dark:text-slate-600" />
-                          {formatDate(transaction.date)}
-                       </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar size={13} className="text-slate-300 dark:text-slate-600" />
+                        {formatDate(transaction.date)}
+                      </div>
                     </td>
 
                     {/* 2. CATEGORIA */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span className="px-2 py-1 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                         {transaction.category}
+                      </span>
+                    </td>
+
+                    {/* 2. SUBCATEGORIA */}
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        {transaction.subcategory}
                       </span>
                     </td>
 
@@ -112,11 +120,10 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
 
                     {/* 4. TIPO */}
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                        transaction.type === 'income' 
-                          ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400' 
-                          : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400'
-                      }`}>
+                      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${transaction.type === 'income'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400'
+                        }`}>
                         {transaction.type === 'income' ? <ArrowUpCircle size={13} /> : <ArrowDownCircle size={13} />}
                         {transaction.type === 'income' ? 'Receita' : 'Despesa'}
                       </div>
@@ -140,11 +147,10 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
                     {/* 6. PAGAMENTO */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       {transaction.type === 'expense' && transaction.payment_method ? (
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ${
-                          theme === 'dark' 
-                            ? `border-slate-700 ${Payment.bg} ${Payment.color} shadow-[0_0_10px_rgba(0,0,0,0.2)]` 
-                            : `border-transparent ${Payment.bg} ${Payment.color}`
-                        }`}>
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ${theme === 'dark'
+                          ? `border-slate-700 ${Payment.bg} ${Payment.color} shadow-[0_0_10px_rgba(0,0,0,0.2)]`
+                          : `border-transparent ${Payment.bg} ${Payment.color}`
+                          }`}>
                           <PaymentIcon size={12} strokeWidth={2.5} />
                           {Payment.label}
                         </div>
@@ -179,30 +185,30 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
 
                     {/* 9. VENCIMENTO */}
                     <td className="px-4 py-4 whitespace-nowrap">
-                        {transaction.due_date ? (
-                           <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400 font-medium">
-                              <CalendarClock size={13} />
-                              {formatDate(transaction.due_date)}
-                           </div>
-                        ) : (
-                           <span className="text-slate-300 dark:text-slate-600 text-xs pl-2">-</span>
-                        )}
+                      {transaction.due_date ? (
+                        <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400 font-medium">
+                          <CalendarClock size={13} />
+                          {formatDate(transaction.due_date)}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300 dark:text-slate-600 text-xs pl-2">-</span>
+                      )}
                     </td>
 
                     {/* 10. AÇÕES */}
                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-0.5">
                         {onEditTransaction && (
-                          <button 
-                            onClick={() => onEditTransaction(transaction)} 
+                          <button
+                            onClick={() => onEditTransaction(transaction)}
                             className="text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30"
                             title="Editar"
                           >
                             <Pencil size={16} />
                           </button>
                         )}
-                        <button 
-                          onClick={() => transaction.id && onDeleteTransaction(transaction.id)} 
+                        <button
+                          onClick={() => transaction.id && onDeleteTransaction(transaction.id)}
                           className="text-slate-300 dark:text-slate-600 hover:text-[#F23E02] dark:hover:text-orange-400 transition-colors p-1.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/30"
                           title="Excluir"
                         >
