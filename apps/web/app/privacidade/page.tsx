@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 
@@ -45,9 +44,9 @@ export default function PrivacyPolicyPage() {
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
               <p className="mb-2">O controlador dos dados pessoais é o responsável legal pela plataforma Seneb.</p>
               <div className="mt-4 space-y-2">
-                <p><strong>Responsável:</strong> [nome ou empresa]</p>
-                <p><strong>Email:</strong> [email de privacidade]</p>
-                <p><strong>Endereço:</strong> [cidade/estado]</p>
+                <p><strong>Responsável:</strong> TechCAmorim</p>
+                <p><strong>Email:</strong> suporte@seneb.com.br</p>
+                <p><strong>Endereço:</strong> São Paulo-SP</p>
               </div>
             </div>
           </section>

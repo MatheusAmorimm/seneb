@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
 
@@ -145,7 +144,7 @@ export default function TermsPage() {
               <span className="bg-[#013750] text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">9</span>
               Legislação aplicável e foro
             </h2>
-            <p>Este termo é regido pelas leis da República Federativa do Brasil. Fica eleito o foro da comarca de [cidade/estado], com renúncia de qualquer outro, por mais privilegiado que seja.</p>
+            <p>Este termo é regido pelas leis da República Federativa do Brasil. Fica eleito o foro da comarca de São Paulo - SP, com renúncia de qualquer outro, por mais privilegiado que seja.</p>
           </section>
         </div>
       </main>
