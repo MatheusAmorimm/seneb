@@ -1,0 +1,11 @@
+﻿{
+    "platforms":  {
+                      "windows-x86_64":  {
+                                             "signature":  "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTZnltOG9QdFEvV0tLakQ1TStsVVUrTXR0NnQ4QWJQSW44V21lamdON0JzSjZJSlg0UEdXUXZhRStCWjU5eTcrYytiL1pEbjVxaUJFZGVRTVQ1MkUvZ2pzaDNIWGhOMndJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc0OTMzNzEzCWZpbGU6U2VuZWJfMC4yLjEzX3g2NF9lbi1VUy5tc2kKbS9NU0RtZ0VlcldycUMrUXN6S3FkN0NEM2FpZDU3RUxuck1WVk5EUSsxa1lPRHVyaVBkclJPNE5FRlFmZzhwVFg0R0JoYWYraWVCWHV6d3doVzBIQVE9PQo=",
+                                             "url":  "https://seneb.com.br/Seneb-Setup.msi"
+                                         }
+                  },
+    "pub_date":  "2026-03-31T05:08:34Z",
+    "version":  "v0.2.13",
+    "notes":  "Nova vers├úo dispon├¡vel"
+}

@@ -41,7 +41,10 @@ build_tauri:
           }
         }
       }
-      $UpdateData | ConvertTo-Json -Depth 10 | Out-File -FilePath "update.json" -Encoding utf8
+      $jsonContent = $UpdateData | ConvertTo-Json -Depth 10
+      $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+      $outPath = Join-Path (Get-Location) "update.json"
+      [System.IO.File]::WriteAllText($outPath, $jsonContent, $utf8NoBom)
       
   artifacts:
     paths:
