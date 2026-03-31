@@ -229,7 +229,7 @@ export default function LoginPage() {
 
               <div className="text-center">
                 <span className="text-slate-600 dark:text-slate-400">Não tem uma conta? </span>
-                <Link href="/cadastro/" className="transition-colors" style={{ color: '#F23E02' }}><strong>Criar conta</strong></Link>
+                <button type="button" onClick={() => router.push('/cadastro/')} className="transition-colors cursor-pointer" style={{ color: '#F23E02' }}><strong>Criar conta</strong></button>
               </div>
             </form>
           </div>

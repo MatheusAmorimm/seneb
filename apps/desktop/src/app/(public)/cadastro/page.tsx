@@ -9,7 +9,10 @@ import { toast } from 'sonner';
 import { setStorageItem } from '@/src/lib/storage';
 import { open } from '@tauri-apps/plugin-shell';
 
+import { useRouter } from 'next/navigation';
+
 export default function CadastroPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   // Controle de Etapas: 1 = Cadastro, 2 = Código
@@ -270,7 +273,7 @@ export default function CadastroPage() {
 
                 <div className="text-center">
                   <span className="text-slate-600">Já tem uma conta? </span>
-                  <Link href="/login/" className="transition-colors font-bold hover:underline" style={{ color: '#F23E02' }}>Fazer login</Link>
+                  <button type="button" onClick={() => router.push('/login/')} className="transition-colors font-bold hover:underline cursor-pointer" style={{ color: '#F23E02' }}>Fazer login</button>
                 </div>
               </form>
             )}
