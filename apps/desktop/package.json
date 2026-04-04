@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
-    "@tauri-apps/api": "^2.0.0-rc.3",
+    "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-store": "^2.4.2",
