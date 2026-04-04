@@ -12,6 +12,7 @@ build_tauri:
     - cd apps/desktop
     - npm install
   script:
+    - $env:Path += ";C:\Users\Administrador\.cargo\bin"
     - if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { Write-Error "🚨 A variável da chave ta vazia no Runner!"; exit 1 }
     - Write-Host "✅ A chave chegou no Windows e tem $($env:TAURI_SIGNING_PRIVATE_KEY.Length) caracteres."
     - $env:NEXT_PUBLIC_API_URL = "https://api.seneb.com.br/api/v1"
