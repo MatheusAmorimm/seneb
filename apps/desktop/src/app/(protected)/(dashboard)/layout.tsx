@@ -5,6 +5,7 @@ import { Sidebar } from "../../../components/sidebar";
 import { Header } from "../../../components/header";
 import { useTheme } from "../../../components/theme_provider";
 import { usePathname } from "next/navigation";
+import { InvitePopup } from "../../../components/invite_popup";
 
 export default function DashboardLayout({
   children,
@@ -32,6 +33,8 @@ export default function DashboardLayout({
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
       />
+
+      <InvitePopup />
 
       {/* Conteúdo Principal */}
       <main className="flex-1 p-4 md:p-8">

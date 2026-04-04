@@ -2,6 +2,7 @@
 
 import { Menu, DollarSign, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { NotificationBell } from "./notification_bell";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -63,6 +64,10 @@ export function Header({ onMenuClick }: HeaderProps) {
             Seneb<span className="text-[#F23E02]">.</span>
           </h1>
         </Link>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <NotificationBell />
       </div>
     </header>
   );

@@ -328,6 +328,13 @@ export default function LandingPage() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
                   <div>
+                    <div className="text-slate-800 font-semibold">v0.2.18 - Notificações Inteligentes e Grupos Compartilhados (04/04/2026)</div>
+                    <div className="text-sm text-slate-500">Adicionada a central de convites com Sininho de notificações, Modais auto-injetados para aceitar ou recusar convidados e correção do Dark Mode nas páginas de Recuperação de Senha.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <div>
                     <div className="text-slate-800 font-semibold">v0.2.8 - Temas, Categorias & Melhorias UI</div>
                     <div className="text-sm text-slate-500">Adicionados novos temas (Claro e Escuro), mais categorias de controle de gastos, animações fluidas na atualização do desktop e correções de navegação.</div>
                   </div>

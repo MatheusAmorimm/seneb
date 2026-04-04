@@ -32,7 +32,7 @@ export default function LancamentosPage() {
 function LancamentosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isGuestActive } = useWorkspaceContext();
+  const { isGuestActive, activeGroupId } = useWorkspaceContext();
   
   // 🚀 2. Corrigido de 'report_id' para 'reopenedId' (como vem da tela de Histórico)
   const editingReportId = searchParams.get('reopenedId'); 
@@ -73,7 +73,7 @@ function LancamentosContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [editingReportId]); // Recarrega se o ID da URL mudar
+  }, [editingReportId, activeGroupId]); // Recarrega se o ID da URL mudar ou o Grupo Ativo mudar
 
   // 🚀 4. useEffect agora escuta a função
   useEffect(() => {

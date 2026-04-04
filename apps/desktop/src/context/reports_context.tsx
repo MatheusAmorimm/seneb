@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { usePathname } from "next/navigation";
 import api from "../services/api";
 import { Report } from "../types";
+import { useWorkspaceContext } from "./workspace_context";
 
 interface ReportsContextType {
   reports: Report[];
@@ -17,6 +18,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
+  const { activeGroupId } = useWorkspaceContext();
 
   // 1. A função volta a ser "pura": Se for chamada, ela busca.
   const refreshReports = useCallback(async () => {
@@ -42,7 +44,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     }
     // Se FOR rota pública, não faz nada (evita o erro 401 na tela de login)
     
-  }, [pathname, refreshReports]);
+  }, [pathname, activeGroupId, refreshReports]);
 
   return (
     <ReportsContext.Provider value={{ reports, isLoading, refreshReports }}>

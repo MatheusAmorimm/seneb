@@ -12,6 +12,9 @@ logger = logging.getLogger("uvicorn")
 async def lifespan(app: FastAPI):
     logger.info("Iniciando conexão com MongoDB...")
     await db.connect_to_mongo()
+    
+    # TTL Index: Deleta notificações com mais de 7 dias (604800 segundos) automaticamente
+    await db.db.notifications.create_index("created_at", expireAfterSeconds=604800)
     yield
     logger.info("Fechando conexão com MongoDB...")
     await db.close_mongo_connection()

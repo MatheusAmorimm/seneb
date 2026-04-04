@@ -73,16 +73,21 @@ async def invite_member(group_id: str, invite: GroupInvite, current_user = Depen
     if any(m["user_id"] == invited_user_id for m in group.get("members", [])):
         raise HTTPException(status_code=400, detail="Usuário já está no grupo.")
         
-    new_member = {
+    # Instancia a Notificação ao invés de adicionar diretamente
+    new_notification = {
         "user_id": invited_user_id,
-        "role": invite.role,
-        "joined_at": datetime.now(timezone.utc)
+        "title": "Novo Convite de Grupo",
+        "message": f"Você foi convidado para participar do grupo '{group.get('name', 'Desconhecido')}'.",
+        "type": "group_invite",
+        "read": False,
+        "meta_data": {
+            "group_id": str(group_obj_id),
+            "role": invite.role
+        },
+        "created_at": datetime.now(timezone.utc)
     }
     
-    await db.db.groups.update_one(
-        {"_id": group_obj_id},
-        {"$push": {"members": new_member}}
-    )
+    await db.db.notifications.insert_one(new_notification)
     
     # ======= DISPARO DE EMAIL (MOCK/STUB) =======
     # TODO: Integrar com SMTP Real (ex: SendGrid, Resend, SMTPlib padrão do python)

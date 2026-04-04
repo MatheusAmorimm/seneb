@@ -113,7 +113,7 @@ export default function RecuperarSenhaPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
 
       <div className="w-112.5">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl overflow-hidden border border-transparent dark:border-slate-800">
 
           <div className="p-8 text-center" style={{ background: 'linear-gradient(to right, #013750, #2C6B74)' }}>
             <div className="flex justify-center mb-4">
@@ -131,12 +131,12 @@ export default function RecuperarSenhaPage() {
             {step === 1 && (
               <form onSubmit={handleSendCode} className="space-y-6">
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">E-MAIL <span className="text-red-500">*</span></label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-200 font-medium text-sm">E-MAIL <span className="text-red-500">*</span></label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                    className="w-full pr-4 py-3 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                     style={{ paddingLeft: '20px' }}
                     placeholder="seu@email.com"
                     required
@@ -154,7 +154,7 @@ export default function RecuperarSenhaPage() {
                 </button>
 
                 <div className="text-center">
-                  <button type="button" onClick={() => window.location.href = '/login'} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">
+                  <button type="button" onClick={() => window.location.href = '/login'} className="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer">
                     <ArrowLeft size={14} /> Voltar para o login
                   </button>
                 </div>
@@ -165,14 +165,14 @@ export default function RecuperarSenhaPage() {
             {step === 2 && (
               <form onSubmit={handleVerifyCode} className="space-y-6">
                 <div className="text-center">
-                  <p className="text-slate-600 mb-4">Insira o código de 8 dígitos enviado para <strong>{email}</strong>.</p>
+                  <p className="text-slate-600 dark:text-slate-300 mb-4">Insira o código de 8 dígitos enviado para <strong className="dark:text-slate-100">{email}</strong>.</p>
 
                   <input
                     type="text"
                     maxLength={8}
                     value={inputCode}
                     onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                    className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                     placeholder="0000-0000"
                     autoFocus
                   />
@@ -191,7 +191,7 @@ export default function RecuperarSenhaPage() {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-sm text-slate-500 hover:text-slate-800 underline"
+                    className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline"
                   >
                     Voltar e corrigir e-mail
                   </button>
@@ -203,12 +203,12 @@ export default function RecuperarSenhaPage() {
             {step === 3 && (
               <form onSubmit={handleResetPassword} className="space-y-6">
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">NOVA SENHA <span className="text-red-500">*</span></label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-200 font-medium text-sm">NOVA SENHA <span className="text-red-500">*</span></label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                    className="w-full pr-12 py-3 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                     style={{ paddingLeft: '20px' }}
                     placeholder="Mínimo 8 caracteres"
                     autoFocus
@@ -216,12 +216,12 @@ export default function RecuperarSenhaPage() {
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">CONFIRMAR NOVA SENHA <span className="text-red-500">*</span></label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-200 font-medium text-sm">CONFIRMAR NOVA SENHA <span className="text-red-500">*</span></label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                    className="w-full pr-12 py-3 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                     style={{ paddingLeft: '20px' }}
                     placeholder="Digite a senha novamente"
                   />
@@ -240,7 +240,7 @@ export default function RecuperarSenhaPage() {
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="text-sm text-slate-500 hover:text-slate-800 underline"
+                    className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline"
                   >
                     Voltar e corrigir código
                   </button>
