@@ -3,7 +3,8 @@ from pydantic import EmailStr, SecretStr
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv("backend/.env.dev")
+load_dotenv("backend/.env", override=True)
 
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME", ""),

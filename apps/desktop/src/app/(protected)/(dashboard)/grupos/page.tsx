@@ -5,11 +5,13 @@ import { Users, Plus, Mail, ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import api from "../../../../services/api";
 import { useWorkspaceContext } from "../../../../context/workspace_context";
 
 export default function GruposPage() {
-  const { groups, isLoadingGroups, refreshGroups } = useWorkspaceContext();
+  const router = useRouter();
+  const { groups, isLoadingGroups, refreshGroups, setActiveGroupId } = useWorkspaceContext();
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
@@ -34,11 +36,16 @@ export default function GruposPage() {
     
     setIsCreating(true);
     try {
-      await api.post("/groups", { name: newGroupName });
+      const resp = await api.post("/groups", { name: newGroupName });
       toast.success("Grupo criado com sucesso!");
       setShowCreateModal(false);
       setNewGroupName("");
+      
       await refreshGroups();
+      
+      // Auto-redirect para Lancamentos
+      setActiveGroupId(resp.data.id);
+      router.push("/lancamentos");
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

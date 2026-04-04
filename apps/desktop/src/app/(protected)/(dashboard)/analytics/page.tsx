@@ -2,11 +2,17 @@
 
 import { Crown, Lock, Globe, Zap, BarChart3, LineChart, Target, ArrowLeft, TrendingUp, PieChart, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { WorkspaceTabs } from "../../../../components/workspace_tabs";
 
 export default function AnalyticsPage() {
   const router = useRouter();
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-8 py-12 relative animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex flex-col items-center justify-start min-h-[80vh] text-center p-8 py-12 relative animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      <div className="w-full max-w-5xl self-start mb-8 text-left">
+        <WorkspaceTabs />
+      </div>
+
       {/* Botão de Voltar */}
       <div className="absolute top-4 left-4 flex gap-2">
         <button 

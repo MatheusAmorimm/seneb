@@ -11,6 +11,7 @@ import { TransactionList } from "../../../../components/transaction_list";
 import { TransactionFilters } from "../../../../components/transaction_filters";
 import { BalanceCard } from "../../../../components/balance_card";
 import { useReports } from "../../../../hooks/use_reports"; 
+import { WorkspaceTabs } from "../../../../components/workspace_tabs";
 
 export default function HistoricoPage() {
   return (
@@ -161,7 +162,7 @@ function HistoricoContent() {
 
   return (
     <div className="space-y-8 pb-10 relative">
-      
+      <WorkspaceTabs />
       {/* CABEÇALHO */}
       <div className="flex items-end justify-between mb-6 animate-in slide-in-from-top-4">
         <div className="flex flex-col gap-1">

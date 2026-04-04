@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Finance Control SaaS"
 
-    # Variáveis Obrigatórias (Se não tiver no .env, o app não liga)
+    # Variáveis Obrigatórias (Se não tiver no .env nem no .env.dev, o app não liga)
     MONGO_URI: str = ""
     SECRET_KEY: str = ""
 
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Configuração da Classe (A mágica acontece aqui)
     model_config = SettingsConfigDict(
-        env_file=".env", extra="ignore", case_sensitive=True
+        env_file=("backend/.env.dev", "backend/.env", ".env"), extra="ignore", case_sensitive=True
     )
 
 

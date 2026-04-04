@@ -15,6 +15,7 @@ import { useReports } from "../../../../hooks/use_reports";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calculator } from "../../../../components/calculator";
 import { useWorkspaceContext } from "../../../../context/workspace_context";
+import { WorkspaceTabs } from "../../../../components/workspace_tabs";
 
 export default function LancamentosPage() {
   return (
@@ -342,6 +343,9 @@ function LancamentosContent() {
           </div>
         </div>
       )}
+
+      {/* Tabs Menu */}
+      <WorkspaceTabs />
 
       {/* Header com Nome do Relatório Reaberto */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top-4">

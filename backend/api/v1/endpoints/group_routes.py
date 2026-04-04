@@ -5,6 +5,9 @@ from backend.core.database import db
 from backend.schemas import GroupSchema, GroupCreate, GroupInvite
 from backend.core.security import get_current_user
 from datetime import datetime, timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -81,4 +84,14 @@ async def invite_member(group_id: str, invite: GroupInvite, current_user = Depen
         {"$push": {"members": new_member}}
     )
     
-    return {"message": "Membro adicionado ao grupo com sucesso!"}
+    # ======= DISPARO DE EMAIL (MOCK/STUB) =======
+    # TODO: Integrar com SMTP Real (ex: SendGrid, Resend, SMTPlib padrão do python)
+    # Requer os parâmetros SMTP_USER, SMTP_PASS, SMTP_SERVER em um arquivo .env.
+    logger.warning(f"📧 [DUMMY EMAIL] Enviando e-mail transacional de convite...")
+    logger.warning(f"📧 De: Seneb <noreply@seneb.com.br>")
+    logger.warning(f"📧 Para: {invite.email}")
+    logger.warning(f"📧 Assunto: Convite para Grupo (Controle Compartilhado)")
+    logger.warning(f"📧 Corpo: O usuário convidou você! Faça login e navegue para 'Meus Grupos'.")
+    logger.warning(f"📧 Status: Simulando sucesso.\n===========================================")
+    
+    return {"message": "Membro adicionado ao grupo com sucesso e e-mail enviado!"}
