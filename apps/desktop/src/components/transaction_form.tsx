@@ -304,6 +304,12 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }, [amount, totalInstallments]);
 
+  const installmentLabel = useMemo(() => {
+    if (subcategory === "Empréstimo") return "Empréstimo Parcelado?";
+    if (subcategory === "Fatura do Cartão") return "Fatura Parcelada?";
+    return "Compra Parcelada?";
+  }, [subcategory]);
+
   const getInputClass = (hasError: boolean) => 
     `w-full h-11 px-3 border rounded-lg focus:outline-none transition-all ${
         hasError 
@@ -469,7 +475,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
                 <input type="checkbox" id="installments" checked={isInstallment} onChange={(e) => setIsInstallment(e.target.checked)}
                   className="w-5 h-5 accent-[#F23E02] rounded cursor-pointer" />
                 <label htmlFor="installments" className="text-sm font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none">
-                  Compra Parcelada?
+                  {installmentLabel}
                 </label>
               </div>
 

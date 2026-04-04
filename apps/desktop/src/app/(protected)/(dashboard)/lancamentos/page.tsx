@@ -130,10 +130,30 @@ function LancamentosContent() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('click', handleClickCapture, true);
 
+    // C. Intercepta o fechamento da janela nativa do Tauri (botão X ou Alt+F4)
+    let unlistenTauriClose: (() => void) | undefined;
+    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+        getCurrentWindow().onCloseRequested((event) => {
+          if (editingReportId) {
+            event.preventDefault();
+            toast.error("Atenção: Finalize o planejamento reaberto antes de fechar o aplicativo.", {
+              duration: 5000,
+            });
+          }
+        }).then((unlisten) => {
+          unlistenTauriClose = unlisten;
+        }).catch(console.error);
+      }).catch(console.error);
+    }
+
     return () => {
       sessionStorage.removeItem('seneb_edition_lock');
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('click', handleClickCapture, true);
+      if (unlistenTauriClose) {
+        unlistenTauriClose();
+      }
     };
   }, [editingReportId]);
 

@@ -36,6 +36,8 @@ export const CATEGORIES: CategoryDefinition[] = [
       "Água / esgoto",
       "Gás",
       "Internet",
+      "Celular",
+      "Telefone Fixo",
       "TV por assinatura",
       "Manutenção da casa",
       "IPTU",
@@ -105,6 +107,8 @@ export const CATEGORIES: CategoryDefinition[] = [
       "IOF",
       "Multas",
       "Parcelamentos",
+      "Fatura do Cartão",
+      "Empréstimo"
     ],
   },
   {
