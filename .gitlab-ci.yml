@@ -17,7 +17,8 @@ build_tauri:
     - if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { Write-Error "🚨 A variável da chave ta vazia no Runner!"; exit 1 }
     - Write-Host "✅ A chave chegou no Windows e tem $($env:TAURI_SIGNING_PRIVATE_KEY.Length) caracteres."
     - $env:NEXT_PUBLIC_API_URL = "https://api.seneb.com.br/api/v1"
-    - npx tauri build
+    # 🩹 SOLUÇÃO TEMPORÁRIA: Pular o WiX (.msi) que dá erro de permissão e buildar só NSIS (.exe)
+    - npx tauri build -b nsis
     
     # 🔍 BUSCA UNIVERSAL: Vasculha qualquer subpasta dentro de bundle atrás da assinatura
     - $sigFile = Get-ChildItem -Path "src-tauri\target\release\bundle" -Recurse -Filter "*.sig" | Select-Object -First 1
@@ -83,7 +84,7 @@ deploy_vps_hostinger:
     # 2. AGORA SIM: Enviamos os arquivos soltos (update.json e MSI) para a pasta já limpa
     - echo "📦 Enviando artefatos para a VPS..."
     - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/update.json $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/update.json
-    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/src-tauri/target/release/bundle/msi/*.msi $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/Seneb-Setup.msi
+    - rsync -avz -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=no" apps/desktop/src-tauri/target/release/bundle/nsis/*.exe $SERVER_USER@$SERVER_IP:/var/www/seneb/finance_control_saas/apps/web/public/Seneb-Setup.exe
     
     # 3. POR ÚLTIMO: Buildamos o Next.js (que agora vai enxergar o MSI e o JSON lá dentro) e reiniciamos
     - ssh -p $SERVER_PORT -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
