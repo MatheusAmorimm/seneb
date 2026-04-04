@@ -136,18 +136,18 @@ function LancamentosContent() {
     // C. Intercepta o fechamento da janela nativa do Tauri (botão X ou Alt+F4)
     let unlistenTauriClose: (() => void) | undefined;
     if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-      import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
-        getCurrentWindow().onCloseRequested((event) => {
-          if (editingReportId) {
+      if (editingReportId) {
+        import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+          getCurrentWindow().onCloseRequested((event) => {
             event.preventDefault();
             toast.error("Atenção: Finalize o planejamento reaberto antes de fechar o aplicativo.", {
               duration: 5000,
             });
-          }
-        }).then((unlisten) => {
-          unlistenTauriClose = unlisten;
+          }).then((unlisten) => {
+            unlistenTauriClose = unlisten;
+          }).catch(console.error);
         }).catch(console.error);
-      }).catch(console.error);
+      }
     }
 
     return () => {

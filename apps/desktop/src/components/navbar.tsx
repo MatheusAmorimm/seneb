@@ -5,6 +5,7 @@ import { LogOut, UserCircle, AlertTriangle } from "lucide-react";
 import { removeStorageItem } from "../lib/storage";
 import { toast } from "sonner";
 import api from "../services/api";
+import { NotificationBell } from "./notification_bell";
 
 export function Navbar() {
   const router = useRouter();
@@ -43,6 +44,9 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-3">
+        <NotificationBell />
+        <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
+
         <button
           onClick={() => {
             const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PlusCircle, History, BarChart3, ArrowRight } from "lucide-react";
+import { PlusCircle, History, BarChart3, ArrowRight, Users } from "lucide-react";
 import { Navbar } from "../../components/navbar";
 import { getStorageItem, setStorageItem } from "../../lib/storage"; 
 import { UserData } from "../../types/index";
@@ -72,7 +72,7 @@ export default function HomePage() {
       </div>
 
       {/* Grid de Navegação - Mantido Conforme o Original */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
         {/* ... Seus cards de Lançamentos, Histórico e Analytics ... */}
         <div 
           onClick={() => router.push("/lancamentos")}
@@ -130,6 +130,26 @@ export default function HomePage() {
             <ArrowRight size={18} className="dark:text-slate-300" />
           </div>
         </div>
+
+        {/* --- Card Grupos --- */}
+        <div 
+          onClick={() => router.push("/grupos")}
+          className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-indigo-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] dark:from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 group-hover:bg-indigo-500 transition-colors duration-300">
+              <Users className="w-8 h-8 text-indigo-500 group-hover:text-white transition-colors" />
+            </div>
+            <h3 className="text-2xl font-serif font-bold text-brand-deepBlue dark:text-slate-100 mb-2">Meus Grupos</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Controle finanças em conjunto com convidados.</p>
+          </div>
+          <div className="relative z-10 flex items-center gap-2 text-indigo-500 font-medium mt-4 group-hover:gap-4 transition-all">
+            <span>Gerenciar</span>
+            <ArrowRight size={18} />
+          </div>
+        </div>
+
       </div>
 
       <footer className="mt-16 text-center text-slate-400 text-sm">

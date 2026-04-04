@@ -48,9 +48,13 @@ async def accept_invite(notification_id: str, current_user = Depends(get_current
     except:
         obj_id = notification_id
 
-    notification = await db.db.notifications.find_one({"_id": obj_id, "user_id": str(current_user.id)})
+    # Busca apenas pelo _id. Checamos permissão depois para erro amigável.
+    notification = await db.db.notifications.find_one({"_id": obj_id})
     if not notification:
-        raise HTTPException(status_code=404, detail="Convite não encontrado.")
+        raise HTTPException(status_code=404, detail=f"Convite não encontrado no servidor. ID: {notification_id}")
+        
+    if str(notification.get("user_id")) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Você não tem permissão para aceitar este convite.")
 
     if notification.get("type") != "group_invite":
         raise HTTPException(status_code=400, detail="Esta notificação não é um convite de grupo.")
@@ -113,12 +117,16 @@ async def reject_invite(notification_id: str, current_user = Depends(get_current
     except:
         obj_id = notification_id
 
-    result = await db.db.notifications.update_one(
-        {"_id": obj_id, "user_id": str(current_user.id), "type": "group_invite"},
+    notification = await db.db.notifications.find_one({"_id": obj_id})
+    if not notification:
+        raise HTTPException(status_code=404, detail="Convite não encontrado.")
+        
+    if str(notification.get("user_id")) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Você não tem permissão para recusar este convite.")
+
+    await db.db.notifications.update_one(
+        {"_id": obj_id},
         {"$set": {"read": True}}
     )
-    
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Convite não encontrado.")
         
     return {"message": "Convite recusado e descartado."}
