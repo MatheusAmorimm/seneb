@@ -14,6 +14,7 @@ import { ArrowLeft, Save, Plus, Trash2, Calendar, FileText, ChevronDown, CheckCi
 import { useReports } from "../../../../hooks/use_reports";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calculator } from "../../../../components/calculator";
+import { useWorkspaceContext } from "../../../../context/workspace_context";
 
 export default function LancamentosPage() {
   return (
@@ -30,6 +31,7 @@ export default function LancamentosPage() {
 function LancamentosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isGuestActive } = useWorkspaceContext();
   
   // 🚀 2. Corrigido de 'report_id' para 'reopenedId' (como vem da tela de Histórico)
   const editingReportId = searchParams.get('reopenedId'); 
@@ -376,11 +378,18 @@ function LancamentosContent() {
       </div>
       
       <section className="animate-in slide-in-from-top-4 duration-500">
-        <TransactionForm 
-          onAddTransaction={handleSaveTransaction} 
-          initialData={editingTransaction}
-          onCancelEdit={handleCancelEdit}
-        />
+        {!isGuestActive ? (
+          <TransactionForm 
+            onAddTransaction={handleSaveTransaction} 
+            initialData={editingTransaction}
+            onCancelEdit={handleCancelEdit}
+          />
+        ) : (
+          <div className="bg-amber-50 p-4 rounded-xl flex items-center gap-2 mb-4 border border-amber-200">
+            <Info className="text-amber-600" />
+            <span className="text-amber-800 text-sm font-medium">Você é apenas um visualizador deste grupo. A adição e edição de laçamentos estão desabilitadas.</span>
+          </div>
+        )}
       </section>
 
       <section className="animate-in fade-in duration-700 delay-100">
@@ -393,6 +402,7 @@ function LancamentosContent() {
           transactions={filteredTransactions} 
           onDeleteTransaction={requestDelete} 
           onEditTransaction={handleEditClick} 
+          isGuestActive={isGuestActive}
         />
       </section>
 

@@ -2,6 +2,7 @@
 
 import { AuthProvider } from "../../components/auth_provider";
 import { ReportsProvider } from "../../context/reports_context";
+import { WorkspaceProvider } from "../../context/workspace_context";
 
 export default function ProtectedLayout({
   children,
@@ -10,9 +11,11 @@ export default function ProtectedLayout({
 }) {
   return (
     <AuthProvider>
-      <ReportsProvider>
-        {children}
-      </ReportsProvider>
+      <WorkspaceProvider>
+        <ReportsProvider>
+          {children}
+        </ReportsProvider>
+      </WorkspaceProvider>
     </AuthProvider>
   );
 }

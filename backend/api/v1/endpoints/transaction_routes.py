@@ -5,7 +5,7 @@ from backend.schemas import TransactionSchema, TransactionUpdate
 from bson import ObjectId
 from backend.core.security import get_current_user
 from backend.models.user_model import UserModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from uuid import uuid4
 from datetime import datetime
 
@@ -33,33 +33,41 @@ def prepare_transaction(doc):
 @router.get("/draft", response_model=List[TransactionSchema])
 async def get_draft_transactions(
     report_id: Optional[str] = None, 
+    group_id: Optional[str] = None,
     current_user = Depends(get_current_user)
 ):
-    if report_id:
-        # 🚀 MODO REABERTO: Busca itens do lote reaberto + itens "soltos" (drafts normais)
-        query = {
-            "user_id": str(current_user.id),
-            "status": "draft",
-            "$or": [
-                {"report_id": report_id},
-                {"report_id": None}, 
-                {"report_id": ""}, 
-                {"report_id": {"$exists": False}}
-            ]
-        }
+    # Verificação de grupo
+    base_query: Dict[str, Any] = {"status": "draft"}
+    if group_id:
+        try:
+            group_oid = ObjectId(group_id)
+        except:
+            group_oid = group_id
+        group = await db.db.groups.find_one({"_id": group_oid, "members.user_id": str(current_user.id)})
+        if not group:
+            raise HTTPException(status_code=403, detail="Acesso negado ao grupo.")
+        base_query["group_id"] = group_id
     else:
-        # 🚀 MODO NORMAL: Busca estritamente rascunhos sem vínculo (Blindado contra chaves inexistentes)
-        query = {
-            "user_id": str(current_user.id),
-            "status": "draft",
-            "$or": [
-                {"report_id": None}, 
-                {"report_id": ""}, 
-                {"report_id": {"$exists": False}}
-            ]
-        }
+        base_query["user_id"] = str(current_user.id)
+        base_query["group_id"] = {"$in": [None, ""]}
+
+    if report_id:
+        # MODO REABERTO
+        base_query["$or"] = [
+            {"report_id": report_id},
+            {"report_id": None}, 
+            {"report_id": ""}, 
+            {"report_id": {"$exists": False}}
+        ]
+    else:
+        # MODO NORMAL
+        base_query["$or"] = [
+            {"report_id": None}, 
+            {"report_id": ""}, 
+            {"report_id": {"$exists": False}}
+        ]
         
-    transactions = await db.db.transactions.find(query).to_list(1000)
+    transactions = await db.db.transactions.find(base_query).to_list(1000)
     return [prepare_transaction(t) for t in transactions]
 
 # --- POST: Criar Transação (Adiciona ao Rascunho) ---
@@ -69,8 +77,27 @@ async def create_transaction(
     current_user = Depends(get_current_user)
 ):
     data = transaction.dict()
-    data["user_id"] = current_user.id
     data["status"] = "draft" # Sempre nasce como rascunho
+    
+    if data.get("group_id"):
+        try:
+            group_oid = ObjectId(data["group_id"])
+        except:
+            group_oid = data["group_id"]
+        group = await db.db.groups.find_one({"_id": group_oid})
+        if not group:
+            raise HTTPException(status_code=404, detail="Grupo não encontrado.")
+        
+        # Verifica permissão 'admin'
+        member = next((m for m in group.get("members", []) if m["user_id"] == str(current_user.id)), None)
+        if not member:
+            raise HTTPException(status_code=403, detail="Acesso negado ao grupo.")
+        if member["role"] == "guest":
+            raise HTTPException(status_code=403, detail="Permissão negada. Apenas administradores podem inserir lançamentos.")
+            
+        data["user_id"] = str(current_user.id) # Quem adicionou
+    else:
+        data["user_id"] = str(current_user.id)
     
     if not data.get("id"):
         data["id"] = str(uuid4())
@@ -91,70 +118,87 @@ async def delete_transaction(
     Remove uma transação (Aceita UUID ou ObjectId).
     """
     
-    # 1. Lógica de Busca Híbrida (Igual à do Update)
+    # 1. Busca Transação
     try:
-        # Tenta padrão MongoDB (ObjectId)
-        filter_query = {
-            "_id": ObjectId(transaction_id),
-            "user_id": str(current_user.id)
-        }
+        query_id = ObjectId(transaction_id)
     except:
-        # Se falhar, tenta buscar como String (UUID)
-        filter_query = {
-            "$or": [
-                {"_id": transaction_id},
-                {"id": transaction_id}
-            ],
-            "user_id": str(current_user.id)
-        }
-
-    # 2. Tenta deletar
-    result = await db.db.transactions.delete_one(filter_query)
-
-    # 3. Se não deletou nada (ID não existe ou não é do usuário), retorna 404
-    if result.deleted_count == 0:
+        query_id = transaction_id
+        
+    existing = await db.db.transactions.find_one({"$or": [{"_id": query_id}, {"id": transaction_id}]})
+    if not existing:
         raise HTTPException(status_code=404, detail="Transação não encontrada.")
         
-    # Retorna 204 (No Content) sucesso
+    # 2. Verificação de Permissão (Pessoal ou Grupo)
+    if existing.get("group_id"):
+        try:
+            group_oid = ObjectId(existing["group_id"])
+        except:
+            group_oid = existing["group_id"]
+        group = await db.db.groups.find_one({"_id": group_oid})
+        if not group:
+            raise HTTPException(status_code=404, detail="Grupo não encontrado.")
+            
+        member = next((m for m in group.get("members", []) if m["user_id"] == str(current_user.id)), None)
+        if not member or member["role"] == "guest":
+            raise HTTPException(status_code=403, detail="Apenas administradores podem modificar este lançamento.")
+    else:
+        if str(existing.get("user_id")) != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Esta transação não pertence a você.")
+
+    # 3. Tenta deletar
+    await db.db.transactions.delete_one({"_id": existing["_id"]})
     return None
 
 # --- POST: FINALIZAR O MÊS (A Mágica) ---
 class FinalizeRequest(BaseModel):
     report_name: str 
     reference_month: str 
-    reopened_report_id: str | None = None # <- Novo campo
+    reopened_report_id: str | None = None
+    group_id: str | None = None
 
 @router.post("/finalize")
 async def finalize_planning(
     request: FinalizeRequest,
     current_user = Depends(get_current_user)
 ):
-    existing_report = await db.db.reports.find_one({
-        "user_id": str(current_user.id),
-        "name": request.report_name
-    })
+    # Verificação de Grupo para Finalização
+    query_existing: Dict[str, Any] = {"name": request.report_name}
+    query_drafts: Dict[str, Any] = {"status": "draft"}
+    
+    if request.group_id:
+        try:
+            group_oid = ObjectId(request.group_id)
+        except:
+            group_oid = request.group_id
+        group = await db.db.groups.find_one({"_id": group_oid})
+        if not group:
+            raise HTTPException(status_code=404, detail="Grupo não encontrado.")
+        member = next((m for m in group.get("members", []) if m["user_id"] == str(current_user.id)), None)
+        if not member or member["role"] == "guest":
+            raise HTTPException(status_code=403, detail="Acesso negado para fechar mês neste grupo.")
+        
+        query_existing["group_id"] = request.group_id
+        query_drafts["group_id"] = request.group_id
+    else:
+        query_existing["user_id"] = str(current_user.id)
+        query_existing["group_id"] = {"$in": [None, ""]}
+        query_drafts["user_id"] = str(current_user.id)
+        query_drafts["group_id"] = {"$in": [None, ""]}
 
+    existing_report = await db.db.reports.find_one(query_existing)
     if existing_report:
-        raise HTTPException(status_code=400, detail="Já existe um relatório com esse nome ou mês de referência.")
+        raise HTTPException(status_code=400, detail="Já existe um relatório com esse nome para este contexto.")
 
     # 🚀 BUSCA BLINDADA PARA FINALIZAR
     if request.reopened_report_id:
-        query_drafts = {
-            "user_id": str(current_user.id),
-            "status": "draft",
-            "$or": [
-                {"report_id": request.reopened_report_id},
-                {"report_id": None}, 
-                {"report_id": ""}, 
-                {"report_id": {"$exists": False}}
-            ]
-        }
+        query_drafts["$or"] = [
+            {"report_id": request.reopened_report_id},
+            {"report_id": None}, 
+            {"report_id": ""}, 
+            {"report_id": {"$exists": False}}
+        ]
     else:
-        query_drafts = {
-            "user_id": str(current_user.id),
-            "status": "draft",
-            "$or": [{"report_id": None}, {"report_id": ""}, {"report_id": {"$exists": False}}]
-        }
+        query_drafts["$or"] = [{"report_id": None}, {"report_id": ""}, {"report_id": {"$exists": False}}]
 
     # 1. Busca usando a query correta
     drafts = await db.db.transactions.find(query_drafts).to_list(None)
@@ -170,14 +214,14 @@ async def finalize_planning(
     report_id = str(uuid4())
     new_report = {
         "id": report_id,
-        "user_id": current_user.id,
+        "user_id": str(current_user.id),
+        "group_id": request.group_id,
         "name": request.report_name,
         "reference_month": request.reference_month,
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": total_income - total_expense,
         "created_at": datetime.now(),
-        # Removi o items_snapshot para não duplicar dados desnecessariamente no banco
     }
     
     await db.db.reports.insert_one(new_report)
@@ -222,29 +266,32 @@ async def update_transaction(
     Atualiza uma transação existente (Aceita UUID ou ObjectId).
     """
     
-    # 1. Definir a Query de Busca (Híbrida)
-    # Tenta converter para ObjectId (Padrão Mongo). Se der erro (ex: é UUID), usa como String.
+    # 1. Busca Transação
     try:
-        filter_query = {
-            "_id": ObjectId(transaction_id),
-            "user_id": str(current_user.id)
-        }
+        query_id = ObjectId(transaction_id)
     except:
-        # Se falhou a conversão, assumimos que o ID foi salvo como string (UUID) ou campo 'id'
-        # Buscamos tanto no _id (se foi salvo como string) quanto no campo id explícito
-        filter_query = {
-            "$or": [
-                {"_id": transaction_id},
-                {"id": transaction_id}
-            ],
-            "user_id": str(current_user.id)
-        }
-
-    # 2. Verificar se a transação existe
-    existing_transaction = await db.db.transactions.find_one(filter_query)
-
+        query_id = transaction_id
+        
+    existing_transaction = await db.db.transactions.find_one({"$or": [{"_id": query_id}, {"id": transaction_id}]})
     if not existing_transaction:
-        raise HTTPException(status_code=404, detail="Transação não encontrada ou ID incompatível.")
+        raise HTTPException(status_code=404, detail="Transação não encontrada.")
+        
+    # 2. Verificação de Permissão (Pessoal ou Grupo)
+    if existing_transaction.get("group_id"):
+        try:
+            group_oid = ObjectId(existing_transaction["group_id"])
+        except:
+            group_oid = existing_transaction["group_id"]
+        group = await db.db.groups.find_one({"_id": group_oid})
+        if not group:
+            raise HTTPException(status_code=404, detail="Grupo não encontrado.")
+            
+        member = next((m for m in group.get("members", []) if m["user_id"] == str(current_user.id)), None)
+        if not member or member["role"] == "guest":
+            raise HTTPException(status_code=403, detail="Apenas administradores podem modificar este lançamento.")
+    else:
+        if str(existing_transaction.get("user_id")) != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Transação não pertence a você.")
 
     # 3. Filtrar dados para update
     update_data = transaction_data.model_dump(exclude_unset=True)
@@ -268,6 +315,7 @@ async def update_transaction(
     transaction_dict = {k: v for k, v in updated_transaction.items()}
     
     if "_id" in transaction_dict:
-        transaction_dict["id"] = str(transaction_dict.pop("_id"))
+        transaction_dict["id"] = str(transaction_dict["_id"])
+        del transaction_dict["_id"]
     
     return TransactionSchema(**transaction_dict)

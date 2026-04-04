@@ -39,3 +39,16 @@ export interface UserData {
   full_name?: string;
   email?: string;
 }
+
+export interface GroupMember {
+  user_id: string;
+  role: 'admin' | 'guest';
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  owner_id: string;
+  members: GroupMember[];
+  created_at: string;
+}

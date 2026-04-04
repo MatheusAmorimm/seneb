@@ -6,6 +6,7 @@ import {
   Home, 
   PieChart, 
   History, 
+  Users,
   X, 
   ChevronDown, 
   ChevronRight, 
@@ -91,6 +92,13 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
       href: "/lancamentos", 
       activeClass: "bg-[#fff0e6] text-[#F23E02] dark:bg-orange-950/30 dark:text-orange-400", 
       hoverClass: "hover:bg-[#fff0e6] hover:text-[#F23E02] dark:hover:bg-orange-950/20 dark:hover:text-orange-300"
+    },
+    { 
+      icon: Users, 
+      label: "Meus Grupos", 
+      href: "/grupos", 
+      activeClass: "bg-[#eef2ff] text-[#013750] dark:bg-indigo-950/30 dark:text-indigo-400",
+      hoverClass: "hover:bg-[#eef2ff] hover:text-[#013750] dark:hover:bg-indigo-950/20 dark:hover:text-indigo-300"
     },
   ];
 

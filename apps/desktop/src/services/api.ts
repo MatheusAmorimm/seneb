@@ -8,7 +8,6 @@ const api = axios.create({
   },
 });
 
-// --- Interceptor de Requisição (Mantido) ---
 api.interceptors.request.use(async (config) => {
   try {
     const token = await getStorageItem<string>('token');
@@ -16,6 +15,24 @@ api.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Workspace Injection: se o usuário estiver na visão de um Grupo,
+    // todos os requests para transações e relatórios ganham o group_id
+    if (typeof window !== 'undefined') {
+      const groupId = sessionStorage.getItem("seneb_active_group_id");
+      if (groupId && groupId !== "personal") {
+        const isTargetRoute = config.url?.includes("/transactions") || config.url?.includes("/reports");
+        if (isTargetRoute) {
+            if (config.method === "get") {
+                config.params = { ...config.params, group_id: groupId };
+            } else if (config.method === "post" || config.method === "put") {
+                if (!config.data) config.data = {};
+                config.data.group_id = groupId;
+            }
+        }
+      }
+    }
+    
   } catch (error) {
     console.error("Erro ao obter token:", error);
   }

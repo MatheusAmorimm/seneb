@@ -6,9 +6,10 @@ interface TransactionListProps {
   transactions: Transaction[];
   onDeleteTransaction: (id: string) => void;
   onEditTransaction?: (transaction: Transaction) => void;
+  isGuestActive?: boolean;
 }
 
-export function TransactionList({ transactions, onDeleteTransaction, onEditTransaction }: TransactionListProps) {
+export function TransactionList({ transactions, onDeleteTransaction, onEditTransaction, isGuestActive }: TransactionListProps) {
   const { theme } = useTheme();
 
   const formatCurrency = (value: number) => {
@@ -66,7 +67,7 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Parcela</th>
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Banco</th>
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Vencimento</th>
-              <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Ações</th>
+              {!isGuestActive && <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-wider text-[#2C6B74] dark:text-teal-400">Ações</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#012a3d]">
@@ -196,26 +197,28 @@ export function TransactionList({ transactions, onDeleteTransaction, onEditTrans
                     </td>
 
                     {/* 10. AÇÕES */}
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-0.5">
-                        {onEditTransaction && (
+                    {!isGuestActive && (
+                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-0.5">
+                          {onEditTransaction && (
+                            <button
+                              onClick={() => onEditTransaction(transaction)}
+                              className="text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          )}
                           <button
-                            onClick={() => onEditTransaction(transaction)}
-                            className="text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                            title="Editar"
+                            onClick={() => transaction.id && onDeleteTransaction(transaction.id)}
+                            className="text-slate-300 dark:text-slate-600 hover:text-[#F23E02] dark:hover:text-orange-400 transition-colors p-1.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/30"
+                            title="Excluir"
                           >
-                            <Pencil size={16} />
+                            <Trash2 size={16} />
                           </button>
-                        )}
-                        <button
-                          onClick={() => transaction.id && onDeleteTransaction(transaction.id)}
-                          className="text-slate-300 dark:text-slate-600 hover:text-[#F23E02] dark:hover:text-orange-400 transition-colors p-1.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/30"
-                          title="Excluir"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })

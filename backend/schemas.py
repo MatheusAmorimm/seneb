@@ -41,9 +41,40 @@ class UserSignupResponse(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+class GroupMemberSchema(BaseModel):
+    user_id: str
+    role: str
+
+class GroupSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    id: Optional[str] = None
+    name: str
+    owner_id: str
+    members: List[GroupMemberSchema]
+    created_at: Optional[datetime] = None
+
+    @field_serializer('created_at')
+    def serialize_datetime(self, created_at: Optional[datetime]):
+        if created_at is not None:
+            from zoneinfo import ZoneInfo
+            from datetime import timezone
+            sp_tz = ZoneInfo('America/Sao_Paulo')
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            return created_at.astimezone(sp_tz).isoformat()
+        return None
+
+class GroupCreate(BaseModel):
+    name: str
+
+class GroupInvite(BaseModel):
+    email: EmailStr
+    role: str
+
 class ReportSchema(BaseModel):
     id: Optional[str] = None
     user_id: str
+    group_id: Optional[str] = None
     name: str  # Ex: "Planejamento Fevereiro 2026"
     reference_month: str # "02/2026"
     
@@ -67,6 +98,7 @@ class BankAdd(BaseModel):
 class TransactionSchema(BaseModel):
     id: Optional[str] = None
     user_id: Optional[str] = None # Injetado pelo backend
+    group_id: Optional[str] = None # Injetado quando for lancamento compartilhado
     description: str
     amount: float
     type: str     
