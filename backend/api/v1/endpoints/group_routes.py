@@ -41,8 +41,11 @@ async def create_group(group_in: GroupCreate, current_user = Depends(get_current
 
 @router.get("", response_model=List[GroupSchema])
 async def get_groups(current_user = Depends(get_current_user)):
-    # Encontra grupos onde o usuário é membro
-    query = {"members.user_id": str(current_user.id)}
+    # Encontra grupos onde o usuário é membro e que estejam ativos
+    query = {
+        "members.user_id": str(current_user.id),
+        "is_active": True
+    }
     groups = await db.db.groups.find(query).to_list(100)
     return [prepare_group(g) for g in groups]
 
@@ -100,3 +103,49 @@ async def invite_member(group_id: str, invite: GroupInvite, current_user = Depen
     logger.warning(f"📧 Status: Simulando sucesso.\n===========================================")
     
     return {"message": "Membro adicionado ao grupo com sucesso e e-mail enviado!"}
+
+@router.delete("/{group_id}")
+async def delete_group(group_id: str, current_user = Depends(get_current_user)):
+    try:
+        group_obj_id = ObjectId(group_id)
+    except:
+        group_obj_id = group_id
+        
+    group = await db.db.groups.find_one({"_id": group_obj_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Grupo não encontrado.")
+        
+    if group.get("owner_id") != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Apenas o criador pode deletar o grupo.")
+        
+    await db.db.groups.update_one(
+        {"_id": group_obj_id},
+        {"$set": {"is_active": False}}
+    )
+    
+    return {"message": "Grupo excluído permanentemente (soft-delete)."}
+
+@router.post("/{group_id}/leave")
+async def leave_group(group_id: str, current_user = Depends(get_current_user)):
+    try:
+        group_obj_id = ObjectId(group_id)
+    except:
+        group_obj_id = group_id
+        
+    group = await db.db.groups.find_one({
+        "_id": group_obj_id,
+        "members": {"$elemMatch": {"user_id": str(current_user.id)}}
+    })
+    
+    if not group:
+        raise HTTPException(status_code=404, detail="Grupo não encontrado ou você não pertence a ele.")
+        
+    if group.get("owner_id") == str(current_user.id):
+        raise HTTPException(status_code=400, detail="Você é o criador. Exclua o botão em vez de sair.")
+        
+    await db.db.groups.update_one(
+        {"_id": group_obj_id},
+        {"$pull": {"members": {"user_id": str(current_user.id)}}}
+    )
+    
+    return {"message": "Você saiu do grupo com sucesso."}

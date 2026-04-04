@@ -11,6 +11,7 @@ interface WorkspaceContextType {
   groups: Group[];
   isLoadingGroups: boolean;
   isGuestActive: boolean;
+  currentUserId: string | null;
   setActiveGroupId: (id: string | null) => void;
   refreshGroups: () => Promise<void>;
 }
@@ -79,6 +80,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         groups,
         isLoadingGroups,
         isGuestActive: isGuestActive || false,
+        currentUserId,
         setActiveGroupId,
         refreshGroups,
       }}

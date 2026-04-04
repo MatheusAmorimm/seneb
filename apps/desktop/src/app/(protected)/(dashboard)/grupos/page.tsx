@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Plus, Mail, ArrowLeft, X } from "lucide-react";
+import { Users, Plus, Mail, ArrowLeft, X, Trash2, LogOut, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import { useWorkspaceContext } from "../../../../context/workspace_context";
 
 export default function GruposPage() {
   const router = useRouter();
-  const { groups, isLoadingGroups, refreshGroups, setActiveGroupId } = useWorkspaceContext();
+  const { groups, isLoadingGroups, refreshGroups, setActiveGroupId, currentUserId, activeGroupId } = useWorkspaceContext();
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
@@ -21,6 +21,9 @@ export default function GruposPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("guest");
   const [isInviting, setIsInviting] = useState(false);
+
+  const [deleteGroupData, setDeleteGroupData] = useState<{ id: string, name: string, isOwner: boolean } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getErrorMessage = (error: unknown): string => {
     if (error instanceof AxiosError) {
@@ -69,6 +72,33 @@ export default function GruposPage() {
       toast.error(getErrorMessage(error));
     } finally {
       setIsInviting(false);
+    }
+  };
+
+  const handleDeleteOrLeave = async () => {
+    if (!deleteGroupData) return;
+    setIsDeleting(true);
+    try {
+      if (deleteGroupData.isOwner) {
+        await api.delete(`/groups/${deleteGroupData.id}`);
+        toast.success("Grupo excluído com sucesso.");
+      } else {
+        await api.post(`/groups/${deleteGroupData.id}/leave`);
+        toast.success("Você saiu do grupo com sucesso.");
+      }
+      
+      // Auto redireciona se estiver no mesmo grupo
+      if (activeGroupId === deleteGroupData.id) {
+          setActiveGroupId(null);
+          router.push("/");
+      }
+
+      await refreshGroups();
+      setDeleteGroupData(null);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -137,16 +167,32 @@ export default function GruposPage() {
                   </div>
                  </div>
 
-                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-auto flex flex-col gap-2">
                    <button 
                      onClick={() => {
                         setInviteGroupId(group.id);
                         setShowInviteModal(true);
                      }}
-                     className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-[#013750] dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
+                     className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-[#013750] dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                    >
                      <Mail size={16} /> Convidar Membro
                    </button>
+                   
+                   {currentUserId === group.owner_id ? (
+                     <button 
+                       onClick={() => setDeleteGroupData({ id: group.id, name: group.name, isOwner: true })}
+                       className="w-full py-2.5 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 cursor-pointer hover:shadow-sm"
+                     >
+                       <Trash2 size={16} /> Excluir Grupo
+                     </button>
+                   ) : (
+                     <button 
+                       onClick={() => setDeleteGroupData({ id: group.id, name: group.name, isOwner: false })}
+                       className="w-full py-2.5 bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 font-bold rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-500/20 transition-colors flex items-center justify-center gap-2 cursor-pointer hover:shadow-sm"
+                     >
+                       <LogOut size={16} /> Sair do Grupo
+                     </button>
+                   )}
                  </div>
                </div>
              )
@@ -219,6 +265,44 @@ export default function GruposPage() {
                   {isInviting ? "Adicionando..." : "Enviar Convite Direto"}
                 </button>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- CONFIRM MODAL (DELETE/LEAVE) --- */}
+      {deleteGroupData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-red-500/30 animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+                 <div className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-full inline-flex mb-4">
+                   {deleteGroupData.isOwner ? <Trash2 size={32} /> : <LogOut size={32} />}
+                 </div>
+                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+                   {deleteGroupData.isOwner ? "Excluir Grupo?" : "Sair do Grupo?"}
+                 </h3>
+                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 px-2">
+                   {deleteGroupData.isOwner ? 
+                     `Tem certeza que deseja excluir o grupo "${deleteGroupData.name}"? Esta ação desabilitará o acesso de todos os membros e impedirá novos lançamentos.` : 
+                     `Tem certeza que deseja sair do grupo "${deleteGroupData.name}"? Você perderá o acesso instantaneamente aos dados.`
+                   }
+                 </p>
+                 <div className="flex gap-3">
+                   <button 
+                     disabled={isDeleting}
+                     onClick={() => setDeleteGroupData(null)}
+                     className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                   >
+                     Cancelar
+                   </button>
+                   <button 
+                     onClick={handleDeleteOrLeave}
+                     disabled={isDeleting}
+                     className="flex-1 py-3 bg-[#F23E02] hover:bg-[#d63802] text-white font-bold rounded-xl shadow-lg disabled:opacity-50 transition-colors flex justify-center items-center gap-2 cursor-pointer"
+                   >
+                     {isDeleting ? "Aguarde..." : (deleteGroupData.isOwner ? "Sim, Excluir" : "Sim, Sair")}
+                   </button>
+                 </div>
             </div>
           </div>
         </div>
