@@ -44,10 +44,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // Busca inicial
     fetchNotifications();
     
-    // Polling a cada 30 segundos para aparecer "dinamicamente"
+    // Polling a cada 10 segundos para aparecer "dinamicamente"
     const interval = setInterval(() => {
       fetchNotifications();
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [fetchNotifications]);

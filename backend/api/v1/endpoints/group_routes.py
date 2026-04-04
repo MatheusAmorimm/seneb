@@ -123,6 +123,12 @@ async def delete_group(group_id: str, current_user = Depends(get_current_user)):
         {"$set": {"is_active": False}}
     )
     
+    # Exclui todos os convites pendentes que mirariam esse grupo excluido para não bugar no Front
+    await db.db.notifications.delete_many({
+        "type": "group_invite",
+        "meta_data.group_id": str(group_obj_id)
+    })
+    
     return {"message": "Grupo excluído permanentemente (soft-delete)."}
 
 @router.post("/{group_id}/leave")

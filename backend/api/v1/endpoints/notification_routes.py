@@ -19,7 +19,7 @@ def prepare_notification(doc):
             del doc["_id"]
     return doc
 
-@router.get("", response_model=List[NotificationModel])
+@router.get("")
 async def get_notifications(current_user = Depends(get_current_user)):
     user_id = str(current_user.id)
     # Lista 50 notificações mais recentes

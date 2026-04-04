@@ -318,13 +318,7 @@ function LancamentosContent() {
     
   const balance = totalIncome - totalExpense;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-turquoise"></div>
-      </div>
-    );
-  }
+  // Removemos o "if (isLoading)" block destrutivo para manter a interface (Header/Tabs) sempre montadas e fluidas
 
   return (
     <div className="space-y-6 pb-20 relative">
@@ -381,7 +375,7 @@ function LancamentosContent() {
         </button>
       </div>
       
-      <section className="animate-in slide-in-from-top-4 duration-500">
+      <section className="animate-in fade-in slide-in-from-top-2 duration-300">
         {!isGuestActive ? (
           <TransactionForm 
             onAddTransaction={handleSaveTransaction} 
@@ -396,18 +390,27 @@ function LancamentosContent() {
         )}
       </section>
 
-      <section className="animate-in fade-in duration-700 delay-100">
+      <section className="animate-in fade-in duration-300">
         <BalanceCard totalIncome={totalIncome} totalExpense={totalExpense} balance={balance} />
       </section>
 
-      <section className="animate-in slide-in-from-bottom-4 duration-700 delay-200">
+      <section className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <TransactionFilters transactions={transactions} onFilter={setFilteredTransactions} />
-        <TransactionList 
-          transactions={filteredTransactions} 
-          onDeleteTransaction={requestDelete} 
-          onEditTransaction={handleEditClick} 
-          isGuestActive={isGuestActive}
-        />
+        
+        <div className="relative min-h-[200px]">
+          {isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-[#012a3d]/50 backdrop-blur-sm rounded-xl">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00988D]"></div>
+            </div>
+          )}
+          
+          <TransactionList 
+            transactions={filteredTransactions} 
+            onDeleteTransaction={requestDelete} 
+            onEditTransaction={handleEditClick} 
+            isGuestActive={isGuestActive}
+          />
+        </div>
       </section>
 
       {/* Calculadora Flutuante */}

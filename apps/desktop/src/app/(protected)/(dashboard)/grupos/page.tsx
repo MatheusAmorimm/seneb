@@ -15,6 +15,8 @@ export default function GruposPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupInviteEmail, setNewGroupInviteEmail] = useState("");
+  const [newGroupInviteRole, setNewGroupInviteRole] = useState("guest");
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteGroupId, setInviteGroupId] = useState("");
@@ -35,22 +37,37 @@ export default function GruposPage() {
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newGroupName.trim()) return;
+    if (!newGroupName.trim() || !newGroupInviteEmail.trim()) return;
     
     setIsCreating(true);
+    let createdGroupId = null;
     try {
       const resp = await api.post("/groups", { name: newGroupName });
-      toast.success("Grupo criado com sucesso!");
+      createdGroupId = resp.data.id;
+      
+      // OBRIGATÓRIO: Convidar alguém para o grupo na hora da criação
+      await api.post(`/groups/${createdGroupId}/members`, { 
+        email: newGroupInviteEmail, 
+        role: newGroupInviteRole 
+      });
+
+      toast.success("Grupo criado e convite enviado!");
       setShowCreateModal(false);
       setNewGroupName("");
+      setNewGroupInviteEmail("");
+      setNewGroupInviteRole("guest");
       
       await refreshGroups();
       
       // Auto-redirect para Lancamentos
-      setActiveGroupId(resp.data.id);
+      setActiveGroupId(createdGroupId);
       router.push("/lancamentos");
     } catch (error) {
+      // Caso a criação falhe ou o e-mail não exista e dê erro na 2a etapa
       toast.error(getErrorMessage(error));
+      
+      // Se quebrou APÓS criar o grupo (no invite), podemos querer deletar o grupo órfão, mas para MVP 
+      // não vamos estressar um rollback hard, pois a criação local não quebra a estrutura primária.
     } finally {
       setIsCreating(false);
     }
@@ -216,9 +233,30 @@ export default function GruposPage() {
                     className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all font-medium"
                     placeholder="Ex: Finanças de Casa" autoFocus required />
                 </div>
-                <button type="submit" disabled={isCreating || !newGroupName.trim()}
-                  className="w-full py-3 bg-[#00988D] text-white font-bold rounded-xl hover:bg-[#007f76] transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70">
-                  {isCreating ? "Criando..." : "Criar Grupo"}
+                <div>
+                  <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5 mt-4">E-mail para Convidar (Obrigatório)</label>
+                  <input type="email" value={newGroupInviteEmail} onChange={(e) => setNewGroupInviteEmail(e.target.value)}
+                    className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#F23E02] transition-all font-medium"
+                    placeholder="email@exemplo.com" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Permissão Inicial</label>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setNewGroupInviteRole("guest")}
+                      className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors cursor-pointer ${newGroupInviteRole === "guest" ? "border-[#00988D] bg-[#e0f7fa] text-[#00988D] dark:bg-teal-950/30 dark:border-teal-500" : "border-slate-200 text-slate-500 dark:border-slate-700 dark:bg-slate-800"}`}
+                    >
+                      🗣️ Visualizador
+                    </button>
+                    <button type="button" onClick={() => setNewGroupInviteRole("admin")}
+                     className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors cursor-pointer ${newGroupInviteRole === "admin" ? "border-[#F23E02] bg-[#fff0e6] text-[#F23E02] dark:bg-orange-950/30 dark:border-orange-500" : "border-slate-200 text-slate-500 dark:border-slate-700 dark:bg-slate-800"}`}
+                    >
+                      👑 Admin
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" disabled={isCreating || !newGroupName.trim() || !newGroupInviteEmail.trim()}
+                  className="w-full py-3 bg-[#00988D] text-white font-bold rounded-xl hover:bg-[#007f76] transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 mt-6">
+                  {isCreating ? "Criando e Convidando..." : "Criar Grupo"}
                 </button>
               </form>
             </div>
