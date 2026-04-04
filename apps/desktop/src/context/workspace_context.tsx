@@ -25,6 +25,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [activeGroupId, setActiveGroupIdState] = useState<string | null>(null);
   const [isLoadingGroups, setIsLoadingGroups] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const pathname = usePathname();
 
@@ -46,6 +47,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setIsLoadingGroups(true);
       const res = await api.get("/groups");
       setGroups(res.data);
+      setHasLoadedOnce(true);
     } catch (err) {
       console.error("Erro ao buscar grupos", err);
     } finally {
@@ -59,6 +61,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       refreshGroups();
     }
   }, [pathname, refreshGroups]);
+
+  useEffect(() => {
+    // Se o grupo antigo armazenado/ativo não existir mais para o usuário
+    // (ex: foi deletado, ou o usuário foi removido), forçamos volta p/ Pessoal
+    if (hasLoadedOnce && activeGroupId) {
+      const stillExists = groups.some(g => g.id === activeGroupId);
+      if (!stillExists) {
+        setActiveGroupId(null);
+      }
+    }
+  }, [groups, activeGroupId, hasLoadedOnce]);
 
   const setActiveGroupId = (id: string | null) => {
     setActiveGroupIdState(id);
