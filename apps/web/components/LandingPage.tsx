@@ -425,7 +425,7 @@ export default function LandingPage() {
             <div className="p-6 space-y-4">
               {/* Opção Windows */}
               <a 
-                href="/Seneb-Setup.exe"
+                href="/Seneb-Setup.msi"
                 onClick={() => setIsDownloadModalOpen(false)}
                 className="flex items-start gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-[#00988D] hover:bg-[#00988D]/5 transition-all group cursor-pointer"
               >
@@ -437,7 +437,7 @@ export default function LandingPage() {
                     Windows
                     <span className="text-xs px-2 py-0.5 bg-[#00988D]/20 text-[#00988D] rounded-full">Recomendado</span>
                   </h4>
-                  <p className="text-sm text-slate-500 mt-1">Instalador nativo (.exe) para Windows 10 e 11</p>
+                  <p className="text-sm text-slate-500 mt-1">Instalador nativo (.msi) para Windows 10 e 11</p>
                 </div>
                 <Download className="w-5 h-5 text-slate-300 group-hover:text-[#00988D] mt-4" />
               </a>
