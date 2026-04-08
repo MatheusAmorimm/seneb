@@ -68,7 +68,7 @@ build_tauri_linux:
   before_script:
     - apt-get update
     - apt-get install -y curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev build-essential
-    - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     - apt-get install -y nodejs
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     - cd apps/desktop
