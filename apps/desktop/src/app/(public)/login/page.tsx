@@ -43,15 +43,13 @@ export default function LoginPage() {
 
       // 4. LÓGICA DE PERSISTÊNCIA (Como combinamos)
       if (keepLogged) {
-        // Checkbox MARCADO -> Disco
         await setStorageItem('token', token);
-        await setStorageItem('refresh_token', refreshToken);
+        if (refreshToken) await setStorageItem('refresh_token', refreshToken);
         await setStorageItem('user', userName);
         await setStorageItem('remember_me', true);
       } else {
-        // Checkbox DESMARCADO -> RAM
         sessionStorage.setItem('token', token);
-        sessionStorage.setItem('refresh_token', refreshToken);
+        if (refreshToken) sessionStorage.setItem('refresh_token', refreshToken);
         sessionStorage.setItem('user', JSON.stringify(userName));
 
         await removeFromDiskOnly('token');

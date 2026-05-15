@@ -89,10 +89,10 @@ api.interceptors.response.use(
         const inDisk = await getStorageItem<string>('remember_me');
         if (inDisk) {
           await setStorageItem('token', newAccessToken);
-          await setStorageItem('refresh_token', newRefreshToken);
+          if (newRefreshToken) await setStorageItem('refresh_token', newRefreshToken);
         } else {
           sessionStorage.setItem('token', newAccessToken);
-          sessionStorage.setItem('refresh_token', newRefreshToken);
+          if (newRefreshToken) sessionStorage.setItem('refresh_token', newRefreshToken);
         }
 
         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
