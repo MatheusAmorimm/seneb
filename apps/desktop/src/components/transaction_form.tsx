@@ -48,6 +48,19 @@ const PAYMENT_OPTIONS_FIXED = [
   { value: "credit_card", label: "Cartão de Crédito" }
 ];
 
+const PAYMENT_OPTIONS_ALL = [
+  { value: "credit_card", label: "Cartão de Crédito" },
+  { value: "debit_card", label: "Cartão de Débito" },
+  { value: "cash", label: "Dinheiro" },
+  { value: "pix", label: "Pix" },
+  { value: "bill", label: "Boleto" }
+];
+
+// Subcategorias que usam débito automático + boleto + pix + crédito (recorrentes/fixas)
+const SUBCATEGORIES_FIXED_PAYMENT = new Set(["Plano de saúde"]);
+// Subcategorias que aceitam todas as formas incluindo boleto
+const SUBCATEGORIES_ALL_PAYMENT = new Set(["Roupas"]);
+
 // Categorias que mostram campos especiais de despesas
 const CATEGORIES_WITH_PAYMENT = ["Moradia", "Transporte", "Saúde", "Educação", "Despesas Financeiras", "Compras Pessoais", "Alimentação", "Lazer e Estilo de Vida", "Família e Dependentes", "Impostos"];
 const CATEGORIES_WITH_DUE_DATE = ["Moradia", "Despesas Financeiras", "Impostos"];
@@ -166,8 +179,10 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   const currentPaymentOptions = useMemo(() => {
     if (["Impostos", "Despesas Financeiras"].includes(category)) return PAYMENT_OPTIONS_BILLS;
     if (["Moradia"].includes(category)) return PAYMENT_OPTIONS_FIXED;
+    if (SUBCATEGORIES_FIXED_PAYMENT.has(subcategory)) return PAYMENT_OPTIONS_FIXED;
+    if (SUBCATEGORIES_ALL_PAYMENT.has(subcategory)) return PAYMENT_OPTIONS_ALL;
     return PAYMENT_OPTIONS_DEFAULT;
-  }, [category]);
+  }, [category, subcategory]);
 
   const showBankField = useMemo(() => {
     if (type === 'income') return false;

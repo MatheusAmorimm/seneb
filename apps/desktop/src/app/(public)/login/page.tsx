@@ -21,9 +21,6 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // DEBUG: Verifique no console (F12) se estes valores aparecem quando você clica em entrar
-    console.log("Tentando Login com:", { email, password });
-
     try {
       // 1. FORÇA BRUTA: Criamos os dados no formato exato de formulário
       const params = new URLSearchParams();
@@ -40,6 +37,7 @@ export default function LoginPage() {
       
       // 3. SE SUCESSO:
       const token = response.data.access_token;
+      const refreshToken = response.data.refresh_token;
       // Pega o apelido, ou primeiro nome, ou fallback
       const userName = response.data.nickname || response.data.user_name?.split(' ')[0] || "Usuário";
 
@@ -47,17 +45,17 @@ export default function LoginPage() {
       if (keepLogged) {
         // Checkbox MARCADO -> Disco
         await setStorageItem('token', token);
+        await setStorageItem('refresh_token', refreshToken);
         await setStorageItem('user', userName);
         await setStorageItem('remember_me', true);
       } else {
         // Checkbox DESMARCADO -> RAM
         sessionStorage.setItem('token', token);
+        sessionStorage.setItem('refresh_token', refreshToken);
         sessionStorage.setItem('user', JSON.stringify(userName));
-        
-        // CORREÇÃO CRÍTICA:
-        // Usamos a função nova para limpar SÓ O DISCO.
-        // Assim, a RAM (onde acabamos de salvar o token) continua intacta.
+
         await removeFromDiskOnly('token');
+        await removeFromDiskOnly('refresh_token');
         await removeFromDiskOnly('user');
         await removeFromDiskOnly('remember_me');
       }
@@ -67,8 +65,6 @@ export default function LoginPage() {
 
     } catch (error) {
       if (error instanceof AxiosError) {
-        console.error("Erro Completo Backend:", error.response?.data);
-        
         const detail = error.response?.data?.detail;
         
         // Tratamento específico para erros de validação (Array)

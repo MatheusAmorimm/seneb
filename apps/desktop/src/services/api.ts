@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getStorageItem, removeStorageItem } from '../lib/storage'; // Adicione removeStorageItem
+import { getStorageItem, removeStorageItem, setStorageItem } from '../lib/storage';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
@@ -15,7 +15,7 @@ api.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // Workspace Injection: se o usuário estiver na visão de um Grupo,
     // todos os requests para transações e relatórios ganham o group_id
     if (typeof window !== 'undefined') {
@@ -32,35 +32,86 @@ api.interceptors.request.use(async (config) => {
         }
       }
     }
-    
-  } catch (error) {
-    console.error("Erro ao obter token:", error);
+
+  } catch {
+    // silently ignore token retrieval errors
   }
   return config;
 });
 
-// --- Interceptor de Resposta (NOVO: Auto-Logout) ---
+let _isRefreshing = false;
+let _refreshQueue: Array<(token: string) => void> = [];
+
+async function _doLogout() {
+  await removeStorageItem('token');
+  await removeStorageItem('refresh_token');
+  await removeStorageItem('user');
+  if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+    window.location.href = '/login';
+  }
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Se o backend disser "Quem é você?" (401)
-    if (error.response?.status === 401) {
-      console.warn("🔒 Sessão expirada ou inválida. Realizando logout automático...");
+    const originalRequest = error.config;
 
+    // Don't try to refresh if the failing request is itself the refresh endpoint
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {
+      originalRequest._retry = true;
+
+      if (_isRefreshing) {
+        // Queue the request until the ongoing refresh completes
+        return new Promise((resolve, reject) => {
+          _refreshQueue.push((newToken: string) => {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(api(originalRequest));
+          });
+          setTimeout(() => reject(error), 10000);
+        });
+      }
+
+      _isRefreshing = true;
       try {
-        // 1. Limpa o token podre do disco/memória
-        await removeStorageItem('token');
-        await removeStorageItem('user');
+        const storedRefreshToken = await getStorageItem<string>('refresh_token');
 
-        // 2. Força o redirecionamento para o login
-        // Usamos window.location para garantir que estados antigos do React sejam zerados
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
+        if (!storedRefreshToken) {
+          await _doLogout();
+          return Promise.reject(error);
         }
-      } catch (logoutError) {
-        console.error("Erro crítico no auto-logout:", logoutError);
+
+        const { data } = await api.post('/auth/refresh', { refresh_token: storedRefreshToken });
+
+        const newAccessToken: string = data.access_token;
+        const newRefreshToken: string = data.refresh_token;
+
+        // Persist the new tokens in whichever storage the old ones were in
+        const inDisk = await getStorageItem<string>('remember_me');
+        if (inDisk) {
+          await setStorageItem('token', newAccessToken);
+          await setStorageItem('refresh_token', newRefreshToken);
+        } else {
+          sessionStorage.setItem('token', newAccessToken);
+          sessionStorage.setItem('refresh_token', newRefreshToken);
+        }
+
+        api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+
+        // Flush the queue
+        _refreshQueue.forEach((cb) => cb(newAccessToken));
+        _refreshQueue = [];
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch {
+        _refreshQueue = [];
+        await _doLogout();
+        return Promise.reject(error);
+      } finally {
+        _isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   }
 );

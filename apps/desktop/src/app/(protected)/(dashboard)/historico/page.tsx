@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileSearch, Calendar, ChevronRight, FileText, Trash2, ArrowLeft, Download, Eye, RefreshCcw, UnlockKeyhole, AlertTriangle, X, RotateCcw, User } from 'lucide-react'; // Novos ícones
+import { FileSearch, ArrowLeft, UnlockKeyhole, AlertTriangle, X, RotateCcw } from 'lucide-react';
 
 import api from "../../../../services/api";
 import { Transaction } from "../../../../types";
@@ -11,8 +11,6 @@ import { TransactionList } from "../../../../components/transaction_list";
 import { TransactionFilters } from "../../../../components/transaction_filters";
 import { BalanceCard } from "../../../../components/balance_card";
 import { useReports } from "../../../../hooks/use_reports"; 
-import { WorkspaceTabs } from "../../../../components/workspace_tabs";
-
 export default function HistoricoPage() {
   return (
     <Suspense fallback={
@@ -104,8 +102,23 @@ function HistoricoContent() {
 
   if (loadingReports) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00988D]"></div>
+      <div className="space-y-8 pb-10">
+        <div className="flex items-end justify-between mb-6">
+          <div className="space-y-2">
+            <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            <div className="h-10 w-64 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
+          ))}
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -162,9 +175,8 @@ function HistoricoContent() {
 
   return (
     <div className="space-y-8 pb-10 relative">
-      <WorkspaceTabs />
       {/* CABEÇALHO */}
-      <div className="flex items-end justify-between mb-6 animate-in slide-in-from-top-4">
+      <div className="flex items-end justify-between mb-6">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
               <button onClick={() => router.push('/')} className="p-1.5 -ml-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors cursor-pointer">
@@ -198,8 +210,8 @@ function HistoricoContent() {
 
       {/* METADADOS */}
       {currentReport && (
-        <section className="animate-in fade-in duration-500">
-          <BalanceCard 
+        <section>
+          <BalanceCard
             totalIncome={currentReport.total_income}
             totalExpense={currentReport.total_expense}
             balance={currentReport.balance}
@@ -208,7 +220,7 @@ function HistoricoContent() {
       )}
 
       {/* LISTA */}
-      <section className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
+      <section>
         <h3 className="text-lg font-bold text-[#013750] dark:text-slate-100 mb-4 flex items-center gap-2 transition-colors">
             Detalhamento
             {loadingDetails && <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(Carregando...)</span>}

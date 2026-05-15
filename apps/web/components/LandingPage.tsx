@@ -9,7 +9,6 @@ import {
   Calendar,
   Download,
   CheckCircle,
-  ArrowRight,
   Sparkles,
   MonitorSmartphone,
   X,
@@ -327,36 +326,52 @@ export default function LandingPage() {
             <div className="bg-white rounded-2xl shadow-lg p-8 text-left">
               <h3 className="text-xl font-bold mb-4 text-slate-800">Últimas Atualizações</h3>
               <div className="space-y-4">
+                <div className="flex items-start gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(242, 62, 2, 0.04)', border: '1px solid rgba(242, 62, 2, 0.15)' }}>
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#F23E02' }} />
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-slate-800 font-semibold">v0.3.0 - Sessão Persistente, Boleto & Convites por E-mail</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold text-white" style={{ backgroundColor: '#F23E02' }}>NOVO</span>
+                      <span className="text-xs text-slate-400">15/05/2026</span>
+                    </div>
+                    <ul className="text-sm text-slate-500 space-y-1 list-none mt-2">
+                      <li>• <strong>Sessão de 30 dias:</strong> usuário continua conectado sem precisar fazer login todo dia</li>
+                      <li>• <strong>Boleto disponível</strong> nas subcategorias Saúde › Plano de Saúde e Compras Pessoais › Roupas</li>
+                      <li>• <strong>Convite por e-mail:</strong> ao convidar alguém para um grupo que ainda não tem conta, o Seneb envia um e-mail de boas-vindas automaticamente</li>
+                      <li>• <strong>Página Sobre</strong> adicionada na tela inicial do app com versão e informações do produto</li>
+                    </ul>
+                  </div>
+                </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
                   <div>
                     <div className="text-slate-800 font-semibold">v0.2.18 - Notificações Inteligentes e Grupos Compartilhados (04/04/2026)</div>
                     <div className="text-sm text-slate-500">Adicionada a central de convites com Sininho de notificações, Modais auto-injetados para aceitar ou recusar convidados e correção do Dark Mode nas páginas de Recuperação de Senha.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
                   <div>
                     <div className="text-slate-800 font-semibold">v0.2.8 - Temas, Categorias & Melhorias UI</div>
                     <div className="text-sm text-slate-500">Adicionados novos temas (Claro e Escuro), mais categorias de controle de gastos, animações fluidas na atualização do desktop e correções de navegação.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
                   <div>
                     <div className="text-slate-800 font-semibold">v0.2.7 - Auto Update</div>
                     <div className="text-sm text-slate-500">App atualiza sozinho no seu computador sem que você precise baixar manualmente.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
                   <div>
                     <div className="text-slate-800 font-semibold">Sistema de histórico por mês</div>
                     <div className="text-sm text-slate-500">Navegue pelas transações de cada mês, reabra meses encerrados com toda segurança.</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#00988D' }} />
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
                   <div>
                     <div className="text-slate-800 font-semibold">Lançamento Inicial</div>
                     <div className="text-sm text-slate-500">Lançamento com funcionalidades essenciais (Painel de Controle, Receitas e Despesas).</div>

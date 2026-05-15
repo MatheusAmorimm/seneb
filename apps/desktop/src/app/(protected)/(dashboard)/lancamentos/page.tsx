@@ -10,7 +10,7 @@ import { TransactionForm } from "../../../../components/transaction_form";
 import { TransactionList } from "../../../../components/transaction_list";
 import { TransactionFilters } from "../../../../components/transaction_filters";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Plus, Trash2, Calendar, FileText, ChevronDown, CheckCircle2, AlertCircle, Info, Calculator as CalculatorIcon, User, AlertTriangle, X, Pencil, FileEdit } from "lucide-react"; 
+import { ArrowLeft, Save, Trash2, Info, AlertTriangle, X, Pencil, FileEdit } from "lucide-react";
 import { useReports } from "../../../../hooks/use_reports";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calculator } from "../../../../components/calculator";
@@ -324,7 +324,7 @@ function LancamentosContent() {
     <div className="space-y-6 pb-20 relative">
       {/* 🛑 BANNER DE MODO REABERTO (Visual Lock Indicator) */}
       {editingReportId && (
-        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
+        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl flex items-center gap-3">
           <div className="bg-amber-100 p-2 rounded-full">
             <AlertTriangle className="text-amber-600 w-5 h-5" />
           </div>
@@ -342,7 +342,7 @@ function LancamentosContent() {
       <WorkspaceTabs />
 
       {/* Header com Nome do Relatório Reaberto */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => {
@@ -375,7 +375,7 @@ function LancamentosContent() {
         </button>
       </div>
       
-      <section className="animate-in fade-in slide-in-from-top-2 duration-300">
+      <section>
         {!isGuestActive ? (
           <TransactionForm 
             onAddTransaction={handleSaveTransaction} 
@@ -390,11 +390,11 @@ function LancamentosContent() {
         )}
       </section>
 
-      <section className="animate-in fade-in duration-300">
+      <section>
         <BalanceCard totalIncome={totalIncome} totalExpense={totalExpense} balance={balance} />
       </section>
 
-      <section className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <section>
         <TransactionFilters transactions={transactions} onFilter={setFilteredTransactions} />
         
         <div className="relative min-h-[200px]">

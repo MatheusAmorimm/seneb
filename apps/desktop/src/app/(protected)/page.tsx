@@ -2,17 +2,32 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PlusCircle, History, BarChart3, ArrowRight, Users } from "lucide-react";
+import { PlusCircle, History, BarChart3, ArrowRight, Users, Shield, Zap, RefreshCw, Globe, Tag } from "lucide-react";
 import { Navbar } from "../../components/navbar";
-import { getStorageItem, setStorageItem } from "../../lib/storage"; 
+import { getStorageItem, setStorageItem } from "../../lib/storage";
 import { UserData } from "../../types/index";
 import { useTheme } from "../../components/theme_provider";
-import api from "../../services/api"; // Instância do Axios [cite: 858]
+import api from "../../services/api";
+
+const APP_VERSION_FALLBACK = "0.3.0";
+
+async function getTauriVersion(): Promise<string> {
+  try {
+    if (typeof window !== "undefined" && (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__) {
+      const { getVersion } = await import("@tauri-apps/api/app");
+      return await getVersion();
+    }
+  } catch {
+    // fall through to fallback
+  }
+  return APP_VERSION_FALLBACK;
+}
 
 export default function HomePage() {
   const router = useRouter();
   const [userName, setUserName] = useState("Investidor");
   const [isLoading, setIsLoading] = useState(true);
+  const [appVersion, setAppVersion] = useState(APP_VERSION_FALLBACK);
   const { setIsHome } = useTheme();
 
   useEffect(() => {
@@ -20,8 +35,11 @@ export default function HomePage() {
   }, [setIsHome]);
 
   useEffect(() => {
+    getTauriVersion().then(setAppVersion);
+  }, []);
+
+  useEffect(() => {
     async function loadUser() {
-      // 1. TENTA CARREGAR RÁPIDO DO STORAGE (UX imediata)
       try {
         const savedUser = await getStorageItem<UserData | string>("user");
         if (savedUser) {
@@ -29,26 +47,18 @@ export default function HomePage() {
           const initialName = parsed.nickname || parsed.full_name?.split(" ")[0] || "Investidor";
           setUserName(initialName);
         }
-      } catch (e) {
-        console.warn("Storage local vazio ou corrompido");
+      } catch {
+        // storage vazio, seguir com fallback
       }
 
-      // 2. BUSCA DO BANCO DE DADOS (Verdade absoluta)
       try {
-        // O interceptor já injeta o Token automaticamente [cite: 859]
         const response = await api.get("/users/me");
         const freshData = response.data;
-
         const freshDisplayName = freshData.nickname || freshData.full_name?.split(" ")[0] || "Investidor";
-        
-        // Atualiza o estado na tela
         setUserName(freshDisplayName);
-        
-        // Sincroniza o storage para a próxima vez [cite: 855, 856]
         await setStorageItem("user", freshData);
-      } catch (error) {
-        console.error("Não foi possível sincronizar perfil com o servidor:", error);
-        // Se der 401, o interceptor em api.ts fará o logout automático [cite: 860]
+      } catch {
+        // 401 é tratado pelo interceptor em api.ts
       } finally {
         setIsLoading(false);
       }
@@ -60,21 +70,22 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
       <Navbar />
-      
-      <div className="text-center space-y-4 mb-16 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+      {/* Saudação */}
+      <div className="text-center space-y-4 mb-16 max-w-2xl">
         <h1 className="text-5xl md:text-6xl font-serif font-bold text-brand-deepBlue dark:text-slate-100 transition-colors">
           Olá, <span className="text-brand-turquoise">{userName}!</span>
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-400 font-sans transition-colors">
-          {isLoading ? "Sincronizando seus dados..." : "Bem-vindo de volta ao seu controle financeiro."} <br />
+          {isLoading ? "Sincronizando seus dados..." : "Bem-vindo de volta ao seu controle financeiro."}{" "}
+          <br />
           Por onde deseja começar hoje?
         </p>
       </div>
 
-      {/* Grid de Navegação - Mantido Conforme o Original */}
+      {/* Cards de Navegação */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
-        {/* ... Seus cards de Lançamentos, Histórico e Analytics ... */}
-        <div 
+        <div
           onClick={() => router.push("/lancamentos")}
           className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-expense-start dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
@@ -92,12 +103,11 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ... Card Histórico ... */}
-        <div 
+        <div
           onClick={() => router.push("/historico")}
           className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-[#cceae8] dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-           <div className="absolute inset-0 bg-gradient-to-br from-[#e0f7fa] dark:from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#e0f7fa] dark:from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-brand-turquoise/10 flex items-center justify-center mb-6 group-hover:bg-brand-turquoise transition-colors duration-300">
               <History className="w-8 h-8 text-brand-turquoise group-hover:text-white transition-colors" />
@@ -111,13 +121,11 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ... Card Analytics ... */}
-        <div 
+        <div
           onClick={() => router.push("/analytics")}
           className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-[#bfdbfe] dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
-           
-           <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] dark:from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] dark:from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-brand-deepBlue/10 flex items-center justify-center mb-6 group-hover:bg-brand-deepBlue transition-colors duration-300">
               <BarChart3 className="w-8 h-8 text-brand-deepBlue group-hover:text-white transition-colors" />
@@ -125,14 +133,13 @@ export default function HomePage() {
             <h3 className="text-2xl font-serif font-bold text-brand-deepBlue dark:text-slate-100 mb-2">Analytics</h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Gráficos e insights da sua evolução.</p>
           </div>
-          <div className="relative z-10 flex items-center gap-2 text-brand-deepBlue dark:text-brand-deepBlue transition-colors font-medium mt-4 group-hover:gap-4 transition-all">
+          <div className="relative z-10 flex items-center gap-2 text-brand-deepBlue dark:text-brand-deepBlue font-medium mt-4 group-hover:gap-4 transition-all">
             <span className="dark:text-slate-300">Explorar</span>
             <ArrowRight size={18} className="dark:text-slate-300" />
           </div>
         </div>
 
-        {/* --- Card Grupos --- */}
-        <div 
+        <div
           onClick={() => router.push("/grupos")}
           className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-indigo-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
@@ -149,12 +156,103 @@ export default function HomePage() {
             <ArrowRight size={18} />
           </div>
         </div>
-
       </div>
 
-      <footer className="mt-16 text-center text-slate-400 text-sm">
-        <p>Seneb Financial Control &copy; {new Date().getFullYear()}</p>
-      </footer>
+      {/* Sobre */}
+      <div className="w-full max-w-6xl mt-16">
+        <div className="bg-white/50 dark:bg-[#012a3d]/50 backdrop-blur-md rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+
+          {/* Cabeçalho do About */}
+          <div className="px-8 pt-8 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-deepBlue dark:bg-slate-100 rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-white dark:text-brand-deepBlue font-serif font-bold text-lg">S</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-serif font-bold text-brand-deepBlue dark:text-slate-100">
+                  Seneb<span className="text-brand-orange">.</span>
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Controle Financeiro Pessoal</p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-turquoise/10 text-brand-turquoise text-sm font-medium border border-brand-turquoise/20 self-start sm:self-auto">
+              <Tag size={13} />
+              v{appVersion}
+            </span>
+          </div>
+
+          {/* Chips de info */}
+          <div className="px-8 py-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+              <div className="w-9 h-9 rounded-xl bg-brand-turquoise/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Zap size={16} className="text-brand-turquoise" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Plataforma</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Aplicativo Desktop</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+              <div className="w-9 h-9 rounded-xl bg-brand-orange/10 flex items-center justify-center shrink-0 mt-0.5">
+                <RefreshCw size={16} className="text-brand-orange" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Atualizações</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Automáticas</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Verificadas ao iniciar o app</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Shield size={16} className="text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Segurança</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Dados criptografados</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Armazenamento seguro em nuvem</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rodapé do About */}
+          <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
+              <a
+                href="https://seneb.com.br/privacidade"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-brand-turquoise transition-colors flex items-center gap-1"
+              >
+                <Globe size={11} />
+                Política de Privacidade
+              </a>
+              <span>·</span>
+              <a
+                href="https://seneb.com.br/termos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-brand-turquoise transition-colors"
+              >
+                Termos de Uso
+              </a>
+              <span>·</span>
+              <a
+                href="https://seneb.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-brand-turquoise transition-colors"
+              >
+                seneb.com.br
+              </a>
+            </div>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              © {new Date().getFullYear()} Seneb Financial. Todos os direitos reservados.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

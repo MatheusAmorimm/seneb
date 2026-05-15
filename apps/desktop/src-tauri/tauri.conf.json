@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Seneb",
-  "version": "0.2.21",
+  "version": "0.3.0",
   "identifier": "br.com.seneb.desktop",
   "build": {
     "frontendDist": "../out",
@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.seneb.com.br http://localhost:8000; frame-ancestors 'none';"
     }
   },
   "plugins": {

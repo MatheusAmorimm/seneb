@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Plus, Mail, ArrowLeft, X, Trash2, LogOut, AlertTriangle } from "lucide-react";
+import { Users, Plus, Mail, ArrowLeft, X, Trash2, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import Link from "next/link";
@@ -46,12 +46,16 @@ export default function GruposPage() {
       createdGroupId = resp.data.id;
       
       // OBRIGATÓRIO: Convidar alguém para o grupo na hora da criação
-      await api.post(`/groups/${createdGroupId}/members`, { 
-        email: newGroupInviteEmail, 
-        role: newGroupInviteRole 
+      const inviteResp = await api.post(`/groups/${createdGroupId}/members`, {
+        email: newGroupInviteEmail,
+        role: newGroupInviteRole
       });
 
-      toast.success("Grupo criado e convite enviado!");
+      if (inviteResp.data.status === "email_sent") {
+        toast.success("Grupo criado!", { description: `${newGroupInviteEmail} não tem conta no Seneb. Um e-mail de convite foi enviado.` });
+      } else {
+        toast.success("Grupo criado e convite enviado!");
+      }
       setShowCreateModal(false);
       setNewGroupName("");
       setNewGroupInviteEmail("");
@@ -79,8 +83,12 @@ export default function GruposPage() {
 
     setIsInviting(true);
     try {
-      await api.post(`/groups/${inviteGroupId}/members`, { email: inviteEmail, role: inviteRole });
-      toast.success("Membro adicionado com sucesso!");
+      const resp = await api.post(`/groups/${inviteGroupId}/members`, { email: inviteEmail, role: inviteRole });
+      if (resp.data.status === "email_sent") {
+        toast.info("E-mail de convite enviado!", { description: `${inviteEmail} não tem conta no Seneb. Avisamos que você convidou.` });
+      } else {
+        toast.success("Convite enviado com sucesso!");
+      }
       setShowInviteModal(false);
       setInviteEmail("");
       setInviteRole("guest");
@@ -120,7 +128,7 @@ export default function GruposPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-5xl mx-auto pb-10 space-y-8">
       
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

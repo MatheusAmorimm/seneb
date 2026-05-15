@@ -118,7 +118,7 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
     <>
       <div 
         className={cn(
-          "fixed inset-0 bg-black/50 z-40 transition-opacity duration-300",
+          "fixed inset-0 bg-black/50 z-40 transition-opacity duration-150",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -126,7 +126,7 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
 
       <aside 
         className={cn(
-          "fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-r border-transparent dark:border-slate-800",
+          "fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-2xl z-50 transform transition-transform duration-150 ease-in-out flex flex-col border-r border-transparent dark:border-slate-800",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -189,7 +189,7 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
 
             {/* Dropdown com Meses */}
             <div className={cn(
-              "overflow-hidden transition-all duration-300 space-y-1",
+              "overflow-hidden transition-all duration-150 space-y-1",
               isHistoryOpen ? "max-h-96 opacity-100 py-1" : "max-h-0 opacity-0"
             )}>
               {isLoading ? (

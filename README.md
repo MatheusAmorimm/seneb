@@ -1,93 +1,474 @@
-# finance_control_saas
+# Seneb — Controle Financeiro
 
+SaaS de gestão financeira pessoal e colaborativa. Desktop cross-platform (Windows / Linux) construído com **Tauri + Next.js + React**. Backend em **FastAPI + MongoDB Atlas**.
 
+---
 
-## Getting started
+## Stack
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+| Camada | Tecnologia |
+|---|---|
+| Desktop | Tauri 2 · Next.js 16 · React 19 · TailwindCSS 4 |
+| Landing page | Next.js 16 |
+| Backend | FastAPI 0.128 · Python 3.12 |
+| Banco de dados | MongoDB Atlas (Motor async) |
+| Autenticação | JWT (HS256) + Bcrypt |
+| CI/CD | GitLab CI → VPS Hostinger |
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+---
 
-## Add your files
-
-* [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Estrutura do Projeto
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/TechCAmorim/finance_control_saas.git
-git branch -M main
-git push -uf origin main
+finance_control_saas/
+├── apps/
+│   ├── desktop/          # App Tauri (Next.js embutido)
+│   └── web/              # Landing page Next.js
+└── backend/              # FastAPI — Clean Architecture
+    ├── core/             # Configs, DB, Security, Mail, Exceptions
+    ├── domain/           # Regras de negócio puras
+    │   ├── entities/     # Entidades de domínio (sem frameworks)
+    │   └── interfaces/   # Contratos de repositório (ABCs)
+    ├── application/      # Casos de uso + DTOs
+    │   ├── gate.py       # Socratic Gate (validação de pré-condições)
+    │   ├── dtos/         # Contratos HTTP (Input/Output)
+    │   └── use_cases/    # Lógica de negócio por domínio
+    ├── infrastructure/
+    │   └── repositories/ # Implementações MongoDB dos contratos
+    └── api/v1/
+        ├── controllers/  # Camada HTTP fina (apenas recebe/responde)
+        ├── middlewares/  # Rate limiting
+        └── dependencies.py  # Injeção de dependência FastAPI
 ```
 
-## Integrate with your tools
+---
 
-* [Set up project integrations](https://gitlab.com/TechCAmorim/finance_control_saas/-/settings/integrations)
+## Arquitetura — Clean Architecture
 
-## Collaborate with your team
+O backend segue **Clean Architecture** com quatro camadas concêntricas. Dependências só apontam para dentro (do externo ao interno).
 
-* [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```
+[ Controllers ] → [ Use Cases ] → [ Interfaces ] ← [ Repositories ]
+                       ↓
+                  [ Entities ]
+```
 
-## Test and Deploy
+### 1. Domain (núcleo)
 
-Use the built-in continuous integration in GitLab.
+Entidades puras em `domain/entities/`. Sem imports de FastAPI, Motor ou qualquer framework.
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```python
+# domain/entities/transaction.py
+class TransactionEntity(BaseModel):
+    id: Optional[str] = None
+    type: Literal["income", "expense"]
+    ...
+```
 
-***
+Interfaces (contratos) em `domain/interfaces/`. Apenas ABCs, sem implementação.
 
-# Editing this README
+```python
+# domain/interfaces/transaction_repository.py
+class ITransactionRepository(ABC):
+    @abstractmethod
+    async def find_drafts(...) -> list[TransactionEntity]: ...
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### 2. Application (casos de uso)
 
-## Suggestions for a good README
+Cada caso de uso é uma classe com um método `execute()`. Recebe DTOs e entidades, nunca objetos HTTP.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```python
+# application/use_cases/transaction/create_transaction.py
+class CreateTransactionUseCase:
+    def __init__(self, transaction_repo, group_repo): ...
 
-## Name
-Choose a self-explaining name for your project.
+    async def execute(self, data: TransactionInput, user_id: str) -> TransactionEntity:
+        ...
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+**Socratic Gate** valida pré-condições antes de executar lógica:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```python
+Gate().require(condition, "mensagem").require(condition2, "mensagem2").check()
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+O gate coleta violações e lança `DomainException` na primeira falha (ou todas com `check_all()`).
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### 3. Infrastructure (repositórios MongoDB)
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Implementam os contratos do domínio. Encapsulam toda conversão entre entidade e documento MongoDB.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```python
+# infrastructure/repositories/mongo_transaction_repository.py
+class MongoTransactionRepository(ITransactionRepository):
+    def _to_entity(self, doc: dict) -> TransactionEntity:
+        data = dict(doc)
+        data["id"] = str(data.pop("_id"))
+        return TransactionEntity(**data)
+    ...
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 4. API (controllers)
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Controllers são finos: recebem HTTP, chamam use case, tratam exceções de domínio → HTTP.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```python
+# api/v1/controllers/transaction_controller.py
+@router.post("")
+async def create_transaction(data: TransactionInput, ...):
+    try:
+        entity = await CreateTransactionUseCase(repo, group_repo).execute(data, user_id)
+        return TransactionOutput(**entity.model_dump())
+    except DomainException as exc:
+        _handle(exc)
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+---
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Como Criar uma Nova Feature
 
-## License
-For open source projects, say how it is licensed.
+Siga **sempre** essa sequência de camadas (de dentro para fora):
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### Passo 1 — Entidade (se domínio novo)
+
+```python
+# backend/domain/entities/meu_dominio.py
+from pydantic import BaseModel
+from typing import Optional, Literal
+
+class MeuDominioEntity(BaseModel):
+    id: Optional[str] = None
+    campo: str
+    tipo: Literal["a", "b"]
+```
+
+### Passo 2 — Interface do Repositório
+
+```python
+# backend/domain/interfaces/meu_dominio_repository.py
+from abc import ABC, abstractmethod
+from backend.domain.entities.meu_dominio import MeuDominioEntity
+
+class IMeuDominioRepository(ABC):
+    @abstractmethod
+    async def create(self, entity: MeuDominioEntity) -> MeuDominioEntity: ...
+
+    @abstractmethod
+    async def find_by_id(self, id: str) -> Optional[MeuDominioEntity]: ...
+```
+
+### Passo 3 — Implementação MongoDB
+
+```python
+# backend/infrastructure/repositories/mongo_meu_dominio_repository.py
+from backend.domain.interfaces.meu_dominio_repository import IMeuDominioRepository
+
+class MongoMeuDominioRepository(IMeuDominioRepository):
+    def __init__(self, db): self._col = db["meu_dominio"]
+
+    def _to_entity(self, doc: dict) -> MeuDominioEntity:
+        data = dict(doc)
+        data["id"] = str(data.pop("_id"))
+        return MeuDominioEntity(**data)
+
+    async def create(self, entity: MeuDominioEntity) -> MeuDominioEntity:
+        data = entity.model_dump(exclude={"id"})
+        result = await self._col.insert_one(data)
+        entity.id = str(result.inserted_id)
+        return entity
+```
+
+### Passo 4 — DTOs (Input/Output HTTP)
+
+```python
+# backend/application/dtos/meu_dominio_dtos.py
+from pydantic import BaseModel, Field
+
+class MeuDominioInput(BaseModel):
+    campo: str = Field(..., max_length=200)
+
+class MeuDominioOutput(BaseModel):
+    id: Optional[str]
+    campo: str
+```
+
+### Passo 5 — Caso de Uso
+
+```python
+# backend/application/use_cases/meu_dominio/criar_meu_dominio.py
+from backend.application.gate import Gate
+from backend.core.exceptions import ConflictException
+from backend.domain.interfaces.meu_dominio_repository import IMeuDominioRepository
+
+class CriarMeuDominioUseCase:
+    def __init__(self, repo: IMeuDominioRepository) -> None:
+        self._repo = repo
+
+    async def execute(self, data: MeuDominioInput, user_id: str) -> MeuDominioEntity:
+        Gate().require(len(data.campo) > 0, "Campo obrigatório.").check()
+
+        entity = MeuDominioEntity(user_id=user_id, campo=data.campo)
+        return await self._repo.create(entity)
+```
+
+### Passo 6 — Injeção de Dependência
+
+```python
+# Adicionar em backend/api/v1/dependencies.py
+def get_meu_dominio_repo(db=Depends(get_db)) -> IMeuDominioRepository:
+    return MongoMeuDominioRepository(db)
+```
+
+### Passo 7 — Controller
+
+```python
+# backend/api/v1/controllers/meu_dominio_controller.py
+from fastapi import APIRouter, Depends, HTTPException
+from backend.core.exceptions import DomainException
+
+router = APIRouter()
+
+def _handle(exc: DomainException) -> None:
+    raise HTTPException(status_code=400, detail=exc.message)
+
+@router.post("", response_model=MeuDominioOutput)
+async def criar(
+    data: MeuDominioInput,
+    current_user=Depends(get_current_user),
+    repo=Depends(get_meu_dominio_repo),
+):
+    try:
+        entity = await CriarMeuDominioUseCase(repo).execute(data, str(current_user.id))
+        return MeuDominioOutput(**entity.model_dump())
+    except DomainException as exc:
+        _handle(exc)
+```
+
+### Passo 8 — Registrar no Router
+
+```python
+# backend/api/v1/api.py
+from backend.api.v1.controllers import meu_dominio_controller
+
+api_router.include_router(
+    meu_dominio_controller.router,
+    prefix="/meu-dominio",
+    tags=["Meu Dominio"],
+)
+```
+
+---
+
+## Regras de Desenvolvimento
+
+### O que NUNCA fazer
+
+- **Nunca** acessar `db.db.*` diretamente em controllers ou use cases. Toda query passa pelo repositório.
+- **Nunca** importar FastAPI (`HTTPException`, `Request`) dentro de use cases ou domínio.
+- **Nunca** colocar lógica de negócio nos controllers (só receber, chamar use case, responder).
+- **Nunca** usar `random` para OTP — usar sempre `secrets`.
+- **Nunca** comparar códigos OTP com `==` — usar `hmac.compare_digest()`.
+- **Nunca** usar `bare except:` — capturar exceções específicas.
+- **Nunca** retornar `404` em "e-mail não encontrado" em fluxos de recuperação de senha (user enumeration).
+
+### O que SEMPRE fazer
+
+- Validar pré-condições com `Gate()` antes de executar lógica nos use cases.
+- Adicionar `max_length` em todos os campos de texto nos DTOs.
+- Usar `Literal[...]` em campos de enum nas entidades e DTOs.
+- Adicionar `created_at: datetime.now(timezone.utc)` em todos os documentos OTP (necessário para TTL).
+- Lançar `DomainException` (ou subclasses) nos use cases — nunca `HTTPException`.
+- Mapear `DomainException` → `HTTPException` nos controllers (função `_handle()`).
+- Aplicar `@limiter.limit("N/minute")` em endpoints de autenticação.
+
+### Exceções de Domínio
+
+| Exceção | HTTP Status | Quando usar |
+|---|---|---|
+| `DomainException` | 400 | Regra de negócio genérica |
+| `NotFoundException` | 404 | Recurso não encontrado |
+| `ForbiddenException` | 403 | Sem permissão |
+| `ConflictException` | 409 | Recurso já existe |
+| `UnauthorizedException` | 401 | Não autenticado |
+
+---
+
+## Segurança — Padrões Obrigatórios
+
+### OTP (One-Time Passwords)
+
+```python
+import secrets
+code = str(secrets.randbelow(90_000_000) + 10_000_000)  # 8 dígitos seguros
+```
+
+### Comparação Constant-Time
+
+```python
+import hmac
+if not hmac.compare_digest(stored["code"], user_provided_code):
+    raise DomainException("Código inválido.")
+```
+
+### TTL de Códigos
+
+Todos os documentos OTP **devem** incluir `created_at` para o TTL index funcionar:
+
+```python
+await db.collection.update_one(
+    {"email": email},
+    {"$set": {"code": code, "created_at": datetime.now(timezone.utc)}},
+    upsert=True,
+)
+```
+
+TTLs configurados no `main.py`:
+- `verification_codes`: 15 min
+- `password_reset_codes`: 15 min
+- `password_change_codes`: 15 min
+- `email_change_codes`: 30 min
+- `notifications`: 7 dias
+
+### Invalidação de Token
+
+O campo `token_version` no usuário é incrementado automaticamente ao trocar senha ou e-mail. O token antigo se torna inválido imediatamente.
+
+### Rate Limiting
+
+```python
+from backend.api.v1.middlewares.rate_limit import limiter
+
+@router.post("/minha-rota")
+@limiter.limit("5/minute")
+async def minha_rota(request: Request, ...):  # request obrigatório para slowapi
+    ...
+```
+
+Limites atuais em `/auth`:
+- `/send-code`: 5/min por IP
+- `/signup`: 5/min por IP
+- `/login`: 10/min por IP
+- `/forgot-password`: 5/min por IP
+
+### CORS
+
+Configure via variável de ambiente:
+
+```env
+ALLOWED_ORIGINS=["https://app.seneb.com.br","https://seneb.com.br"]
+```
+
+---
+
+## Variáveis de Ambiente
+
+```env
+# Obrigatórias
+SECRET_KEY=<string_aleatória_mínimo_32_chars>
+MONGO_URI=mongodb+srv://...
+
+# Opcionais (com defaults)
+DATABASE_NAME=finance_saas_dev
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
+ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:3001"]
+DISABLE_OPENAPI=false
+
+# E-mail
+MAIL_USERNAME=suporte@seneb.com.br
+MAIL_PASSWORD=...
+MAIL_FROM=suporte@seneb.com.br
+MAIL_PORT=587
+MAIL_SERVER=smtp.hostinger.com
+```
+
+> **Nunca** comitar `.env` no repositório.
+
+---
+
+## Setup Local
+
+### Backend
+
+```bash
+cd backend
+python -m venv ../.venv
+source ../.venv/bin/activate  # Windows: ..\.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn backend.main:app --reload --port 8000
+```
+
+### Desktop (Tauri + Next.js)
+
+```bash
+cd apps/desktop
+npm install
+npm run tauri dev
+```
+
+### Landing Page
+
+```bash
+cd apps/web
+npm install
+npm run dev   # porta 3001
+```
+
+---
+
+## Frontend — Padrões Tauri + Next.js
+
+### Storage
+
+Use `getStorageItem` / `setStorageItem` de `src/lib/storage` — abstrai Tauri Store (desktop) e localStorage (web).
+
+```typescript
+import { getStorageItem, setStorageItem } from '@/lib/storage'
+
+const token = await getStorageItem<string>('token')
+await setStorageItem('token', newToken)
+```
+
+### API Client
+
+O cliente Axios em `src/services/api.ts` injeta automaticamente:
+- Bearer token no header `Authorization`
+- `group_id` em queries/body quando há workspace de grupo ativo (via `sessionStorage`)
+
+### Context Providers
+
+| Provider | Arquivo | Responsabilidade |
+|---|---|---|
+| `WorkspaceContext` | `context/workspace_context.tsx` | Workspace ativo (pessoal ou grupo) |
+| `NotificationContext` | `context/notification_context.tsx` | Polling de notificações (10s) |
+| `ReportsContext` | `context/reports_context.tsx` | Relatório ativo |
+
+### Convenções de Nomenclatura (Frontend)
+
+- Arquivos: `snake_case.tsx`
+- Componentes React: `PascalCase`
+- Hooks: `useNomeDoHook`
+- Contexts: `NomeContext`
+- Serviços: sempre via `src/services/api.ts`
+
+---
+
+## CI/CD — GitLab
+
+O pipeline tem 3 stages:
+
+1. **build_tauri** (Windows runner) → MSI assinado
+2. **build_tauri_linux** (Ubuntu 22.04) → AppImage + DEB
+3. **deploy_vps_hostinger** (Alpine) → rsync para VPS + rebuild Next.js + restart PM2
+
+Artefatos de atualização gerados: `update-windows.json`, `update-linux.json`.
+
+---
+
+## Distribuição Desktop
+
+- **Auto-update**: Tauri Updater com assinatura criptográfica
+- **Servidor de updates**: `https://seneb.com.br/update.json`
+- **Windows**: MSI (instalação passiva)
+- **Linux**: AppImage + DEB

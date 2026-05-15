@@ -1,27 +1,51 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+
+from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_MIN_SECRET_KEY_LENGTH = 32
 
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "Finance Control SaaS"
+    PROJECT_NAME: str = "Seneb - Finance Control"
 
-    # Variáveis Obrigatórias (Se não tiver no .env nem no .env.dev, o app não liga)
     MONGO_URI: str = ""
     SECRET_KEY: str = ""
-
     DATABASE_NAME: str = "finance_saas_dev"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
-    # Configuração da Classe (A mágica acontece aqui)
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    DISABLE_OPENAPI: bool = False
+
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    MAIL_FROM: str = ""
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = ""
+
     model_config = SettingsConfigDict(
-        env_file=("backend/.env.dev", "backend/.env", ".env"), extra="ignore", case_sensitive=True
+        env_file=("backend/.env.dev", "backend/.env", ".env"),
+        extra="ignore",
+        case_sensitive=True,
     )
+
+    @model_validator(mode="after")
+    def validate_required(self) -> "Settings":
+        if not self.SECRET_KEY:
+            raise ValueError("SECRET_KEY must be set in environment variables.")
+        if len(self.SECRET_KEY) < _MIN_SECRET_KEY_LENGTH:
+            raise ValueError(
+                f"SECRET_KEY must be at least {_MIN_SECRET_KEY_LENGTH} characters long."
+            )
+        return self
 
 
 @lru_cache()
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
+
 
 settings = get_settings()

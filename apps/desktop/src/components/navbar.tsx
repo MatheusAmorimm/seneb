@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut, UserCircle, AlertTriangle } from "lucide-react";
-import { removeStorageItem } from "../lib/storage";
+import { getStorageItem, removeStorageItem } from "../lib/storage";
 import { toast } from "sonner";
 import api from "../services/api";
 import { NotificationBell } from "./notification_bell";
@@ -14,25 +14,26 @@ export function Navbar() {
     e.preventDefault();
 
     try {
+      const refreshToken = await getStorageItem<string>("refresh_token");
+      if (refreshToken) {
+        await api.post("/auth/logout", { refresh_token: refreshToken }).catch(() => {});
+      }
 
       await removeStorageItem("token");
+      await removeStorageItem("refresh_token");
       await removeStorageItem("user");
-
 
       api.defaults.headers.common['Authorization'] = undefined;
 
       toast.info("Sessão encerrada.");
-
       window.location.href = "/login";
-
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
+    } catch {
       toast.error("Erro ao encerrar sessão.");
     }
   };
 
   return (
-    <nav className="absolute top-0 left-0 w-full p-6 flex flex-wrap justify-between items-center gap-y-4 z-50 animate-in fade-in slide-in-from-top-4 duration-700">
+    <nav className="absolute top-0 left-0 w-full p-6 flex flex-wrap justify-between items-center gap-y-4 z-50">
 
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-[#013750] dark:bg-slate-100 rounded-lg flex items-center justify-center text-white dark:text-[#013750] font-serif font-bold text-xl shadow-lg transition-colors">

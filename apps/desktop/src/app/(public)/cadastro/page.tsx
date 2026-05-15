@@ -104,6 +104,7 @@ export default function CadastroPage() {
       const response = await api.post('auth/signup', payload);
 
       await setStorageItem('token', response.data.access_token);
+      await setStorageItem('refresh_token', response.data.refresh_token);
       await setStorageItem('user', response.data.user_name);
       await setStorageItem('remember_me', true);
 

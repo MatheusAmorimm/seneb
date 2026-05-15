@@ -17,6 +17,6 @@ pytest
 pytest-asyncio
 httpx
 fastapi-mail
-email-validator
 certifi>=2024.2.2
 tzdata
+slowapi==0.1.9

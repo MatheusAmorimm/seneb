@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { User, Mail, Lock, Save, Crown, ShieldAlert, X, ArrowRight, KeyRound, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "../../../../components/theme_provider";
 import { Palette, Moon, Sun } from "lucide-react";
@@ -12,7 +11,6 @@ import api from "../../../../services/api";
 import { setStorageItem } from "../../../../lib/storage";
 
 export default function ProfilePage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -239,7 +237,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto pb-10 space-y-8">
       
       <div className="flex items-center gap-4">
         <Link 
