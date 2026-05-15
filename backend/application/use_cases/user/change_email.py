@@ -38,7 +38,10 @@ class ChangeEmailInitUseCase:
             raise DomainException("Senha atual incorreta.")
 
         if current_user.last_email_change:
-            days_since = (datetime.now(timezone.utc) - current_user.last_email_change).days
+            last_change = current_user.last_email_change
+            if last_change.tzinfo is None:
+                last_change = last_change.replace(tzinfo=timezone.utc)
+            days_since = (datetime.now(timezone.utc) - last_change).days
             if days_since < _EMAIL_CHANGE_COOLDOWN_DAYS:
                 remaining = _EMAIL_CHANGE_COOLDOWN_DAYS - days_since
                 raise DomainException(

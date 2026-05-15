@@ -64,19 +64,18 @@ export default function LoginPage() {
     } catch (error) {
       if (error instanceof AxiosError) {
         const detail = error.response?.data?.detail;
-        
-        // Tratamento específico para erros de validação (Array)
+        const status = error.response?.status;
         if (Array.isArray(detail)) {
-             // Geralmente o erro é: [{loc: ['body', 'username'], msg: 'field required', ...}]
-             const field = detail[0]?.loc[1] === 'username' ? 'E-mail' : 'Senha';
-             toast.error(`O campo ${field} é obrigatório.`);
+          const field = detail[0]?.loc[1] === 'username' ? 'E-mail' : 'Senha';
+          toast.error(`O campo ${field} é obrigatório.`);
         } else if (typeof detail === 'string') {
-             toast.error(detail); // Ex: "E-mail ou senha incorretos"
+          toast.error(detail);
         } else {
-             toast.error("Verifique seus dados e tente novamente.");
+          toast.error(`Erro HTTP ${status ?? 'sem resposta'}: ${JSON.stringify(detail) ?? 'sem detalhe'}`);
         }
       } else {
-        toast.error("Erro inesperado. Verifique sua conexão.");
+        const msg = error instanceof Error ? error.message : String(error);
+        toast.error(`Erro interno: ${msg}`);
       }
     } finally {
       setLoading(false);

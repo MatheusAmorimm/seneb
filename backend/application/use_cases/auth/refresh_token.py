@@ -27,7 +27,10 @@ class RefreshTokenUseCase:
         if not stored:
             raise UnauthorizedException("Sessão inválida. Faça login novamente.")
 
-        if stored["expires_at"] < datetime.now(timezone.utc):
+        expires_at = stored["expires_at"]
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
             await col.delete_one({"_id": stored["_id"]})
             raise UnauthorizedException("Sessão expirada. Faça login novamente.")
 
