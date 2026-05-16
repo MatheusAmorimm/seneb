@@ -55,9 +55,17 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Tauri desktop app origins — always allowed regardless of env config
+_TAURI_ORIGINS = [
+    "https://tauri.localhost",
+    "http://tauri.localhost",
+    "tauri://localhost",
+]
+_allowed_origins = list(set(settings.ALLOWED_ORIGINS + _TAURI_ORIGINS))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
