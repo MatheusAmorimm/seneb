@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, CreditCard, AlertCircle, Hash, CalendarClock, Save, Info, X, PenLine } from 'lucide-react';
+import { Plus, CreditCard, AlertCircle, Hash, CalendarClock, Save, Info, X, PenLine, Target } from 'lucide-react';
 import api from '../services/api';
-import { Transaction, TransactionType, PaymentMethod } from '../types';
+import { Goal, Transaction, TransactionType, PaymentMethod } from '../types';
 import { toast } from 'sonner';
 import { getCategoriesByType, getSubcategories } from '../constants/categories';
+import { AppSelect } from './ui/app_select';
+import { AppDateInput } from './ui/app_date_input';
 
 const MAX_AMOUNT = 1_000_000_000;
 
@@ -63,7 +65,16 @@ const SUBCATEGORIES_ALL_PAYMENT = new Set(["Roupas"]);
 
 // Categorias que mostram campos especiais de despesas
 const CATEGORIES_WITH_PAYMENT = ["Moradia", "Transporte", "Saúde", "Educação", "Despesas Financeiras", "Compras Pessoais", "Alimentação", "Lazer e Estilo de Vida", "Família e Dependentes", "Impostos"];
-const CATEGORIES_WITH_DUE_DATE = ["Moradia", "Despesas Financeiras", "Impostos"];
+// Categorias cujas contas têm datas de vencimento recorrentes ou anuais
+const CATEGORIES_WITH_DUE_DATE = [
+  "Moradia",           // aluguel, condomínio, contas de serviços
+  "Despesas Financeiras", // fatura do cartão, empréstimo, parcelamentos
+  "Impostos",          // IRPF, IPTU, IPVA, taxas
+  "Saúde",             // plano de saúde, mensalidade da academia
+  "Educação",          // mensalidade escolar, faculdade
+  "Transporte",        // IPVA, seguro do veículo
+  "Família e Dependentes", // creche, mensalidades
+];
 const CATEGORIES_WITH_INSTALLMENT = ["Compras Pessoais", "Despesas Financeiras", "Lazer e Estilo de Vida"];
 
 interface TransactionFormProps {
@@ -92,10 +103,15 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   const [totalInstallments, setTotalInstallments] = useState(1);
   const [currentInstallment, setCurrentInstallment] = useState(1);
 
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goalId, setGoalId] = useState<string>('');
+  const [isLoadingGoals, setIsLoadingGoals] = useState(false);
+
   const [errors, setErrors] = useState({
     category: false,
     subcategory: false,
-    amount: false
+    amount: false,
+    goal: false,
   });
 
   const formatBankName = (name: string) => {
@@ -124,7 +140,8 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
         setCurrentInstallment(1);
       }
       
-      setErrors({ category: false, subcategory: false, amount: false });
+      setGoalId(initialData.goal_id || '');
+      setErrors({ category: false, subcategory: false, amount: false, goal: false });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       resetForm();
@@ -144,7 +161,8 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     setIsCustomBankMode(false);
     setTotalInstallments(1);
     setCurrentInstallment(1);
-    setErrors({ category: false, subcategory: false, amount: false });
+    setGoalId('');
+    setErrors({ category: false, subcategory: false, amount: false, goal: false });
   };
 
   // Fetch custom banks
@@ -166,8 +184,17 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     fetchUserBanks();
   }, []);
 
+  useEffect(() => {
+    if (type !== 'goal') return;
+    setIsLoadingGoals(true);
+    api.get('/goals').then(r => setGoals(r.data)).catch(() => {}).finally(() => setIsLoadingGoals(false));
+  }, [type]);
+
   // Categories filtered by type
-  const availableCategories = useMemo(() => getCategoriesByType(type), [type]);
+  const availableCategories = useMemo(
+    () => type === 'goal' ? [] : getCategoriesByType(type),
+    [type]
+  );
   const availableSubcategories = useMemo(() => getSubcategories(category), [category]);
 
   // Field visibility
@@ -210,10 +237,11 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   // Cleanup effects
   const handleTypeChange = (newType: TransactionType) => {
     setType(newType);
+    setGoalId('');
     if (!initialData) {
        setCategory(''); setSubcategory(''); setDescription(''); setAmount(''); setPaymentMethod('');
        setBank(''); setDueDate(''); setIsInstallment(false); setIsCustomBankMode(false);
-       setErrors({ category: false, subcategory: false, amount: false });
+       setErrors({ category: false, subcategory: false, amount: false, goal: false });
     }
   };
 
@@ -264,30 +292,42 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const hasCategoryError = !category;
-    const hasSubcategoryError = !subcategory;
     const parsedAmount = parseCurrencyToNumber(amount);
     const hasAmountError = !amount || parsedAmount <= 0 || parsedAmount > MAX_AMOUNT;
 
-    const newErrors = {
-        category: hasCategoryError,
-        subcategory: hasSubcategoryError,
-        amount: hasAmountError
-    };
-
-    if (hasCategoryError || hasSubcategoryError || hasAmountError) {
-        setErrors(newErrors);
+    if (type === 'goal') {
+      const hasGoalError = !goalId;
+      if (hasGoalError || hasAmountError) {
+        setErrors(prev => ({ ...prev, goal: hasGoalError, amount: hasAmountError }));
         toast.error("Preencha os campos obrigatórios em vermelho.");
         return;
+      }
+    } else {
+      const hasCategoryError = !category;
+      const hasSubcategoryError = !subcategory;
+      if (hasCategoryError || hasSubcategoryError || hasAmountError) {
+        setErrors({ category: hasCategoryError, subcategory: hasSubcategoryError, amount: hasAmountError, goal: false });
+        toast.error("Preencha os campos obrigatórios em vermelho.");
+        return;
+      }
     }
 
     try {
       setIsSubmitting(true);
-      
-      const payload: Transaction = {
+
+      const payload: Transaction = type === 'goal' ? {
+        id: initialData?.id,
+        type,
+        category: 'Meta',
+        subcategory: '',
+        description: description || undefined,
+        amount: parsedAmount,
+        date: initialData?.date || new Date().toISOString().split('T')[0],
+        goal_id: goalId,
+      } : {
         id: initialData?.id,
         type, category, subcategory,
-        description: description || '',
+        description: description || undefined,
         amount: parsedAmount,
         date: initialData?.date || new Date().toISOString().split('T')[0],
         due_date: showDueDateField && dueDate ? dueDate : undefined,
@@ -297,18 +337,19 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
         total_installments: isInstallment ? totalInstallments : 1,
         installment_identifier: isInstallment ? `${currentInstallment}/${totalInstallments}` : undefined
       };
-      
+
       await onAddTransaction(payload);
-      
+
       if (!initialData) {
         setCategory('');
         setSubcategory('');
         setDescription('');
         setAmount(''); setPaymentMethod(''); setBank(''); setDueDate('');
         setIsInstallment(false); setTotalInstallments(1); setCurrentInstallment(1); setIsCustomBankMode(false);
-        setErrors({ category: false, subcategory: false, amount: false });
+        setGoalId('');
+        setErrors({ category: false, subcategory: false, amount: false, goal: false });
       }
-    } catch (error) { console.error(error); } 
+    } catch (error) { console.error(error); }
     finally { setIsSubmitting(false); }
   };
 
@@ -349,43 +390,53 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'income' ? 'bg-white dark:bg-slate-800 text-[#00988D] dark:text-teal-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>Receita</button>
           <button type="button" onClick={() => handleTypeChange('expense')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${type === 'expense' ? 'bg-white dark:bg-slate-800 text-[#F23E02] dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>Despesa</button>
+          <button type="button" onClick={() => handleTypeChange('goal')}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1 ${type === 'goal' ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}><Target size={13} /> Meta</button>
         </div>
       </div>
       
       <div className="flex flex-col gap-5">
-        {/* LINHA 1: Categoria + Subcategoria + Valor */}
+        {/* LINHA 1: Categoria + Subcategoria + Valor (ou Meta) */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-          
-          <div className="md:col-span-3">
-            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.category ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Categoria *</label>
-            <select 
-              value={category} 
-              onChange={(e) => {
-                  setCategory(e.target.value);
-                  if(e.target.value) setErrors(prev => ({...prev, category: false}));
-              }}
-              className={getInputClass(errors.category)}
-            >
-              <option value="" className="dark:bg-slate-900">Selecione...</option>
-              {availableCategories.map(cat => (<option key={cat.name} value={cat.name} className="dark:bg-slate-900">{cat.name}</option>))}
-            </select>
-          </div>
 
-          <div className="md:col-span-3">
-            <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.subcategory ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Subcategoria *</label>
-            <select 
-              value={subcategory} 
-              onChange={(e) => {
-                  setSubcategory(e.target.value);
-                  if(e.target.value) setErrors(prev => ({...prev, subcategory: false}));
-              }}
-              disabled={!category}
-              className={`${getInputClass(errors.subcategory)} disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:border-slate-200 dark:disabled:border-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600`}
-            >
-              <option value="" className="dark:bg-slate-900">{category ? "Selecione..." : "Escolha a categoria"}</option>
-              {availableSubcategories.map(sub => (<option key={sub} value={sub} className="dark:bg-slate-900">{sub}</option>))}
-            </select>
-          </div>
+          {type === 'goal' ? (
+            <div className="md:col-span-6">
+              <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.goal ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Meta *</label>
+              <AppSelect
+                value={goalId}
+                onChange={(v) => { setGoalId(v); if (v) setErrors(prev => ({ ...prev, goal: false })); }}
+                options={goals.map(g => ({ value: g.id!, label: g.name }))}
+                placeholder={isLoadingGoals ? 'Carregando...' : 'Selecione a meta...'}
+                hasError={errors.goal}
+                disabled={isLoadingGoals}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="md:col-span-3">
+                <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.category ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Categoria *</label>
+                <AppSelect
+                  value={category}
+                  onChange={(v) => { setCategory(v); if (v) setErrors(prev => ({ ...prev, category: false })); }}
+                  options={availableCategories.map(cat => ({ value: cat.name, label: cat.name }))}
+                  placeholder="Selecione..."
+                  hasError={errors.category}
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${errors.subcategory ? 'text-red-600' : 'text-[#2C6B74] dark:text-teal-400'}`}>Subcategoria *</label>
+                <AppSelect
+                  value={subcategory}
+                  onChange={(v) => { setSubcategory(v); if (v) setErrors(prev => ({ ...prev, subcategory: false })); }}
+                  options={availableSubcategories.map(sub => ({ value: sub, label: sub }))}
+                  placeholder={category ? 'Selecione...' : 'Escolha a categoria'}
+                  hasError={errors.subcategory}
+                  disabled={!category}
+                />
+              </div>
+            </>
+          )}
 
           <div className="md:col-span-3">
             <div className="flex justify-between items-center mb-1.5 ml-1">
@@ -396,10 +447,10 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
                 {description.length}/100
               </span>
             </div>
-            <input 
-              value={description} 
+            <input
+              value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={!category}
+              disabled={type !== 'goal' && !category}
               maxLength={100}
               className={`${getInputClass(false)} disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:border-slate-200 dark:disabled:border-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600`}
               placeholder="Opcional — detalhe aqui" 
@@ -441,11 +492,12 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
             {showPaymentField && (
               <div className={`${showDueDateField ? 'md:col-span-4' : 'md:col-span-6'}`}>
                 <label className="block text-xs font-bold text-[#2C6B74] dark:text-teal-400 uppercase mb-1.5 ml-1">Meio de Pagamento</label>
-                <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                  className="w-full h-11 px-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
-                  <option value="" className="dark:bg-slate-900">Selecione...</option>
-                  {currentPaymentOptions.map(opt => (<option key={opt.value} value={opt.value} className="dark:bg-slate-900">{opt.label}</option>))}
-                </select>
+                <AppSelect
+                  value={paymentMethod}
+                  onChange={(v) => setPaymentMethod(v as PaymentMethod)}
+                  options={currentPaymentOptions}
+                  placeholder="Selecione..."
+                />
               </div>
             )}
 
@@ -453,12 +505,16 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
               <div className={`${showDueDateField ? 'md:col-span-4' : 'md:col-span-6'}`}>
                 <label className="block text-xs font-bold text-[#2C6B74] dark:text-teal-400 uppercase mb-1.5 ml-1">Banco / Origem</label>
                 {!isCustomBankMode ? (
-                  <select value={bank} onChange={(e) => handleBankChange(e.target.value)} disabled={isLoadingBanks}
-                    className="w-full h-11 px-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 disabled:opacity-70">
-                    <option value="" className="dark:bg-slate-900">{isLoadingBanks ? "Carregando..." : "Selecione..."}</option>
-                    {bankList.map(b => (<option key={b} value={b} className="dark:bg-slate-900">{b}</option>))}
-                    <option value="other_custom_option" className="font-bold text-[#F23E02] dark:text-orange-400 border-t border-slate-200 dark:border-slate-700 dark:bg-slate-900">+ Outro</option>
-                  </select>
+                  <AppSelect
+                    value={bank}
+                    onChange={handleBankChange}
+                    options={[
+                      ...bankList.map(b => ({ value: b, label: b })),
+                      { value: 'other_custom_option', label: '+ Outro', accent: true },
+                    ]}
+                    placeholder={isLoadingBanks ? 'Carregando...' : 'Selecione...'}
+                    disabled={isLoadingBanks}
+                  />
                 ) : (
                   <div className="flex gap-2 animate-in fade-in slide-in-from-left-1">
                     <input value={bank} onChange={(e) => setBank(e.target.value)} autoFocus
@@ -475,8 +531,7 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
             {showDueDateField && (
               <div className="md:col-span-4">
                 <label className="block text-xs font-bold text-[#2C6B74] dark:text-teal-400 uppercase mb-1.5 ml-1 flex items-center gap-1"><CalendarClock size={12} /> Vencimento</label>
-                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full h-11 px-4 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-[#F23E02] bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-sans" />
+                <AppDateInput value={dueDate} onChange={setDueDate} />
               </div>
             )}
           </div>

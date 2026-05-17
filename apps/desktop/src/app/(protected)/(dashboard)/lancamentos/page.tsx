@@ -16,6 +16,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Calculator } from "../../../../components/calculator";
 import { useWorkspaceContext } from "../../../../context/workspace_context";
 import { WorkspaceTabs } from "../../../../components/workspace_tabs";
+import { GoalCompletionOverlay } from "../../../../components/goal_completion_overlay";
+import { Goal } from "../../../../types";
 
 export default function LancamentosPage() {
   return (
@@ -40,6 +42,8 @@ function LancamentosContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [goalsTotal, setGoalsTotal] = useState(0);
+  const [celebratingGoal, setCelebratingGoal] = useState<Goal | null>(null);
   
   // Estados de Hover dos botões
   const [isHovered, setIsHovered] = useState(false); 
@@ -75,10 +79,32 @@ function LancamentosContent() {
     }
   }, [editingReportId, activeGroupId]); // Recarrega se o ID da URL mudar ou o Grupo Ativo mudar
 
+  const fetchGoalsTotal = useCallback(async () => {
+    try {
+      const res = await api.get('/goals/monthly-total');
+      setGoalsTotal(res.data.total ?? 0);
+    } catch { /* silently ignore */ }
+  }, []);
+
+  const checkGoalCompletion = useCallback(async (goalId: string) => {
+    try {
+      const res = await api.get('/goals');
+      const goals: Goal[] = res.data;
+      const goal = goals.find((g) => g.id === goalId);
+      if (goal && goal.current_amount >= goal.target_amount && !goal.is_celebrated) {
+        setCelebratingGoal(goal);
+      }
+    } catch { /* silently ignore */ }
+  }, []);
+
   // 🚀 4. useEffect agora escuta a função
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
+
+  useEffect(() => {
+    fetchGoalsTotal();
+  }, [fetchGoalsTotal]);
 
   // 🚀 PREVENÇÃO DE FUGA: Bloqueia a saída da página sem finalizar caso seja um Mês Reaberto
   useEffect(() => {
@@ -176,8 +202,8 @@ function LancamentosContent() {
         current_installment: transaction.current_installment,
         total_installments: transaction.total_installments,
         installment_identifier: transaction.installment_identifier || null,
-        // 🚀 5. Corrigido de 'editingTransaction' (Objeto) para 'editingReportId' (String da URL)
-        report_id: editingReportId || null 
+        goal_id: transaction.goal_id || null,
+        report_id: editingReportId || null,
       };
 
       const payload = Object.fromEntries(
@@ -186,21 +212,26 @@ function LancamentosContent() {
 
       if (transaction.id) {
         const response = await api.put(`/transactions/${transaction.id}`, payload);
-        
-        setTransactions((prev) => 
+
+        setTransactions((prev) =>
           prev.map((t) => (t.id === transaction.id ? response.data : t))
         );
         setFilteredTransactions((prev) =>
           prev.map((t) => (t.id === transaction.id ? response.data : t))
         );
-        
+
         toast.success("Lançamento atualizado!");
         setEditingTransaction(null);
+        if (transaction.type === 'goal') fetchGoalsTotal();
       } else {
-        const response = await api.post('/transactions', rawPayload); 
+        const response = await api.post('/transactions', payload);
         setTransactions((prev) => [response.data, ...prev]);
         setFilteredTransactions((prev) => [response.data, ...prev]);
         toast.success("Lançamento salvo!");
+        if (transaction.type === 'goal' && transaction.goal_id) {
+          fetchGoalsTotal();
+          checkGoalCompletion(transaction.goal_id);
+        }
       }
     } catch (error) {
       console.error("Erro detalhado:", error);
@@ -261,23 +292,24 @@ function LancamentosContent() {
     if (!transactionToDelete) return;
     try {
       const id = transactionToDelete;
+      const isGoal = transactions.find((t) => t.id === id)?.type === 'goal';
+
       setTransactions((prev) => {
         const updated = prev.filter((t) => t.id !== id);
         setFilteredTransactions(updated);
         return updated;
-      }); 
-      setTransactionToDelete(null); 
-      
+      });
+      setTransactionToDelete(null);
+
       await api.delete(`/transactions/${id}`);
       toast.success("Item removido.");
-      
-      if (editingTransaction?.id === id) {
-        setEditingTransaction(null);
-      }
+
+      if (editingTransaction?.id === id) setEditingTransaction(null);
+      if (isGoal) fetchGoalsTotal();
     } catch (error) {
       console.error(error);
       toast.error("Erro ao excluir. O item reaparecerá ao atualizar.");
-      fetchTransactions(); 
+      fetchTransactions();
     }
   };
 
@@ -391,7 +423,7 @@ function LancamentosContent() {
       </section>
 
       <section>
-        <BalanceCard totalIncome={totalIncome} totalExpense={totalExpense} balance={balance} />
+        <BalanceCard totalIncome={totalIncome} totalExpense={totalExpense} balance={balance} goalsTotal={goalsTotal} />
       </section>
 
       <section>
@@ -476,6 +508,14 @@ function LancamentosContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* --- OVERLAY DE META CONCLUÍDA --- */}
+      {celebratingGoal && (
+        <GoalCompletionOverlay
+          goal={celebratingGoal}
+          onClose={() => setCelebratingGoal(null)}
+        />
       )}
 
     </div>

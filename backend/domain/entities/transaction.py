@@ -6,9 +6,9 @@ class TransactionEntity(BaseModel):
     id: Optional[str] = None
     user_id: Optional[str] = None
     group_id: Optional[str] = None
-    description: str
+    description: Optional[str] = None
     amount: float
-    type: Literal["income", "expense"]
+    type: Literal["income", "expense", "goal"]
     category: str
     subcategory: Optional[str] = None
     date: str
@@ -21,5 +21,6 @@ class TransactionEntity(BaseModel):
     current_installment: int = 1
     total_installments: int = 1
     installment_identifier: Optional[str] = None
+    goal_id: Optional[str] = None
     status: Literal["draft", "finalized"] = "draft"
     report_id: Optional[str] = None

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LogOut, UserCircle, AlertTriangle } from "lucide-react";
+import { LogOut, UserCircle, AlertTriangle, Target } from "lucide-react";
 import { getStorageItem, removeStorageItem } from "../lib/storage";
 import { toast } from "sonner";
 import api from "../services/api";
@@ -46,6 +46,26 @@ export function Navbar() {
 
       <div className="flex items-center gap-3">
         <NotificationBell />
+        <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
+
+        <button
+          onClick={() => {
+            const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+            if (isLocked) {
+              toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                duration: 5000,
+                icon: <AlertTriangle className="text-red-500" />
+              });
+              return;
+            }
+            router.push("/metas");
+          }}
+          className="flex items-center gap-2 px-4 py-2 text-[#013750] dark:text-slate-300 font-medium hover:bg-white/50 dark:hover:bg-slate-800 rounded-lg transition-all text-sm group cursor-pointer"
+        >
+          <Target size={20} className="text-[#013750] dark:text-slate-400 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors" />
+          <span>Metas</span>
+        </button>
+
         <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
 
         <button

@@ -1,10 +1,10 @@
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'goal';
 export type PaymentMethod = 'credit_card' | 'debit_card' | 'cash' | 'pix' | 'bill' | 'automatic_debit';
 export type TransactionStatus = 'draft' | 'finalized';
 
 export interface Transaction {
   id?: string; // Opcional pois na criação ainda não tem ID
-  description: string;
+  description?: string;
   amount: number;
   type: TransactionType;
   category: string;
@@ -21,8 +21,22 @@ export interface Transaction {
   total_installments?: number;
   installment_identifier?: string; // Ex: "1/10"
 
+  goal_id?: string;
   status?: TransactionStatus;
-  report_id?: string; // ID do relatório ao qual pertence
+  report_id?: string;
+}
+
+export interface Goal {
+  id: string;
+  user_id: string;
+  name: string;
+  target_amount: number;
+  deadline: string; // "YYYY-MM-DD"
+  image_base64?: string;
+  current_amount: number;
+  is_celebrated: boolean;
+  celebrated_at?: string;
+  created_at?: string;
 }
 
 export interface Report {

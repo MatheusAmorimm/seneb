@@ -4,9 +4,9 @@ from pydantic import BaseModel, Field
 
 
 class TransactionInput(BaseModel):
-    description: str = Field(..., min_length=1, max_length=500)
+    description: Optional[str] = Field(None, min_length=1, max_length=500)
     amount: float = Field(..., gt=0)
-    type: Literal["income", "expense"]
+    type: Literal["income", "expense", "goal"]
     category: str = Field(..., max_length=100)
     subcategory: Optional[str] = Field(None, max_length=100)
     date: str
@@ -19,6 +19,7 @@ class TransactionInput(BaseModel):
     current_installment: int = Field(1, ge=1)
     total_installments: int = Field(1, ge=1)
     group_id: Optional[str] = None
+    goal_id: Optional[str] = None
 
 
 class TransactionUpdateInput(BaseModel):
@@ -26,7 +27,7 @@ class TransactionUpdateInput(BaseModel):
     amount: Optional[float] = Field(None, gt=0)
     category: Optional[str] = Field(None, max_length=100)
     subcategory: Optional[str] = Field(None, max_length=100)
-    type: Optional[Literal["income", "expense"]] = None
+    type: Optional[Literal["income", "expense", "goal"]] = None
     date: Optional[str] = None
     due_date: Optional[str] = None
     payment_method: Optional[Literal[
@@ -37,6 +38,7 @@ class TransactionUpdateInput(BaseModel):
     current_installment: Optional[int] = Field(None, ge=1)
     total_installments: Optional[int] = Field(None, ge=1)
     installment_identifier: Optional[str] = None
+    goal_id: Optional[str] = None
 
 
 class FinalizeInput(BaseModel):
@@ -50,7 +52,7 @@ class TransactionOutput(BaseModel):
     id: Optional[str] = None
     user_id: Optional[str] = None
     group_id: Optional[str] = None
-    description: str
+    description: Optional[str] = None
     amount: float
     type: str
     category: str
@@ -63,5 +65,6 @@ class TransactionOutput(BaseModel):
     current_installment: int
     total_installments: int
     installment_identifier: Optional[str] = None
+    goal_id: Optional[str] = None
     status: str
     report_id: Optional[str] = None

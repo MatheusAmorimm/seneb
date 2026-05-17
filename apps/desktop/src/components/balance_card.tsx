@@ -1,12 +1,13 @@
-import { ArrowUpCircle, ArrowDownCircle, DollarSign } from "lucide-react";
+import { ArrowUpCircle, ArrowDownCircle, DollarSign, Target } from "lucide-react";
 
 interface BalanceCardProps {
     totalIncome: number;
     totalExpense: number;
     balance: number;
+    goalsTotal?: number;
 }
 
-export function BalanceCard({ totalIncome, totalExpense, balance }: BalanceCardProps) {
+export function BalanceCard({ totalIncome, totalExpense, balance, goalsTotal = 0 }: BalanceCardProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -15,7 +16,7 @@ export function BalanceCard({ totalIncome, totalExpense, balance }: BalanceCardP
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {/* Receitas */}
       <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105 bg-gradient-to-br from-[#d1f4f0] to-[#b3ede7] dark:from-emerald-900/40 dark:to-emerald-950/40 border border-[#00d4a8] dark:border-emerald-800/50">
         <div className="flex items-center gap-3 mb-2">
@@ -25,6 +26,17 @@ export function BalanceCard({ totalIncome, totalExpense, balance }: BalanceCardP
           <h3 className="font-medium text-[#047857] dark:text-emerald-300">Receitas</h3>
         </div>
         <p className="text-2xl font-bold text-[#065f46] dark:text-white">{formatCurrency(totalIncome)}</p>
+      </div>
+
+      {/* Investimentos/Metas */}
+      <div className="p-6 rounded-xl shadow-md transition-transform hover:scale-105 bg-gradient-to-br from-[#fef9c3] to-[#fde68a] dark:from-amber-900/40 dark:to-amber-950/40 border border-[#fcd34d] dark:border-amber-800/50">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 rounded-lg bg-[#f59e0b]">
+            <Target className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="font-medium text-[#92400e] dark:text-amber-300">Invest./Metas</h3>
+        </div>
+        <p className="text-2xl font-bold text-[#78350f] dark:text-white">{formatCurrency(goalsTotal)}</p>
       </div>
 
       {/* Despesas */}

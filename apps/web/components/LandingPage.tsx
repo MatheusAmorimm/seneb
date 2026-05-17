@@ -330,8 +330,24 @@ export default function LandingPage() {
                   <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#F23E02' }} />
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-slate-800 font-semibold">v0.3.0 - Sessão Persistente, Boleto & Convites por E-mail</span>
+                      <span className="text-slate-800 font-semibold">v0.4.0 - Metas Financeiras & Animações</span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold text-white" style={{ backgroundColor: '#F23E02' }}>NOVO</span>
+                      <span className="text-xs text-slate-400">17/05/2026</span>
+                    </div>
+                    <ul className="text-sm text-slate-500 space-y-1 list-none mt-2">
+                      <li>• <strong>Sistema de Metas:</strong> crie metas financeiras com valor alvo, prazo e imagem personalizada; acompanhe o progresso em tempo real com barra de progresso</li>
+                      <li>• <strong>Lançamentos vinculados a metas:</strong> ao registrar um lançamento do tipo Meta, o valor é automaticamente contabilizado na meta correspondente</li>
+                      <li>• <strong>Animação de conquista:</strong> ao atingir 100% de uma meta, uma animação Lottie Trophy é exibida com som e celebração</li>
+                      <li>• <strong>Reset inteligente:</strong> ao excluir um lançamento de meta que desmarca a conclusão, o sistema reseta o estado e permite celebrar novamente ao completar</li>
+                      <li>• <strong>Componentes visuais custom:</strong> novo seletor dropdown (AppSelect) e calendário interativo (AppDateInput) seguindo a paleta de cores do app</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(0, 152, 141, 0.04)', border: '1px solid rgba(0, 152, 141, 0.15)' }}>
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-slate-800 font-semibold">v0.3.0 - Sessão Persistente, Boleto & Convites por E-mail</span>
                       <span className="text-xs text-slate-400">15/05/2026</span>
                     </div>
                     <ul className="text-sm text-slate-500 space-y-1 list-none mt-2">

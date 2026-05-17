@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PlusCircle, History, BarChart3, ArrowRight, Users, Shield, Zap, RefreshCw, Globe, Tag } from "lucide-react";
-import { Navbar } from "../../components/navbar";
+import { PlusCircle, History, BarChart3, ArrowRight, Users, Shield, Zap, RefreshCw, Globe, Tag, Target } from "lucide-react";
+import { SenebLogo } from "../../components/seneb_logo";
+import { Header } from "../../components/header";
+import { Sidebar } from "../../components/sidebar";
 import { getStorageItem, setStorageItem } from "../../lib/storage";
 import { UserData } from "../../types/index";
 import { useTheme } from "../../components/theme_provider";
@@ -28,10 +30,10 @@ export default function HomePage() {
   const [userName, setUserName] = useState("Investidor");
   const [isLoading, setIsLoading] = useState(true);
   const [appVersion, setAppVersion] = useState(APP_VERSION_FALLBACK);
-  const { setIsHome } = useTheme();
+  const { isSidebarOpen, setIsSidebarOpen, setIsHome } = useTheme();
 
   useEffect(() => {
-    setIsHome(true);
+    setIsHome(false);
   }, [setIsHome]);
 
   useEffect(() => {
@@ -68,8 +70,11 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <Navbar />
+    <div className="min-h-screen flex flex-col">
+      <Header onMenuClick={() => setIsSidebarOpen(true)} />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      <main className="flex-1 flex flex-col items-center justify-center p-8">
 
       {/* Saudação */}
       <div className="text-center space-y-4 mb-16 max-w-2xl">
@@ -84,7 +89,7 @@ export default function HomePage() {
       </div>
 
       {/* Cards de Navegação */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 w-full max-w-6xl">
         <div
           onClick={() => router.push("/lancamentos")}
           className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-expense-start dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
@@ -140,6 +145,24 @@ export default function HomePage() {
         </div>
 
         <div
+          onClick={() => router.push("/metas")}
+          className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-amber-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-[#fef9c3] dark:from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-6 group-hover:bg-amber-500 transition-colors duration-300">
+              <Target className="w-8 h-8 text-amber-500 group-hover:text-white transition-colors" />
+            </div>
+            <h3 className="text-2xl font-serif font-bold text-brand-deepBlue dark:text-slate-100 mb-2">Metas</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Acompanhe e celebre suas metas.</p>
+          </div>
+          <div className="relative z-10 flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium mt-4 group-hover:gap-4 transition-all">
+            <span>Acessar</span>
+            <ArrowRight size={18} />
+          </div>
+        </div>
+
+        <div
           onClick={() => router.push("/grupos")}
           className="cursor-pointer group relative bg-white/60 dark:bg-[#012a3d]/60 backdrop-blur-md p-8 rounded-3xl border border-indigo-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-64 overflow-hidden"
         >
@@ -164,16 +187,9 @@ export default function HomePage() {
 
           {/* Cabeçalho do About */}
           <div className="px-8 pt-8 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-brand-deepBlue dark:bg-slate-100 rounded-xl flex items-center justify-center shadow-md">
-                <span className="text-white dark:text-brand-deepBlue font-serif font-bold text-lg">S</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-serif font-bold text-brand-deepBlue dark:text-slate-100">
-                  Seneb<span className="text-brand-orange">.</span>
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Controle Financeiro Pessoal</p>
-              </div>
+            <div className="flex flex-col gap-1">
+              <SenebLogo className="text-brand-deepBlue dark:text-slate-100" />
+              <p className="text-xs text-slate-500 dark:text-slate-400">Controle Financeiro Pessoal</p>
             </div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-turquoise/10 text-brand-turquoise text-sm font-medium border border-brand-turquoise/20 self-start sm:self-auto">
               <Tag size={13} />
@@ -253,6 +269,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      </main>
     </div>
   );
 }

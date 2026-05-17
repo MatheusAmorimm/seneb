@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from backend.api.v1.controllers import (
     auth_controller,
+    goal_controller,
     group_controller,
     notification_controller,
     report_controller,
@@ -17,3 +18,4 @@ api_router.include_router(report_controller.router, prefix="/reports", tags=["Re
 api_router.include_router(user_controller.router, prefix="/users", tags=["Users"])
 api_router.include_router(group_controller.router, prefix="/groups", tags=["Groups"])
 api_router.include_router(notification_controller.router, prefix="/notifications", tags=["Notifications"])
+api_router.include_router(goal_controller.router, prefix="/goals", tags=["Goals"])

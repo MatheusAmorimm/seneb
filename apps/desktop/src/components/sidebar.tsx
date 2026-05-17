@@ -2,18 +2,22 @@
 
 import { useState, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { 
-  Home, 
-  PieChart, 
-  History, 
+import { getStorageItem, removeStorageItem } from "../lib/storage";
+import {
+  Home,
+  PieChart,
+  History,
   Users,
-  X, 
-  ChevronDown, 
-  ChevronRight, 
+  X,
+  ChevronDown,
+  ChevronRight,
   FileText,
   PlusCircle,
   Trash2,
-  AlertTriangle // Para o ícone de alerta do modal
+  AlertTriangle,
+  Target,
+  UserCircle,
+  LogOut
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useReports } from "../hooks/use_reports";
@@ -93,10 +97,17 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
       activeClass: "bg-[#fff0e6] text-[#F23E02] dark:bg-orange-950/30 dark:text-orange-400", 
       hoverClass: "hover:bg-[#fff0e6] hover:text-[#F23E02] dark:hover:bg-orange-950/20 dark:hover:text-orange-300"
     },
-    { 
-      icon: Users, 
-      label: "Meus Grupos", 
-      href: "/grupos", 
+    {
+      icon: Target,
+      label: "Metas",
+      href: "/metas",
+      activeClass: "bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400",
+      hoverClass: "hover:bg-amber-50 hover:text-amber-800 dark:hover:bg-amber-950/20 dark:hover:text-amber-300"
+    },
+    {
+      icon: Users,
+      label: "Meus Grupos",
+      href: "/grupos",
       activeClass: "bg-[#eef2ff] text-[#013750] dark:bg-indigo-950/30 dark:text-indigo-400",
       hoverClass: "hover:bg-[#eef2ff] hover:text-[#013750] dark:hover:bg-indigo-950/20 dark:hover:text-indigo-300"
     },
@@ -266,6 +277,57 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
           </button>
 
         </nav>
+
+        {/* Rodapé: Perfil e Logout */}
+        <div className="px-4 py-4 border-t border-slate-100 dark:border-slate-800 space-y-1">
+          <button
+            onClick={() => {
+              const isLocked = sessionStorage.getItem('seneb_edition_lock') === 'true';
+              if (isLocked) {
+                toast.error("Obrigatório: Finalize o mês reaberto antes de sair.", {
+                  duration: 5000,
+                  icon: <AlertTriangle className="text-red-500" />
+                });
+                return;
+              }
+              router.push('/perfil');
+              onClose();
+            }}
+            className={cn(
+              "w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-sans font-medium cursor-pointer",
+              "text-gray-500 dark:text-slate-400",
+              pathname === '/perfil'
+                ? "bg-slate-100 dark:bg-slate-800 text-brand-deepBlue dark:text-slate-100 font-bold shadow-sm"
+                : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-deepBlue dark:hover:text-slate-200"
+            )}
+          >
+            <UserCircle size={20} />
+            <span>Meu Perfil</span>
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                const refreshToken = await getStorageItem<string>("refresh_token");
+                if (refreshToken) {
+                  await api.post("/auth/logout", { refresh_token: refreshToken }).catch(() => {});
+                }
+                await removeStorageItem("token");
+                await removeStorageItem("refresh_token");
+                await removeStorageItem("user");
+                api.defaults.headers.common['Authorization'] = undefined;
+                toast.info("Sessão encerrada.");
+                window.location.href = "/login";
+              } catch {
+                toast.error("Erro ao encerrar sessão.");
+              }
+            }}
+            className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-sans font-medium cursor-pointer text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
+          >
+            <LogOut size={20} />
+            <span>Sair</span>
+          </button>
+        </div>
       </aside>
 
       {/* --- MODAL DE CONFIRMAÇÃO --- */}

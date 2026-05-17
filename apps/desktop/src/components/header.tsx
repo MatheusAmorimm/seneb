@@ -1,8 +1,9 @@
 "use client";
 
-import { Menu, DollarSign, AlertTriangle } from "lucide-react";
+import { Menu, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { NotificationBell } from "./notification_bell";
+import { SenebLogo } from "./seneb_logo";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -52,17 +53,12 @@ export function Header({ onMenuClick }: HeaderProps) {
         </button>
 
          {/* Logo e Título (Clicável para Home) */}
-        <Link 
+        <Link
           href="/"
           onClick={(e) => handleLinkClick(e, '/')}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-white no-underline"
+          className="hover:opacity-80 transition-opacity cursor-pointer text-white no-underline"
         >
-          <div className="bg-white/10 p-2 rounded-full">
-             <DollarSign className="w-5 h-5" />
-          </div>
-          <h1 className="text-xl font-serif font-bold tracking-wide">
-            Seneb<span className="text-[#F23E02]">.</span>
-          </h1>
+          <SenebLogo withIconBubble />
         </Link>
       </div>
 

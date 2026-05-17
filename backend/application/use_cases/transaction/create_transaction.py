@@ -46,6 +46,7 @@ class CreateTransactionUseCase:
             is_installment=data.is_installment,
             current_installment=data.current_installment,
             total_installments=data.total_installments,
+            goal_id=data.goal_id if data.type == "goal" else None,
             status="draft",
         )
 
