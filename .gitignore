@@ -47,3 +47,9 @@ Thumbs.db
 
 # Agent
 .agent/
+
+# Documentação local e arquivos do agente (não versionados)
+docs/
+CLAUDE.md
+CLAUDE.local.md
+.claude/

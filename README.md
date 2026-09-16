@@ -1,51 +1,62 @@
 # Seneb — Controle Financeiro
 
-SaaS de gestão financeira pessoal e colaborativa. Desktop cross-platform (Windows / Linux) construído com **Tauri + Next.js + React**. Backend em **FastAPI + MongoDB Atlas**.
+Aplicativo **gratuito** de controle financeiro pessoal e em grupo. Desktop cross-platform (Windows / Linux) com **Tauri 2 + Next.js 16 + React 19**, backend **FastAPI + MongoDB Atlas**, landing page **Next.js** na Vercel. Distribuição e atualização automática via **GitHub Releases**.
+
+> Documentação complementar: [`deploy/README.md`](deploy/README.md) (passo a passo de hospedagem).
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia |
-|---|---|
-| Desktop | Tauri 2 · Next.js 16 · React 19 · TailwindCSS 4 |
-| Landing page | Next.js 16 |
-| Backend | FastAPI 0.128 · Python 3.12 |
-| Banco de dados | MongoDB Atlas (Motor async) |
-| Autenticação | JWT (HS256) + Bcrypt |
-| CI/CD | GitLab CI → VPS Hostinger |
+| Camada | Tecnologia | Hospedagem |
+|---|---|---|
+| Desktop | Tauri 2 · Next.js 16 (export estático) · React 19 · TailwindCSS 4 · Recharts 3 | PC do usuário (MSI / AppImage / DEB via GitHub Releases) |
+| Landing page | Next.js 16 | Vercel (`seneb.com.br`) |
+| Backend | FastAPI 0.128 · Python 3.12 · Docker | Render Free (`api.seneb.com.br`) ou qualquer VM (`deploy/`) |
+| Banco de dados | MongoDB Atlas M0 (Motor async) | Atlas |
+| Autenticação | JWT (HS256) + refresh token rotativo + bcrypt | — |
+| E-mail | SMTP (Resend / Brevo / Gmail) via fastapi-mail | — |
+| CI/CD | GitHub Actions | — |
+| Pacotes JS | **Yarn 4** (workspaces) | — |
 
 ---
 
 ## Estrutura do Projeto
 
 ```
-finance_control_saas/
+seneb/
+├── package.json            # raiz do workspace Yarn 4 (husky, lint-staged, scripts)
+├── render.yaml             # Blueprint do Render (backend Docker, plano Free)
+├── docker-compose.yml      # dev local (backend + Mongo opcional via --profile local-db)
+├── deploy/                 # alternativa em VM: compose de produção + Caddy + guia
+├── .github/workflows/      # ci.yml · release-desktop.yml · backend-image.yml
 ├── apps/
-│   ├── desktop/          # App Tauri (Next.js embutido)
-│   └── web/              # Landing page Next.js
-└── backend/              # FastAPI — Clean Architecture
-    ├── core/             # Configs, DB, Security, Mail, Exceptions
-    ├── domain/           # Regras de negócio puras
-    │   ├── entities/     # Entidades de domínio (sem frameworks)
-    │   └── interfaces/   # Contratos de repositório (ABCs)
-    ├── application/      # Casos de uso + DTOs
-    │   ├── gate.py       # Socratic Gate (validação de pré-condições)
-    │   ├── dtos/         # Contratos HTTP (Input/Output)
-    │   └── use_cases/    # Lógica de negócio por domínio
+│   ├── desktop/            # App Tauri (Next.js embutido)
+│   └── web/                # Landing page Next.js
+└── backend/                # FastAPI — Clean Architecture
+    ├── core/               # Configs, DB, Security, Mail, Exceptions
+    ├── domain/             # Regras de negócio puras
+    │   ├── entities/       # Entidades (sem frameworks)
+    │   └── interfaces/     # Contratos de repositório (ABCs)
+    ├── application/        # Casos de uso + DTOs + políticas
+    │   ├── gate.py         # Socratic Gate (validação de pré-condições)
+    │   ├── policies/       # Regras de acesso reutilizáveis (ex.: relatórios)
+    │   ├── dtos/           # Contratos HTTP (Input/Output)
+    │   └── use_cases/      # auth · user · transaction · report · goal · group · notification · analytics
     ├── infrastructure/
-    │   └── repositories/ # Implementações MongoDB dos contratos
-    └── api/v1/
-        ├── controllers/  # Camada HTTP fina (apenas recebe/responde)
-        ├── middlewares/  # Rate limiting
-        └── dependencies.py  # Injeção de dependência FastAPI
+    │   └── repositories/   # Implementações MongoDB dos contratos
+    ├── api/v1/
+    │   ├── controllers/    # Camada HTTP fina
+    │   ├── middlewares/    # Rate limiting
+    │   └── dependencies.py # Injeção de dependência FastAPI
+    └── tests/              # unitários com repositórios fake + integração opt-in
 ```
 
 ---
 
 ## Arquitetura — Clean Architecture
 
-O backend segue **Clean Architecture** com quatro camadas concêntricas. Dependências só apontam para dentro (do externo ao interno).
+O backend segue **Clean Architecture** com quatro camadas concêntricas. Dependências só apontam para dentro.
 
 ```
 [ Controllers ] → [ Use Cases ] → [ Interfaces ] ← [ Repositories ]
@@ -61,31 +72,19 @@ Entidades puras em `domain/entities/`. Sem imports de FastAPI, Motor ou qualquer
 # domain/entities/transaction.py
 class TransactionEntity(BaseModel):
     id: Optional[str] = None
-    type: Literal["income", "expense"]
+    type: Literal["income", "expense", "goal"]
     ...
+
+    @property
+    def effective_amount(self) -> float:
+        """Parcela do mês para compras parceladas; valor cheio para o resto."""
 ```
 
-Interfaces (contratos) em `domain/interfaces/`. Apenas ABCs, sem implementação.
-
-```python
-# domain/interfaces/transaction_repository.py
-class ITransactionRepository(ABC):
-    @abstractmethod
-    async def find_drafts(...) -> list[TransactionEntity]: ...
-```
+Interfaces (contratos) em `domain/interfaces/`. Apenas ABCs.
 
 ### 2. Application (casos de uso)
 
-Cada caso de uso é uma classe com um método `execute()`. Recebe DTOs e entidades, nunca objetos HTTP.
-
-```python
-# application/use_cases/transaction/create_transaction.py
-class CreateTransactionUseCase:
-    def __init__(self, transaction_repo, group_repo): ...
-
-    async def execute(self, data: TransactionInput, user_id: str) -> TransactionEntity:
-        ...
-```
+Cada caso de uso é uma classe com `execute()`. Recebe DTOs e entidades, nunca objetos HTTP.
 
 **Socratic Gate** valida pré-condições antes de executar lógica:
 
@@ -93,170 +92,33 @@ class CreateTransactionUseCase:
 Gate().require(condition, "mensagem").require(condition2, "mensagem2").check()
 ```
 
-O gate coleta violações e lança `DomainException` na primeira falha (ou todas com `check_all()`).
+**Policies** concentram regras de acesso reutilizadas por vários casos de uso (ex.: `ReportAccessPolicy`: pessoal → só o dono; grupo → membro lê, admin altera).
 
 ### 3. Infrastructure (repositórios MongoDB)
 
-Implementam os contratos do domínio. Encapsulam toda conversão entre entidade e documento MongoDB.
-
-```python
-# infrastructure/repositories/mongo_transaction_repository.py
-class MongoTransactionRepository(ITransactionRepository):
-    def _to_entity(self, doc: dict) -> TransactionEntity:
-        data = dict(doc)
-        data["id"] = str(data.pop("_id"))
-        return TransactionEntity(**data)
-    ...
-```
+Implementam os contratos do domínio e encapsulam a conversão entidade ↔ documento. Agregações (somas de metas, análises) vivem aqui, nunca nos casos de uso.
 
 ### 4. API (controllers)
 
-Controllers são finos: recebem HTTP, chamam use case, tratam exceções de domínio → HTTP.
-
-```python
-# api/v1/controllers/transaction_controller.py
-@router.post("")
-async def create_transaction(data: TransactionInput, ...):
-    try:
-        entity = await CreateTransactionUseCase(repo, group_repo).execute(data, user_id)
-        return TransactionOutput(**entity.model_dump())
-    except DomainException as exc:
-        _handle(exc)
-```
+Controllers são finos: recebem HTTP, chamam o caso de uso, mapeiam `DomainException` → HTTP.
 
 ---
 
 ## Como Criar uma Nova Feature
 
-Siga **sempre** essa sequência de camadas (de dentro para fora):
+Siga **sempre** essa sequência (de dentro para fora):
 
-### Passo 1 — Entidade (se domínio novo)
+1. **Entidade** em `domain/entities/` (se domínio novo).
+2. **Interface** do repositório em `domain/interfaces/`.
+3. **Implementação Mongo** em `infrastructure/repositories/`.
+4. **DTOs** em `application/dtos/` (sempre `max_length` em textos, `Literal` em enums).
+5. **Caso de uso** em `application/use_cases/<dominio>/` com `Gate()`.
+6. **Injeção** em `api/v1/dependencies.py` (`get_<x>_repo`).
+7. **Controller** em `api/v1/controllers/` com `_handle()`.
+8. **Rota** em `api/v1/api.py`.
+9. **Teste unitário** em `backend/tests/` usando os fakes de `tests/fakes.py` (adicione um fake ao criar uma interface nova).
 
-```python
-# backend/domain/entities/meu_dominio.py
-from pydantic import BaseModel
-from typing import Optional, Literal
-
-class MeuDominioEntity(BaseModel):
-    id: Optional[str] = None
-    campo: str
-    tipo: Literal["a", "b"]
-```
-
-### Passo 2 — Interface do Repositório
-
-```python
-# backend/domain/interfaces/meu_dominio_repository.py
-from abc import ABC, abstractmethod
-from backend.domain.entities.meu_dominio import MeuDominioEntity
-
-class IMeuDominioRepository(ABC):
-    @abstractmethod
-    async def create(self, entity: MeuDominioEntity) -> MeuDominioEntity: ...
-
-    @abstractmethod
-    async def find_by_id(self, id: str) -> Optional[MeuDominioEntity]: ...
-```
-
-### Passo 3 — Implementação MongoDB
-
-```python
-# backend/infrastructure/repositories/mongo_meu_dominio_repository.py
-from backend.domain.interfaces.meu_dominio_repository import IMeuDominioRepository
-
-class MongoMeuDominioRepository(IMeuDominioRepository):
-    def __init__(self, db): self._col = db["meu_dominio"]
-
-    def _to_entity(self, doc: dict) -> MeuDominioEntity:
-        data = dict(doc)
-        data["id"] = str(data.pop("_id"))
-        return MeuDominioEntity(**data)
-
-    async def create(self, entity: MeuDominioEntity) -> MeuDominioEntity:
-        data = entity.model_dump(exclude={"id"})
-        result = await self._col.insert_one(data)
-        entity.id = str(result.inserted_id)
-        return entity
-```
-
-### Passo 4 — DTOs (Input/Output HTTP)
-
-```python
-# backend/application/dtos/meu_dominio_dtos.py
-from pydantic import BaseModel, Field
-
-class MeuDominioInput(BaseModel):
-    campo: str = Field(..., max_length=200)
-
-class MeuDominioOutput(BaseModel):
-    id: Optional[str]
-    campo: str
-```
-
-### Passo 5 — Caso de Uso
-
-```python
-# backend/application/use_cases/meu_dominio/criar_meu_dominio.py
-from backend.application.gate import Gate
-from backend.core.exceptions import ConflictException
-from backend.domain.interfaces.meu_dominio_repository import IMeuDominioRepository
-
-class CriarMeuDominioUseCase:
-    def __init__(self, repo: IMeuDominioRepository) -> None:
-        self._repo = repo
-
-    async def execute(self, data: MeuDominioInput, user_id: str) -> MeuDominioEntity:
-        Gate().require(len(data.campo) > 0, "Campo obrigatório.").check()
-
-        entity = MeuDominioEntity(user_id=user_id, campo=data.campo)
-        return await self._repo.create(entity)
-```
-
-### Passo 6 — Injeção de Dependência
-
-```python
-# Adicionar em backend/api/v1/dependencies.py
-def get_meu_dominio_repo(db=Depends(get_db)) -> IMeuDominioRepository:
-    return MongoMeuDominioRepository(db)
-```
-
-### Passo 7 — Controller
-
-```python
-# backend/api/v1/controllers/meu_dominio_controller.py
-from fastapi import APIRouter, Depends, HTTPException
-from backend.core.exceptions import DomainException
-
-router = APIRouter()
-
-def _handle(exc: DomainException) -> None:
-    raise HTTPException(status_code=400, detail=exc.message)
-
-@router.post("", response_model=MeuDominioOutput)
-async def criar(
-    data: MeuDominioInput,
-    current_user=Depends(get_current_user),
-    repo=Depends(get_meu_dominio_repo),
-):
-    try:
-        entity = await CriarMeuDominioUseCase(repo).execute(data, str(current_user.id))
-        return MeuDominioOutput(**entity.model_dump())
-    except DomainException as exc:
-        _handle(exc)
-```
-
-### Passo 8 — Registrar no Router
-
-```python
-# backend/api/v1/api.py
-from backend.api.v1.controllers import meu_dominio_controller
-
-api_router.include_router(
-    meu_dominio_controller.router,
-    prefix="/meu-dominio",
-    tags=["Meu Dominio"],
-)
-```
+O domínio `analytics` (`entities/analytics.py`, `interfaces/analytics_repository.py`, `use_cases/analytics/`, `mongo_analytics_repository.py`, `analytics_controller.py`) é o exemplo mais recente e completo desse fluxo.
 
 ---
 
@@ -264,27 +126,28 @@ api_router.include_router(
 
 ### O que NUNCA fazer
 
-- **Nunca** acessar `db.db.*` diretamente em controllers ou use cases. Toda query passa pelo repositório.
+- **Nunca** acessar `db.db.*` diretamente em controllers ou use cases novos. Toda query passa pelo repositório.
 - **Nunca** importar FastAPI (`HTTPException`, `Request`) dentro de use cases ou domínio.
-- **Nunca** colocar lógica de negócio nos controllers (só receber, chamar use case, responder).
+- **Nunca** colocar lógica de negócio nos controllers.
 - **Nunca** usar `random` para OTP — usar sempre `secrets`.
-- **Nunca** comparar códigos OTP com `==` — usar `hmac.compare_digest()`.
-- **Nunca** usar `bare except:` — capturar exceções específicas.
-- **Nunca** retornar `404` em "e-mail não encontrado" em fluxos de recuperação de senha (user enumeration).
+- **Nunca** comparar códigos OTP com `==` — usar `hmac.compare_digest()` (via `verify_otp`).
+- **Nunca** usar `bare except:`.
+- **Nunca** retornar `404` em "e-mail não encontrado" em fluxos de recuperação de senha.
+- **Nunca** somar `amount` direto em totais de período — usar `effective_amount` (Python) ou o estágio `_EFFECTIVE_AMOUNT_STAGE` (Mongo).
 
 ### O que SEMPRE fazer
 
-- Validar pré-condições com `Gate()` antes de executar lógica nos use cases.
-- Adicionar `max_length` em todos os campos de texto nos DTOs.
-- Usar `Literal[...]` em campos de enum nas entidades e DTOs.
-- Adicionar `created_at: datetime.now(timezone.utc)` em todos os documentos OTP (necessário para TTL).
+- Validar pré-condições com `Gate()` nos use cases.
+- `max_length` em todos os campos de texto nos DTOs; `Literal[...]` em enums.
+- `created_at: datetime.now(timezone.utc)` em documentos OTP (TTL).
 - Lançar `DomainException` (ou subclasses) nos use cases — nunca `HTTPException`.
-- Mapear `DomainException` → `HTTPException` nos controllers (função `_handle()`).
-- Aplicar `@limiter.limit("N/minute")` em endpoints de autenticação.
+- Mapear `DomainException` → `HTTPException` nos controllers (`_handle()`).
+- `@limiter.limit("N/minute")` em endpoints de autenticação.
+- Ao criar índice novo, adicioná-lo em `_ensure_indexes()` no `main.py`.
 
 ### Exceções de Domínio
 
-| Exceção | HTTP Status | Quando usar |
+| Exceção | HTTP | Quando usar |
 |---|---|---|
 | `DomainException` | 400 | Regra de negócio genérica |
 | `NotFoundException` | 404 | Recurso não encontrado |
@@ -294,74 +157,21 @@ api_router.include_router(
 
 ---
 
-## Segurança — Padrões Obrigatórios
+## Segurança
 
-### OTP (One-Time Passwords)
-
-```python
-import secrets
-code = str(secrets.randbelow(90_000_000) + 10_000_000)  # 8 dígitos seguros
-```
-
-### Comparação Constant-Time
-
-```python
-import hmac
-if not hmac.compare_digest(stored["code"], user_provided_code):
-    raise DomainException("Código inválido.")
-```
-
-### TTL de Códigos
-
-Todos os documentos OTP **devem** incluir `created_at` para o TTL index funcionar:
-
-```python
-await db.collection.update_one(
-    {"email": email},
-    {"$set": {"code": code, "created_at": datetime.now(timezone.utc)}},
-    upsert=True,
-)
-```
-
-TTLs configurados no `main.py`:
-- `verification_codes`: 15 min
-- `password_reset_codes`: 15 min
-- `password_change_codes`: 15 min
-- `email_change_codes`: 30 min
-- `notifications`: 7 dias
-
-### Invalidação de Token
-
-O campo `token_version` no usuário é incrementado automaticamente ao trocar senha ou e-mail. O token antigo se torna inválido imediatamente.
-
-### Rate Limiting
-
-```python
-from backend.api.v1.middlewares.rate_limit import limiter
-
-@router.post("/minha-rota")
-@limiter.limit("5/minute")
-async def minha_rota(request: Request, ...):  # request obrigatório para slowapi
-    ...
-```
-
-Limites atuais em `/auth`:
-- `/send-code`: 5/min por IP
-- `/signup`: 5/min por IP
-- `/login`: 10/min por IP
-- `/forgot-password`: 5/min por IP
-
-### CORS
-
-Configure via variável de ambiente:
-
-```env
-ALLOWED_ORIGINS=["https://app.seneb.com.br","https://seneb.com.br"]
-```
+- **Senhas:** bcrypt (12 rounds) via a lib `bcrypt`; hashes antigos gerados com passlib continuam válidos.
+- **OTP:** 8 dígitos com `secrets`, armazenado como HMAC-SHA256 com `SECRET_KEY`, comparado em tempo constante; TTL de 15 min (30 min para troca de e-mail).
+- **Tokens:** access token JWT curto (`ACCESS_TOKEN_EXPIRE_MINUTES`) + refresh token rotativo de 30 dias (hash SHA-256 no banco, índice único). `token_version` invalida sessões ao trocar senha/e-mail.
+- **Rate limiting:** slowapi por IP real (`--proxy-headers` no uvicorn) em `/auth/*` e troca de senha/e-mail.
+- **Headers:** `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`.
+- **CORS:** `ALLOWED_ORIGINS` + origens do Tauri sempre permitidas.
+- **OpenAPI:** `DISABLE_OPENAPI=true` em produção.
 
 ---
 
 ## Variáveis de Ambiente
+
+Modelo completo em [`backend/.env.example`](backend/.env.example).
 
 ```env
 # Obrigatórias
@@ -371,49 +181,73 @@ MONGO_URI=mongodb+srv://...
 # Opcionais (com defaults)
 DATABASE_NAME=finance_saas_dev
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+REFRESH_TOKEN_EXPIRE_DAYS=30
 ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:3001"]
 DISABLE_OPENAPI=false
 
-# E-mail
-MAIL_USERNAME=suporte@seneb.com.br
-MAIL_PASSWORD=...
-MAIL_FROM=suporte@seneb.com.br
+# E-mail (SMTP). Sem MAIL_SERVER, ou com MAIL_DEV_LOG_CODES=true, o código vai para o log.
+MAIL_SERVER=smtp.resend.com
 MAIL_PORT=587
-MAIL_SERVER=smtp.hostinger.com
+MAIL_USERNAME=resend
+MAIL_PASSWORD=<api key>
+MAIL_FROM=no-reply@seneb.com.br
+MAIL_STARTTLS=true
+MAIL_SSL_TLS=false
+MAIL_DEV_LOG_CODES=false
+
+# Runtime (Docker)
+PORT=8000
+WEB_CONCURRENCY=1
 ```
 
-> **Nunca** comitar `.env` no repositório.
+> **Nunca** comitar `.env`.
 
 ---
 
 ## Setup Local
 
+### Pré-requisitos
+
+Node 22+ com Corepack, Python 3.12+, Rust (só para empacotar o desktop), Docker (opcional).
+
+### Tudo de uma vez
+
+```bash
+corepack enable
+yarn install                              # instala desktop + web + hooks do husky
+cp backend/.env.example backend/.env      # preencha MONGO_URI e SECRET_KEY
+```
+
 ### Backend
 
 ```bash
-cd backend
-python -m venv ../.venv
-source ../.venv/bin/activate  # Windows: ..\.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn backend.main:app --reload --port 8000
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload --port 8000       # a partir da raiz do repo
+# ou: docker compose up --build   |   docker compose --profile local-db up --build
+cd backend && python -m pytest                      # testes (integração só com TEST_MONGO_URI)
 ```
 
 ### Desktop (Tauri + Next.js)
 
 ```bash
-cd apps/desktop
-npm install
-npm run tauri dev
+yarn dev:desktop
 ```
 
 ### Landing Page
 
 ```bash
-cd apps/web
-npm install
-npm run dev   # porta 3001
+yarn dev:web        # porta 3001
 ```
+
+### Qualidade
+
+```bash
+yarn lint && yarn typecheck
+```
+
+Os hooks do husky rodam `lint-staged` no pre-commit e `commitlint` (Conventional Commits) no commit-msg.
 
 ---
 
@@ -421,20 +255,11 @@ npm run dev   # porta 3001
 
 ### Storage
 
-Use `getStorageItem` / `setStorageItem` de `src/lib/storage` — abstrai Tauri Store (desktop) e localStorage (web).
-
-```typescript
-import { getStorageItem, setStorageItem } from '@/lib/storage'
-
-const token = await getStorageItem<string>('token')
-await setStorageItem('token', newToken)
-```
+`getStorageItem` / `setStorageItem` de `src/lib/storage` abstraem Tauri Store (desktop) e sessionStorage.
 
 ### API Client
 
-O cliente Axios em `src/services/api.ts` injeta automaticamente:
-- Bearer token no header `Authorization`
-- `group_id` em queries/body quando há workspace de grupo ativo (via `sessionStorage`)
+`src/services/api.ts` injeta o Bearer token, renova o access token com o refresh token (fila de requisições) e adiciona `group_id` em `/transactions`, `/reports` e `/analytics` quando há grupo ativo.
 
 ### Context Providers
 
@@ -442,33 +267,33 @@ O cliente Axios em `src/services/api.ts` injeta automaticamente:
 |---|---|---|
 | `WorkspaceContext` | `context/workspace_context.tsx` | Workspace ativo (pessoal ou grupo) |
 | `NotificationContext` | `context/notification_context.tsx` | Polling de notificações (10s) |
-| `ReportsContext` | `context/reports_context.tsx` | Relatório ativo |
+| `ReportsContext` | `context/reports_context.tsx` | Relatórios do workspace ativo |
 
-### Convenções de Nomenclatura (Frontend)
+### Análises
 
-- Arquivos: `snake_case.tsx`
-- Componentes React: `PascalCase`
-- Hooks: `useNomeDoHook`
-- Contexts: `NomeContext`
+`src/services/analytics.ts` (cliente tipado) → `src/hooks/use_analytics.ts` → `src/components/analytics/*`. As cores de série em `chart_theme.ts` foram validadas para daltonismo e contraste nos temas claro e escuro; ao adicionar um gráfico, use apenas essas cores.
+
+### Convenções
+
+- Arquivos: `snake_case.tsx` · Componentes: `PascalCase` · Hooks: `useNomeDoHook` · Contexts: `NomeContext`
 - Serviços: sempre via `src/services/api.ts`
 
 ---
 
-## CI/CD — GitLab
+## CI/CD — GitHub Actions
 
-O pipeline tem 3 stages:
+| Workflow | Gatilho | O que faz |
+|---|---|---|
+| `ci.yml` | push/PR | lint + typecheck + build das duas apps; pytest; build da imagem Docker |
+| `release-desktop.yml` | tag `v*` | build Windows (MSI) e Linux (AppImage + DEB) com `tauri-action`, assina, cria a GitHub Release com `latest.json` e cópias `Seneb-Setup.*` |
+| `backend-image.yml` | push em `main` (backend/) | publica `ghcr.io/matheusamorimm/seneb-backend` |
 
-1. **build_tauri** (Windows runner) → MSI assinado
-2. **build_tauri_linux** (Ubuntu 22.04) → AppImage + DEB
-3. **deploy_vps_hostinger** (Alpine) → rsync para VPS + rebuild Next.js + restart PM2
-
-Artefatos de atualização gerados: `update-windows.json`, `update-linux.json`.
+O Render e a Vercel fazem deploy sozinhos a cada push na `main`.
 
 ---
 
 ## Distribuição Desktop
 
-- **Auto-update**: Tauri Updater com assinatura criptográfica
-- **Servidor de updates**: `https://seneb.com.br/update.json`
-- **Windows**: MSI (instalação passiva)
-- **Linux**: AppImage + DEB
+- **Auto-update:** Tauri Updater com assinatura (minisign). Endpoint: `https://github.com/MatheusAmorimm/seneb/releases/latest/download/latest.json`.
+- **Windows:** MSI (instalação passiva). **Linux:** AppImage (auto-atualiza) + DEB.
+- **Nova versão:** bump em `apps/desktop/package.json`, `src-tauri/tauri.conf.json` e `src-tauri/Cargo.toml` → changelog na landing → `git tag vX.Y.Z && git push --tags`.
