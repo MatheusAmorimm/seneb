@@ -1,0 +1,48 @@
+# Alternativa ao Render: qualquer VM Linux com Docker (ex.: Oracle Cloud Always Free).
+#
+#   1. Copie esta pasta para a VM e crie um arquivo .env ao lado (use backend/.env.example).
+#   2. Aponte o DNS de api.seneb.com.br para o IP da VM (o Caddy emite o TLS sozinho).
+#   3. docker compose -f docker-compose.prod.yml up -d
+#
+# A imagem é publicada pelo workflow .github/workflows/backend-image.yml.
+# O Watchtower baixa a imagem nova automaticamente a cada 5 minutos.
+services:
+  backend:
+    image: ghcr.io/matheusamorimm/seneb-backend:latest
+    container_name: seneb_backend
+    env_file:
+      - .env
+    environment:
+      PORT: "8000"
+      WEB_CONCURRENCY: "2"
+    expose:
+      - "8000"
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  caddy:
+    image: caddy:2
+    container_name: seneb_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: seneb_watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --label-enable --cleanup --interval 300
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

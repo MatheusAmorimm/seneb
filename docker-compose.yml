@@ -1,18 +1,37 @@
+# Desenvolvimento local.
+#   docker compose up --build                     -> backend usando o MONGO_URI do backend/.env (ex.: Atlas)
+#   docker compose --profile local-db up --build  -> backend + MongoDB local em container
+# Para usar o Mongo local, defina no backend/.env: MONGO_URI=mongodb://mongo:27017
 services:
   backend:
-    build: 
-      context: ./backend # Aponta para onde está o Dockerfile
-    container_name: finance_backend
+    build:
+      context: ./backend
+    container_name: seneb_backend
     ports:
-      # 🚀 SEGURANÇA: Exposto apenas para o localhost (Nginx)
-      - "127.0.0.1:8000:8000" 
+      - "127.0.0.1:8000:8000"
     env_file:
       - ./backend/.env
+    environment:
+      PORT: "8000"
     networks:
-      - finance_network
-    # 🚀 RESILIÊNCIA: Reinicia automaticamente, a menos que você pare manualmente
-    restart: unless-stopped 
+      - seneb_network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: seneb_mongo
+    profiles: ["local-db"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - seneb_network
+    restart: unless-stopped
 
 networks:
-  finance_network:
+  seneb_network:
     driver: bridge
+
+volumes:
+  mongo_data:
