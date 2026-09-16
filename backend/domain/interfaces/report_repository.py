@@ -9,14 +9,15 @@ class IReportRepository(ABC):
     async def create(self, report: ReportEntity) -> ReportEntity: ...
 
     @abstractmethod
-    async def find_by_user(self, user_id: str) -> list[ReportEntity]: ...
+    async def find_by_user(self, user_id: str) -> list[ReportEntity]:
+        """Somente relatórios pessoais do usuário (sem group_id)."""
 
     @abstractmethod
-    async def find_by_id(
-        self,
-        report_id: str,
-        user_id: str,
-    ) -> Optional[ReportEntity]: ...
+    async def find_by_group(self, group_id: str) -> list[ReportEntity]: ...
+
+    @abstractmethod
+    async def find_by_id(self, report_id: str) -> Optional[ReportEntity]:
+        """Busca sem filtro de dono; o controle de acesso é feito pelo caso de uso."""
 
     @abstractmethod
     async def name_exists(

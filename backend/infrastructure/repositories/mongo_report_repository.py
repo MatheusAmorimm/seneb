@@ -29,18 +29,22 @@ class MongoReportRepository(IReportRepository):
 
     async def find_by_user(self, user_id: str) -> list[ReportEntity]:
         docs = await (
-            self._col.find({"user_id": user_id})
+            self._col.find({"user_id": user_id, "group_id": {"$in": [None, ""]}})
             .sort("created_at", -1)
             .to_list(_REPORTS_LIMIT)
         )
         return [self._to_entity(d) for d in docs]
 
-    async def find_by_id(
-        self,
-        report_id: str,
-        user_id: str,
-    ) -> Optional[ReportEntity]:
-        doc = await self._col.find_one({"id": report_id, "user_id": user_id})
+    async def find_by_group(self, group_id: str) -> list[ReportEntity]:
+        docs = await (
+            self._col.find({"group_id": group_id})
+            .sort("created_at", -1)
+            .to_list(_REPORTS_LIMIT)
+        )
+        return [self._to_entity(d) for d in docs]
+
+    async def find_by_id(self, report_id: str) -> Optional[ReportEntity]:
+        doc = await self._col.find_one({"id": report_id})
         return self._to_entity(doc) if doc else None
 
     async def name_exists(
