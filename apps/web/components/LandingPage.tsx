@@ -17,6 +17,12 @@ import {
   Package
 } from 'lucide-react';
 
+// Instaladores e atualizações vêm do GitHub Releases. O workflow de release
+// publica cópias com nome fixo (Seneb-Setup.*) ao lado dos assets versionados.
+const RELEASE_BASE = 'https://github.com/MatheusAmorimm/seneb/releases/latest/download';
+const RELEASES_PAGE = 'https://github.com/MatheusAmorimm/seneb/releases';
+const ISSUES_PAGE = 'https://github.com/MatheusAmorimm/seneb/issues';
+
 export default function LandingPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -330,8 +336,23 @@ export default function LandingPage() {
                   <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#F23E02' }} />
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-slate-800 font-semibold">v0.4.0 - Metas Financeiras & Animações</span>
+                      <span className="text-slate-800 font-semibold">v0.5.0 - Análises Financeiras & Seneb 100% Gratuito</span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold text-white" style={{ backgroundColor: '#F23E02' }}>NOVO</span>
+                      <span className="text-xs text-slate-400">11/09/2026</span>
+                    </div>
+                    <ul className="text-sm text-slate-500 space-y-1 list-none mt-2">
+                      <li>• <strong>Nova área de Análises:</strong> despesas por categoria e subcategoria, evolução mensal de receitas, despesas e saldo, meios de pagamento e próximos vencimentos, com filtro de período e comparação com o período anterior</li>
+                      <li>• <strong>Fim do plano Premium:</strong> o Seneb passa a ser totalmente gratuito, sem limites e sem assinatura</li>
+                      <li>• <strong>Downloads e atualizações pelo GitHub:</strong> o app continua se atualizando sozinho, agora a partir das releases oficiais do projeto</li>
+                      <li>• <strong>Correções:</strong> totais de compras parceladas no histórico agora consideram a parcela do mês; relatórios de grupo ficam visíveis para todos os membros</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(0, 152, 141, 0.04)', border: '1px solid rgba(0, 152, 141, 0.15)' }}>
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-slate-800 font-semibold">v0.4.0 - Metas Financeiras & Animações</span>
                       <span className="text-xs text-slate-400">17/05/2026</span>
                     </div>
                     <ul className="text-sm text-slate-500 space-y-1 list-none mt-2">
@@ -398,7 +419,10 @@ export default function LandingPage() {
               <div className="mt-8 pt-8 border-t border-slate-200">
                 <h4 className="text-lg font-bold mb-4 text-slate-800">Reportar um problema</h4>
                 <p className="text-slate-600 mb-4">
-                  Entre em contato através do email: <span className="font-semibold" style={{ color: '#F23E02' }}>suporte@seneb.com.br</span>
+                  Abra uma issue no GitHub:{' '}
+                  <a href={ISSUES_PAGE} target="_blank" rel="noopener noreferrer" className="font-semibold underline" style={{ color: '#F23E02' }}>
+                    github.com/MatheusAmorimm/seneb/issues
+                  </a>
                 </p>
               </div>
             </div>
@@ -456,7 +480,7 @@ export default function LandingPage() {
             <div className="p-6 space-y-4">
               {/* Opção Windows */}
               <a 
-                href="/Seneb-Setup.msi"
+                href={`${RELEASE_BASE}/Seneb-Setup.msi`}
                 onClick={() => setIsDownloadModalOpen(false)}
                 className="flex items-start gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-[#00988D] hover:bg-[#00988D]/5 transition-all group cursor-pointer"
               >
@@ -475,7 +499,7 @@ export default function LandingPage() {
 
               {/* Opção Linux AppImage */}
               <a 
-                href="/Seneb-Setup.AppImage"
+                href={`${RELEASE_BASE}/Seneb-Setup.AppImage`}
                 onClick={() => setIsDownloadModalOpen(false)}
                 className="flex items-start gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-[#F23E02] hover:bg-[#F23E02]/5 transition-all group cursor-pointer"
               >
@@ -491,7 +515,7 @@ export default function LandingPage() {
 
               {/* Opção Linux Deb */}
               <a 
-                href="/Seneb-Setup.deb"
+                href={`${RELEASE_BASE}/Seneb-Setup.deb`}
                 onClick={() => setIsDownloadModalOpen(false)}
                 className="flex items-start gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-[#2C6B74] hover:bg-[#2C6B74]/5 transition-all group cursor-pointer"
               >
@@ -507,7 +531,10 @@ export default function LandingPage() {
             </div>
             
             <div className="bg-slate-50 p-4 text-center text-xs text-slate-500 border-t border-slate-100">
-              O download do arquivo de instalação iniciará automaticamente após a seleção.
+              O download do arquivo de instalação iniciará automaticamente após a seleção.{' '}
+              <a href={RELEASES_PAGE} target="_blank" rel="noopener noreferrer" className="font-semibold underline" style={{ color: '#00988D' }}>
+                Ver todas as versões
+              </a>
             </div>
           </div>
         </div>
