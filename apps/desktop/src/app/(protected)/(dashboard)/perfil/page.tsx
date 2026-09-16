@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Mail, Lock, Save, Crown, ShieldAlert, X, ArrowRight, KeyRound, ArrowLeft } from "lucide-react";
+import { User, Mail, Lock, Save, ShieldAlert, X, ArrowRight, KeyRound, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import Link from "next/link";
@@ -250,9 +250,9 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-serif font-bold text-[#013750] dark:text-slate-100 transition-colors">Meu Perfil</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* COLUNA 1: DADOS PESSOAIS */}
-        <div className="md:col-span-2 space-y-6">
+      <div className="max-w-3xl">
+        {/* DADOS PESSOAIS */}
+        <div className="space-y-6">
           <form onSubmit={handleUpdateProfile} className="bg-white dark:bg-[#012a3d] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
             <h2 className="text-lg font-bold text-[#013750] dark:text-slate-100 mb-6 flex items-center gap-2">
               <User size={20} className="text-[#00988D] dark:text-teal-400" /> 
@@ -338,19 +338,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* COLUNA 2: PLANO */}
-        <div className="md:col-span-1">
-          <div className="bg-gradient-to-br from-[#013750] to-[#022a3d] p-6 rounded-2xl shadow-xl text-white text-center relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-            <div className="bg-white/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/20">
-              <Crown size={32} className="text-[#F2B705]" />
-            </div>
-            <h3 className="text-xl font-serif font-bold mb-2">Seja Premium</h3>
-            <p className="text-white/70 text-sm mb-6 leading-relaxed">Desbloqueie relatórios ilimitados, gráficos avançados e suporte prioritário.</p>
-            <button disabled className="w-full py-3 bg-[#F2B705] text-[#013750] font-bold rounded-xl shadow-lg hover:bg-[#d9a404] transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed">Assinar Agora (Em breve)</button>
-            <p className="text-[10px] text-white/40 mt-4 uppercase tracking-widest">Plano Atual: Gratuito</p>
-          </div>
-        </div>
       </div>
 
       {/* ============================================ */}
