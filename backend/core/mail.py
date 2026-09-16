@@ -1,29 +1,56 @@
+import logging
+from functools import lru_cache
+
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr, SecretStr
 
 from backend.core.configs import settings
 
-_conf = ConnectionConfig(
-    MAIL_USERNAME=settings.MAIL_USERNAME,
-    MAIL_PASSWORD=SecretStr(settings.MAIL_PASSWORD),
-    MAIL_FROM=settings.MAIL_FROM,
-    MAIL_PORT=settings.MAIL_PORT,
-    MAIL_SERVER=settings.MAIL_SERVER,
-    MAIL_STARTTLS=True,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-)
+logger = logging.getLogger("uvicorn")
+
+
+@lru_cache()
+def _mailer() -> FastMail:
+    """Constrói a conexão SMTP apenas no primeiro envio.
+
+    Antes a configuração era montada na importação do módulo, o que impedia
+    o backend de subir sem SMTP configurado (ex.: desenvolvimento local).
+    """
+    conf = ConnectionConfig(
+        MAIL_USERNAME=settings.MAIL_USERNAME,
+        MAIL_PASSWORD=SecretStr(settings.MAIL_PASSWORD),
+        MAIL_FROM=settings.MAIL_FROM,
+        MAIL_PORT=settings.MAIL_PORT,
+        MAIL_SERVER=settings.MAIL_SERVER,
+        MAIL_STARTTLS=settings.MAIL_STARTTLS,
+        MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
+        USE_CREDENTIALS=bool(settings.MAIL_USERNAME),
+        VALIDATE_CERTS=True,
+    )
+    return FastMail(conf)
+
+
+def _mail_configured() -> bool:
+    return bool(settings.MAIL_SERVER and settings.MAIL_FROM)
 
 
 async def _send(subject: str, recipient: str, html: str) -> None:
+    if settings.MAIL_DEV_LOG_CODES or not _mail_configured():
+        logger.warning(
+            "[MAIL_DEV] e-mail não enviado (SMTP desligado). Para: %s | Assunto: %s | Conteúdo: %s",
+            recipient,
+            subject,
+            html,
+        )
+        return
+
     message = MessageSchema(
         subject=subject,
         recipients=[recipient],  # type: ignore[list-item]
         body=html,
         subtype=MessageType.html,
     )
-    await FastMail(_conf).send_message(message)
+    await _mailer().send_message(message)
 
 
 async def send_verification_code(email: EmailStr, code: str) -> None:
@@ -89,8 +116,8 @@ async def send_group_invite_email(
                 <strong>"{group_name}"</strong> no Seneb.
             </p>
             <p style="font-size: 15px; color: #555; line-height: 1.6;">
-                O Seneb é um aplicativo de controle financeiro que permite gerenciar suas finanças
-                pessoais e compartilhar despesas com grupos.
+                O Seneb é um aplicativo gratuito de controle financeiro que permite gerenciar suas
+                finanças pessoais e compartilhar despesas com grupos.
             </p>
             <div style="text-align: center; margin: 32px 0;">
                 <a href="https://seneb.com.br"
