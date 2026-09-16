@@ -1,0 +1,87 @@
+name: Release Desktop
+
+# Dispara ao criar uma tag vX.Y.Z (ex.: git tag v0.5.0 && git push origin v0.5.0).
+# Gera MSI (Windows) e AppImage + DEB (Linux), assina, cria a GitHub Release e o
+# latest.json lido pelo updater do app. Também publica cópias com nome fixo
+# (Seneb-Setup.*) usadas pelos links da landing page.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            bundles: msi
+          - os: ubuntu-22.04
+            bundles: appimage,deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Habilitar Corepack (Yarn 4)
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - name: Dependências do sistema (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
+
+      - run: yarn install --immutable
+
+      - name: Build, assinar e publicar
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          NEXT_PUBLIC_API_URL: ${{ vars.API_URL || 'https://api.seneb.com.br/api/v1' }}
+        with:
+          projectPath: apps/desktop
+          tauriScript: yarn tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: Seneb ${{ github.ref_name }}
+          releaseBody: "Novidades: https://seneb.com.br/#changelogs"
+          releaseDraft: false
+          prerelease: false
+          args: --bundles ${{ matrix.bundles }}
+
+  stable-names:
+    name: Publicar cópias com nome fixo
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar assets e reenviar como Seneb-Setup.*
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir dl && cd dl
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern '*.msi' --pattern '*.AppImage' --pattern '*.deb'
+          ls -la
+          for f in *.msi; do [ -e "$f" ] && cp "$f" Seneb-Setup.msi; done
+          for f in *.AppImage; do [ -e "$f" ] && cp "$f" Seneb-Setup.AppImage; done
+          for f in *.deb; do [ -e "$f" ] && cp "$f" Seneb-Setup.deb; done
+          gh release upload "$TAG" Seneb-Setup.* --clobber --repo "$GITHUB_REPOSITORY"

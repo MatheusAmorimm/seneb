@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Desktop + Landing (lint, typecheck, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Habilitar Corepack (Yarn 4)
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - run: yarn install --immutable
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn workspace web build
+      - run: yarn workspace desktop build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.API_URL || 'https://api.seneb.com.br/api/v1' }}
+
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+        env:
+          SECRET_KEY: ci-secret-key-with-at-least-32-characters
+          MONGO_URI: mongodb://localhost:27017
+          MAIL_DEV_LOG_CODES: "true"
+
+  backend-image-check:
+    name: Backend (docker build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
