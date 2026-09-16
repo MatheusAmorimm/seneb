@@ -7,6 +7,7 @@ env/
 venv/
 *.env
 *.env.*
+!*.env.example
 gerar_contexto.py
 context.py
 projeto_completo.txt
@@ -18,12 +19,21 @@ dist/
 .next/
 out/
 build/
+*.tsbuildinfo
+next-env.d.ts
 
-# Scripts
-scripts/
+# Yarn Berry
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
 
 # Tauri / Rust
-src-tauri/*
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/schemas/
 seneb.key
 seneb.key.pub
 
