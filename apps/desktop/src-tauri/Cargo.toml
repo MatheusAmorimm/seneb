@@ -1,10 +1,10 @@
 [package]
 name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.5.0"
+description = "Seneb - Controle Financeiro"
+authors = ["Matheus Amorim"]
 license = ""
-repository = ""
+repository = "https://github.com/MatheusAmorimm/seneb"
 edition = "2021"
 rust-version = "1.77.2"
 

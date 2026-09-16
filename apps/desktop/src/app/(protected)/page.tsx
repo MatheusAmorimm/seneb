@@ -11,7 +11,7 @@ import { UserData } from "../../types/index";
 import { useTheme } from "../../components/theme_provider";
 import api from "../../services/api";
 
-const APP_VERSION_FALLBACK = "0.3.0";
+const APP_VERSION_FALLBACK = "0.5.0";
 
 async function getTauriVersion(): Promise<string> {
   try {
