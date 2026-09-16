@@ -1,13 +1,13 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Seneb",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "identifier": "br.com.seneb.desktop",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeDevCommand": "yarn dev",
+    "beforeBuildCommand": "yarn build"
   },
   "app": {
     "windows": [
@@ -20,13 +20,13 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.seneb.com.br http://localhost:8000; frame-ancestors 'none';"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.seneb.com.br https://*.onrender.com http://localhost:8000; frame-ancestors 'none';"
     }
   },
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://seneb.com.br/update.json"
+        "https://github.com/MatheusAmorimm/seneb/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU4M0ZENDNFMjg2RkNBOUYKUldTZnltOG9QdFEvV0xTelFUTFlITGhFSlJKRU10a1RwNTdWeSs3T0k4bkk3NTFabWNNNzVRUmIK",
       "windows": {

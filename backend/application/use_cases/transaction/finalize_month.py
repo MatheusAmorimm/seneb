@@ -50,8 +50,9 @@ class FinalizeMonthUseCase:
 
         Gate().require(len(drafts) > 0, "Não há lançamentos para finalizar.").check()
 
-        total_income = sum(t.amount for t in drafts if t.type == "income")
-        total_expense = sum(t.amount for t in drafts if t.type == "expense")
+        # Usa o valor efetivo (parcela) para bater com os totais da tela de Lançamentos.
+        total_income = round(sum(t.effective_amount for t in drafts if t.type == "income"), 2)
+        total_expense = round(sum(t.effective_amount for t in drafts if t.type == "expense"), 2)
         report_id = str(uuid4())
 
         report = ReportEntity(

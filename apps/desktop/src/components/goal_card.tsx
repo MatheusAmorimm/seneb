@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Pencil, Trash2, Trophy, Target, Calendar, TrendingUp } from "lucide-react";
 import { Goal } from "../types";
 import api from "../services/api";
@@ -64,14 +64,7 @@ export function GoalCard({ goal, onEdit, onDelete, onCelebrated }: GoalCardProps
   const monthlyNeeded = calcMonthlyNeeded(goal.target_amount, goal.current_amount, goal.deadline);
   const hasFirework = useRef(false);
 
-  useEffect(() => {
-    if (isComplete && !goal.is_celebrated && !hasFirework.current) {
-      hasFirework.current = true;
-      triggerCelebration();
-    }
-  }, [isComplete, goal.is_celebrated]);
-
-  async function triggerCelebration() {
+  const triggerCelebration = useCallback(async () => {
     playGoalSound();
 
     const { default: confetti } = await import("canvas-confetti");
@@ -89,7 +82,14 @@ export function GoalCard({ goal, onEdit, onDelete, onCelebrated }: GoalCardProps
     } catch {
       // silently ignore
     }
-  }
+  }, [goal.id, onCelebrated]);
+
+  useEffect(() => {
+    if (isComplete && !goal.is_celebrated && !hasFirework.current) {
+      hasFirework.current = true;
+      triggerCelebration();
+    }
+  }, [isComplete, goal.is_celebrated, triggerCelebration]);
 
   return (
     <div className={`

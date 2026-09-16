@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
+from pymongo.errors import PyMongoError
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
@@ -27,18 +28,50 @@ _NOTIFICATION_TTL = 604800    # 7 days
 _REFRESH_TOKEN_TTL = 2592000  # 30 days
 
 
+async def _ensure_indexes() -> None:
+    """Cria índices de forma idempotente.
+
+    Cada índice é criado individualmente: se um falhar (ex.: dado duplicado
+    impedindo um índice único), registramos o erro e seguimos, para não
+    derrubar a API na inicialização.
+    """
+    col = db.db
+    specs = [
+        # TTLs (limpeza automática)
+        (col.notifications, "created_at", {"expireAfterSeconds": _NOTIFICATION_TTL}),
+        (col.verification_codes, "created_at", {"expireAfterSeconds": _OTP_TTL_SHORT}),
+        (col.password_reset_codes, "created_at", {"expireAfterSeconds": _OTP_TTL_SHORT}),
+        (col.password_change_codes, "created_at", {"expireAfterSeconds": _OTP_TTL_SHORT}),
+        (col.email_change_codes, "created_at", {"expireAfterSeconds": _OTP_TTL_LONG}),
+        (col.refresh_tokens, "expires_at", {"expireAfterSeconds": 0}),
+        # Unicidade
+        (col.users, "email", {"unique": True}),
+        (col.refresh_tokens, "token_hash", {"unique": True}),
+        # Consultas de lançamentos (rascunhos, relatórios, análises)
+        (col.transactions, [("user_id", 1), ("group_id", 1), ("status", 1), ("date", 1)], {}),
+        (col.transactions, [("group_id", 1), ("status", 1), ("date", 1)], {}),
+        (col.transactions, "report_id", {}),
+        (col.transactions, [("goal_id", 1), ("type", 1)], {}),
+        (col.transactions, [("user_id", 1), ("status", 1), ("due_date", 1)], {}),
+        # Relatórios, notificações e grupos
+        (col.reports, [("user_id", 1), ("created_at", -1)], {}),
+        (col.reports, [("group_id", 1), ("created_at", -1)], {}),
+        (col.reports, "id", {}),
+        (col.notifications, [("user_id", 1), ("created_at", -1)], {}),
+        (col.groups, [("members.user_id", 1), ("is_active", 1)], {}),
+    ]
+    for collection, keys, options in specs:
+        try:
+            await collection.create_index(keys, **options)
+        except PyMongoError as exc:
+            logger.error("Falha ao criar índice %s em %s: %s", keys, collection.name, exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Connecting to MongoDB...")
     await db.connect_to_mongo()
-
-    col = db.db
-    await col.notifications.create_index("created_at", expireAfterSeconds=_NOTIFICATION_TTL)
-    await col.verification_codes.create_index("created_at", expireAfterSeconds=_OTP_TTL_SHORT)
-    await col.password_reset_codes.create_index("created_at", expireAfterSeconds=_OTP_TTL_SHORT)
-    await col.password_change_codes.create_index("created_at", expireAfterSeconds=_OTP_TTL_SHORT)
-    await col.email_change_codes.create_index("created_at", expireAfterSeconds=_OTP_TTL_LONG)
-    await col.refresh_tokens.create_index("expires_at", expireAfterSeconds=0)
+    await _ensure_indexes()
 
     yield
 
@@ -79,6 +112,7 @@ async def security_headers(request: Request, call_next) -> Response:
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
     return response
 
 

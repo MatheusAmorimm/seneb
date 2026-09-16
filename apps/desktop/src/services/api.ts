@@ -21,7 +21,9 @@ api.interceptors.request.use(async (config) => {
     if (typeof window !== 'undefined') {
       const groupId = sessionStorage.getItem("seneb_active_group_id");
       if (groupId && groupId !== "personal") {
-        const isTargetRoute = config.url?.includes("/transactions") || config.url?.includes("/reports");
+        const isTargetRoute = ["/transactions", "/reports", "/analytics"].some(
+          (prefix) => config.url?.includes(prefix)
+        );
         if (isTargetRoute) {
             if (config.method === "get") {
                 config.params = { ...config.params, group_id: groupId };

@@ -50,8 +50,8 @@ export function UpdateScreen({ children }: { children: React.ReactNode }) {
           });
         }
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        toast.error(`Erro ao verificar atualizações: ${errorMsg}`);
+        // Sem internet ou sem release publicada ainda: não incomodar o usuário a cada abertura.
+        console.warn("Falha ao verificar atualizações:", error);
       }
     }
 

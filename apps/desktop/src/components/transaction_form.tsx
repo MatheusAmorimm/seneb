@@ -118,6 +118,23 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
     return name.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   };
 
+  const resetForm = () => {
+    setType('expense');
+    setCategory('');
+    setSubcategory('');
+    setDescription('');
+    setAmount('');
+    setPaymentMethod('');
+    setBank('');
+    setDueDate('');
+    setIsInstallment(false);
+    setIsCustomBankMode(false);
+    setTotalInstallments(1);
+    setCurrentInstallment(1);
+    setGoalId('');
+    setErrors({ category: false, subcategory: false, amount: false, goal: false });
+  };
+
   // Load edit data
   useEffect(() => {
     if (initialData) {
@@ -147,23 +164,6 @@ export function TransactionForm({ onAddTransaction, initialData, onCancelEdit }:
       resetForm();
     }
   }, [initialData]);
-
-  const resetForm = () => {
-    setType('expense');
-    setCategory('');
-    setSubcategory('');
-    setDescription('');
-    setAmount('');
-    setPaymentMethod('');
-    setBank('');
-    setDueDate('');
-    setIsInstallment(false);
-    setIsCustomBankMode(false);
-    setTotalInstallments(1);
-    setCurrentInstallment(1);
-    setGoalId('');
-    setErrors({ category: false, subcategory: false, amount: false, goal: false });
-  };
 
   // Fetch custom banks
   useEffect(() => {

@@ -62,6 +62,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [pathname, refreshGroups]);
 
+  const setActiveGroupId = useCallback((id: string | null) => {
+    setActiveGroupIdState(id);
+    if (id) {
+      sessionStorage.setItem(WORKSPACE_CACHE_KEY, id);
+    } else {
+      sessionStorage.setItem(WORKSPACE_CACHE_KEY, "personal");
+    }
+  }, []);
+
   useEffect(() => {
     // Se o grupo antigo armazenado/ativo não existir mais para o usuário
     // (ex: foi deletado, ou o usuário foi removido), forçamos volta p/ Pessoal
@@ -71,16 +80,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setActiveGroupId(null);
       }
     }
-  }, [groups, activeGroupId, hasLoadedOnce]);
-
-  const setActiveGroupId = (id: string | null) => {
-    setActiveGroupIdState(id);
-    if (id) {
-      sessionStorage.setItem(WORKSPACE_CACHE_KEY, id);
-    } else {
-      sessionStorage.setItem(WORKSPACE_CACHE_KEY, "personal");
-    }
-  };
+  }, [groups, activeGroupId, hasLoadedOnce, setActiveGroupId]);
 
   const activeGroup = groups.find((g) => g.id === activeGroupId) || null;
   const isGuestActive = activeGroup && currentUserId ? activeGroup.members.find(m => m.user_id === currentUserId)?.role === "guest" : false;

@@ -8,12 +8,16 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from backend.core.configs import settings
 from backend.core.database import db
 from backend.domain.entities.user import UserEntity
+from backend.domain.interfaces.analytics_repository import IAnalyticsRepository
 from backend.domain.interfaces.goal_repository import IGoalRepository
 from backend.domain.interfaces.group_repository import IGroupRepository
 from backend.domain.interfaces.notification_repository import INotificationRepository
 from backend.domain.interfaces.report_repository import IReportRepository
 from backend.domain.interfaces.transaction_repository import ITransactionRepository
 from backend.domain.interfaces.user_repository import IUserRepository
+from backend.infrastructure.repositories.mongo_analytics_repository import (
+    MongoAnalyticsRepository,
+)
 from backend.infrastructure.repositories.mongo_goal_repository import MongoGoalRepository
 from backend.infrastructure.repositories.mongo_group_repository import MongoGroupRepository
 from backend.infrastructure.repositories.mongo_notification_repository import (
@@ -70,6 +74,12 @@ def get_notification_repo(
     database: AsyncIOMotorDatabase = Depends(get_db),
 ) -> INotificationRepository:
     return MongoNotificationRepository(database)
+
+
+def get_analytics_repo(
+    database: AsyncIOMotorDatabase = Depends(get_db),
+) -> IAnalyticsRepository:
+    return MongoAnalyticsRepository(database)
 
 
 async def get_current_user(

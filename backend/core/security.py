@@ -4,12 +4,33 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
+import bcrypt
 from jose import jwt
-from passlib.context import CryptContext
 
 from backend.core.configs import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt só considera os primeiros 72 bytes da senha. O passlib (usado antes)
+# truncava silenciosamente; mantemos o mesmo comportamento para que hashes
+# antigos continuem válidos.
+_BCRYPT_MAX_BYTES = 72
+_BCRYPT_ROUNDS = 12
+
+
+def _prepare_password(password: str) -> bytes:
+    return password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
+
+
+def get_password_hash(password: str) -> str:
+    salt = bcrypt.gensalt(rounds=_BCRYPT_ROUNDS)
+    return bcrypt.hashpw(_prepare_password(password), salt).decode("utf-8")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(_prepare_password(plain_password), hashed_password.encode("utf-8"))
+    except ValueError:
+        # hash malformado ou de outro algoritmo
+        return False
 
 
 def hash_otp(code: str) -> str:
@@ -44,11 +65,3 @@ def create_access_token(
     )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)

@@ -1,0 +1,44 @@
+# Blueprint do Render (https://render.com/docs/blueprint-spec)
+# Uso: Render Dashboard > New > Blueprint > selecionar este repositório.
+# Os valores marcados com `sync: false` são pedidos na tela na primeira vez.
+services:
+  - type: web
+    name: seneb-backend
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_NAME
+        value: seneb_prod
+      - key: ALLOWED_ORIGINS
+        value: '["https://seneb.com.br","https://www.seneb.com.br"]'
+      - key: DISABLE_OPENAPI
+        value: "true"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "30"
+      - key: MAIL_SERVER
+        value: smtp.resend.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        value: resend
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        value: no-reply@seneb.com.br
+      - key: MAIL_STARTTLS
+        value: "true"
+      - key: MAIL_SSL_TLS
+        value: "false"
+      - key: WEB_CONCURRENCY
+        value: "1"

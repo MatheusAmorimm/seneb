@@ -1,7 +1,5 @@
 from typing import Optional
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
-
 from backend.core.exceptions import ForbiddenException, NotFoundException
 from backend.domain.entities.transaction import TransactionEntity
 from backend.domain.interfaces.goal_repository import IGoalRepository
@@ -15,12 +13,10 @@ class DeleteTransactionUseCase:
         transaction_repo: ITransactionRepository,
         group_repo: IGroupRepository,
         goal_repo: Optional[IGoalRepository] = None,
-        db: Optional[AsyncIOMotorDatabase] = None,
     ) -> None:
         self._transaction_repo = transaction_repo
         self._group_repo = group_repo
         self._goal_repo = goal_repo
-        self._db = db
 
     async def execute(self, transaction_id: str, current_user_id: str) -> None:
         existing = await self._transaction_repo.find_by_id(transaction_id)
@@ -33,7 +29,7 @@ class DeleteTransactionUseCase:
 
         await self._transaction_repo.delete(transaction_id)
 
-        if goal_id and self._goal_repo and self._db:
+        if goal_id and self._goal_repo:
             await self._maybe_reset_celebration(goal_id)
 
     async def _maybe_reset_celebration(self, goal_id: str) -> None:
@@ -41,12 +37,7 @@ class DeleteTransactionUseCase:
         if not goal or not goal.is_celebrated:
             return
 
-        pipeline = [
-            {"$match": {"type": "goal", "goal_id": goal_id}},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
-        ]
-        agg = await self._db["transactions"].aggregate(pipeline).to_list(1)
-        current_amount = agg[0]["total"] if agg else 0.0
+        current_amount = await self._transaction_repo.sum_goal_contribution(goal_id)
 
         if current_amount < goal.target_amount:
             await self._goal_repo.update(goal_id, {"is_celebrated": False, "celebrated_at": None})

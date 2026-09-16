@@ -1,0 +1,31 @@
+{
+  "name": "seneb",
+  "private": true,
+  "packageManager": "yarn@4.18.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "postinstall": "husky || true",
+    "dev:desktop": "yarn workspace desktop tauri dev",
+    "dev:web": "yarn workspace web dev",
+    "build:desktop": "yarn workspace desktop tauri build",
+    "build:web": "yarn workspace web build",
+    "lint": "yarn workspace desktop lint && yarn workspace web lint",
+    "typecheck": "yarn workspace desktop typecheck && yarn workspace web typecheck",
+    "tauri": "yarn workspace desktop tauri"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2"
+  },
+  "lint-staged": {
+    "apps/desktop/**/*.{ts,tsx}": "yarn workspace desktop eslint --fix",
+    "apps/web/**/*.{ts,tsx}": "yarn workspace web eslint --fix"
+  }
+}

@@ -142,7 +142,7 @@ function LancamentosContent() {
       const isHeaderLink = target?.closest('header');
 
       if (target && (target.tagName === 'A' || isSidebarLink || isHeaderLink)) {
-        const href = target.getAttribute('href') || (target as any).href || '';
+        const href = target.getAttribute('href') || (target as HTMLAnchorElement).href || '';
         const isInternalLancamento = href.includes('/lancamentos') || href.includes('reopenedId');
         
         if (href && !isInternalLancamento) {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from 'sonner';
 import { UpdateScreen } from "../components/update_screen";
 import { ThemeProvider } from "../components/theme_provider";
+import { BackendStatus } from "../components/backend_status";
 
 const nunito = Nunito_Sans({
   subsets: ["latin"],
@@ -38,6 +39,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${nunito.variable} ${tinos.variable} ${karla.variable} antialiased`}>
           <ThemeProvider>
+            <BackendStatus />
             <UpdateScreen>
               {children}
             </UpdateScreen>

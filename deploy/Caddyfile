@@ -1,0 +1,4 @@
+api.seneb.com.br {
+    encode gzip
+    reverse_proxy backend:8000
+}

@@ -24,3 +24,14 @@ class TransactionEntity(BaseModel):
     goal_id: Optional[str] = None
     status: Literal["draft", "finalized"] = "draft"
     report_id: Optional[str] = None
+
+    @property
+    def effective_amount(self) -> float:
+        """Valor que efetivamente pesa no mês.
+
+        Compras parceladas guardam o valor total em `amount`; o que conta no
+        mês é a parcela. É a mesma regra exibida na tela de Lançamentos.
+        """
+        if self.is_installment and self.total_installments and self.total_installments > 1:
+            return self.amount / self.total_installments
+        return self.amount

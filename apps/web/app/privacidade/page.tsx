@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
               <p className="mb-2">O controlador dos dados pessoais é o responsável legal pela plataforma Seneb.</p>
               <div className="mt-4 space-y-2">
                 <p><strong>Responsável:</strong> TechCAmorim</p>
-                <p><strong>Email:</strong> suporte@seneb.com.br</p>
+                <p><strong>Email:</strong> theuscamorim@gmail.com</p>
                 <p><strong>Endereço:</strong> São Paulo-SP</p>
               </div>
             </div>
