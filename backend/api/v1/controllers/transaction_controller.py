@@ -1,12 +1,9 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from backend.api.v1.dependencies import (
     get_current_user,
-    get_db,
     get_goal_repo,
     get_group_repo,
     get_report_repo,
@@ -111,10 +108,9 @@ async def delete_transaction(
     transaction_repo: ITransactionRepository = Depends(get_transaction_repo),
     group_repo: IGroupRepository = Depends(get_group_repo),
     goal_repo: IGoalRepository = Depends(get_goal_repo),
-    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
-        await DeleteTransactionUseCase(transaction_repo, group_repo, goal_repo, db).execute(
+        await DeleteTransactionUseCase(transaction_repo, group_repo, goal_repo).execute(
             transaction_id, str(current_user.id)
         )
     except DomainException as exc:

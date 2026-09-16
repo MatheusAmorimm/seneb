@@ -1,13 +1,17 @@
 from backend.application.dtos.goal_dtos import GoalOutput, GoalUpdateInput
 from backend.core.exceptions import ForbiddenException, NotFoundException
 from backend.domain.interfaces.goal_repository import IGoalRepository
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from backend.domain.interfaces.transaction_repository import ITransactionRepository
 
 
 class UpdateGoalUseCase:
-    def __init__(self, goal_repo: IGoalRepository, db: AsyncIOMotorDatabase) -> None:
+    def __init__(
+        self,
+        goal_repo: IGoalRepository,
+        transaction_repo: ITransactionRepository,
+    ) -> None:
         self._goal_repo = goal_repo
-        self._db = db
+        self._transaction_repo = transaction_repo
 
     async def execute(self, goal_id: str, data: GoalUpdateInput, user_id: str) -> GoalOutput:
         goal = await self._goal_repo.find_by_id(goal_id)
@@ -18,13 +22,10 @@ class UpdateGoalUseCase:
 
         updates = data.model_dump(exclude_none=True)
         updated = await self._goal_repo.update(goal_id, updates)
+        if not updated:
+            raise NotFoundException("Meta não encontrada.")
 
-        pipeline = [
-            {"$match": {"user_id": user_id, "type": "goal", "goal_id": goal_id}},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
-        ]
-        agg = await self._db["transactions"].aggregate(pipeline).to_list(1)
-        current_amount = agg[0]["total"] if agg else 0.0
+        current_amount = await self._transaction_repo.sum_goal_contribution(goal_id)
 
         return GoalOutput(
             id=updated.id,

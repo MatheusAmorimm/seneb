@@ -1,25 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from backend.domain.interfaces.transaction_repository import ITransactionRepository
 
 
 class GetGoalMonthlyTotalUseCase:
-    def __init__(self, db: AsyncIOMotorDatabase) -> None:
-        self._db = db
+    def __init__(self, transaction_repo: ITransactionRepository) -> None:
+        self._transaction_repo = transaction_repo
 
     async def execute(self, user_id: str) -> float:
-        now = datetime.now()
-        month_prefix = now.strftime("%Y-%m")  # "2026-05"
-
-        pipeline = [
-            {
-                "$match": {
-                    "user_id": user_id,
-                    "type": "goal",
-                    "date": {"$regex": f"^{month_prefix}"},
-                }
-            },
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
-        ]
-        agg = await self._db["transactions"].aggregate(pipeline).to_list(1)
-        return agg[0]["total"] if agg else 0.0
+        month_prefix = datetime.now(timezone.utc).strftime("%Y-%m")  # "2026-09"
+        return await self._transaction_repo.sum_goal_month(user_id, month_prefix)

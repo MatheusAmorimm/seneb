@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from backend.api.v1.dependencies import get_current_user, get_db
+from backend.api.v1.dependencies import get_current_user, get_goal_repo, get_transaction_repo
 from backend.application.dtos.goal_dtos import (
     GoalInput,
     GoalMonthlyTotalOutput,
@@ -16,13 +15,10 @@ from backend.application.use_cases.goal.list_goals import ListGoalsUseCase
 from backend.application.use_cases.goal.update_goal import UpdateGoalUseCase
 from backend.core.exceptions import DomainException, ForbiddenException, NotFoundException
 from backend.domain.entities.user import UserEntity
-from backend.infrastructure.repositories.mongo_goal_repository import MongoGoalRepository
+from backend.domain.interfaces.goal_repository import IGoalRepository
+from backend.domain.interfaces.transaction_repository import ITransactionRepository
 
 router = APIRouter()
-
-
-def _get_goal_repo(db: AsyncIOMotorDatabase = Depends(get_db)) -> MongoGoalRepository:
-    return MongoGoalRepository(db)
 
 
 def _handle(exc: DomainException) -> None:
@@ -36,18 +32,18 @@ def _handle(exc: DomainException) -> None:
 @router.get("", response_model=list[GoalOutput])
 async def list_goals(
     current_user: UserEntity = Depends(get_current_user),
-    goal_repo: MongoGoalRepository = Depends(_get_goal_repo),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    goal_repo: IGoalRepository = Depends(get_goal_repo),
+    transaction_repo: ITransactionRepository = Depends(get_transaction_repo),
 ):
-    return await ListGoalsUseCase(goal_repo, db).execute(str(current_user.id))
+    return await ListGoalsUseCase(goal_repo, transaction_repo).execute(str(current_user.id))
 
 
 @router.get("/monthly-total", response_model=GoalMonthlyTotalOutput)
 async def get_monthly_total(
     current_user: UserEntity = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    transaction_repo: ITransactionRepository = Depends(get_transaction_repo),
 ):
-    total = await GetGoalMonthlyTotalUseCase(db).execute(str(current_user.id))
+    total = await GetGoalMonthlyTotalUseCase(transaction_repo).execute(str(current_user.id))
     return GoalMonthlyTotalOutput(total=total)
 
 
@@ -55,7 +51,7 @@ async def get_monthly_total(
 async def create_goal(
     data: GoalInput,
     current_user: UserEntity = Depends(get_current_user),
-    goal_repo: MongoGoalRepository = Depends(_get_goal_repo),
+    goal_repo: IGoalRepository = Depends(get_goal_repo),
 ):
     return await CreateGoalUseCase(goal_repo).execute(data, str(current_user.id))
 
@@ -65,11 +61,13 @@ async def update_goal(
     goal_id: str,
     data: GoalUpdateInput,
     current_user: UserEntity = Depends(get_current_user),
-    goal_repo: MongoGoalRepository = Depends(_get_goal_repo),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    goal_repo: IGoalRepository = Depends(get_goal_repo),
+    transaction_repo: ITransactionRepository = Depends(get_transaction_repo),
 ):
     try:
-        return await UpdateGoalUseCase(goal_repo, db).execute(goal_id, data, str(current_user.id))
+        return await UpdateGoalUseCase(goal_repo, transaction_repo).execute(
+            goal_id, data, str(current_user.id)
+        )
     except DomainException as exc:
         _handle(exc)
 
@@ -78,7 +76,7 @@ async def update_goal(
 async def celebrate_goal(
     goal_id: str,
     current_user: UserEntity = Depends(get_current_user),
-    goal_repo: MongoGoalRepository = Depends(_get_goal_repo),
+    goal_repo: IGoalRepository = Depends(get_goal_repo),
 ):
     try:
         await CelebrateGoalUseCase(goal_repo).execute(goal_id, str(current_user.id))
@@ -90,7 +88,7 @@ async def celebrate_goal(
 async def delete_goal(
     goal_id: str,
     current_user: UserEntity = Depends(get_current_user),
-    goal_repo: MongoGoalRepository = Depends(_get_goal_repo),
+    goal_repo: IGoalRepository = Depends(get_goal_repo),
 ):
     try:
         await DeleteGoalUseCase(goal_repo).execute(goal_id, str(current_user.id))
