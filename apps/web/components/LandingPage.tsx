@@ -36,7 +36,7 @@ const ISSUES_PAGE = 'https://github.com/MatheusAmorimm/seneb/issues';
 // Desenvolvedor e suporte. A foto vem do avatar público do GitHub.
 const DEV_GITHUB = 'https://github.com/MatheusAmorimm';
 const DEV_LINKEDIN = 'https://www.linkedin.com/in/matheus-amorimm/';
-const DEV_PORTFOLIO = 'https://matheusamorimm.github.io/DevLinks/';
+const DEV_PORTFOLIO = 'https://matheuscamorim.com.br';
 const DEV_AVATAR = 'https://avatars.githubusercontent.com/MatheusAmorimm?size=256';
 const SUPPORT_EMAIL = 'mtxdevfrontend@gmail.com';
 const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Seneb: problema ou sugestão')}`;
@@ -198,7 +198,7 @@ export default function LandingPage() {
                   <span className="text-sm font-medium">100% Gratuito e Fácil de Usar</span>
                 </div>
 
-                <h1 className="text-5xl md:text-6xl mb-6 text-slate-800 font-bold leading-tight">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl mb-6 text-slate-800 font-bold leading-tight">
                   Controle suas finanças com{' '}
                   <span className="relative inline-block">
                     <span className="relative z-10" style={{ color: '#F23E02' }}>simplicidade</span>
@@ -242,7 +242,7 @@ export default function LandingPage() {
 
               {/* Right Content - Mock Interface */}
               <div className="relative">
-                <div className="bg-white rounded-2xl shadow-2xl p-6 transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 transform rotate-1 hover:rotate-0 transition-transform duration-500">
                   <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-200">
                     <DollarSign className="w-6 h-6" style={{ color: '#00988D' }} />
                     <span className="text-slate-800 font-bold">Painel de Controle</span>
@@ -251,17 +251,17 @@ export default function LandingPage() {
                   <div className="space-y-4">
                     {/* Mock Balance Cards */}
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-green-50 p-4 rounded-xl border-2 border-green-200">
+                      <div className="min-w-0 bg-green-50 p-2.5 sm:p-4 rounded-xl border-2 border-green-200">
                         <div className="text-xs text-green-700 mb-1 font-semibold">Receitas</div>
-                        <div className="text-lg text-green-800 font-bold">R$ 5.420</div>
+                        <div className="text-sm sm:text-lg text-green-800 font-bold">R$ 5.420</div>
                       </div>
-                      <div className="p-4 rounded-xl border-2" style={{ backgroundColor: '#fff5f0', borderColor: '#ffd4ba' }}>
+                      <div className="min-w-0 p-2.5 sm:p-4 rounded-xl border-2" style={{ backgroundColor: '#fff5f0', borderColor: '#ffd4ba' }}>
                         <div className="text-xs mb-1 font-semibold" style={{ color: '#d63802' }}>Despesas</div>
-                        <div className="text-lg font-bold" style={{ color: '#F23E02' }}>R$ 2.180</div>
+                        <div className="text-sm sm:text-lg font-bold" style={{ color: '#F23E02' }}>R$ 2.180</div>
                       </div>
-                      <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+                      <div className="min-w-0 bg-blue-50 p-2.5 sm:p-4 rounded-xl border-2 border-blue-200">
                         <div className="text-xs text-blue-700 mb-1 font-semibold">Saldo</div>
-                        <div className="text-lg text-blue-800 font-bold">R$ 3.240</div>
+                        <div className="text-sm sm:text-lg text-blue-800 font-bold">R$ 3.240</div>
                       </div>
                     </div>
 
@@ -280,7 +280,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Floating badge */}
-                <div className="absolute -top-4 -right-4 bg-white rounded-full p-4 shadow-xl animate-bounce" style={{ border: '3px solid #F23E02' }}>
+                <div className="absolute -top-4 right-0 sm:-right-4 bg-white rounded-full p-4 shadow-xl animate-bounce" style={{ border: '3px solid #F23E02' }}>
                   <CheckCircle className="w-8 h-8" style={{ color: '#F23E02' }} />
                 </div>
               </div>
@@ -507,7 +507,7 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(242, 62, 2, 0.1)' }}>
                   <Mail className="w-6 h-6" style={{ color: '#F23E02' }} />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="text-xl font-bold mb-1 text-slate-800">Enviar um e-mail</h3>
                   <p className="text-slate-600 text-sm mb-3">
                     Descreva o problema e, se puder, anexe um print. Respondo o mais rápido que conseguir.
@@ -525,13 +525,14 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(0, 152, 141, 0.1)' }}>
                   <Bug className="w-6 h-6" style={{ color: '#00988D' }} />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="text-xl font-bold mb-1 text-slate-800">Abrir uma issue no GitHub</h3>
                   <p className="text-slate-600 text-sm mb-3">
                     Para quem já usa o GitHub: acompanhe o andamento e veja o que outras pessoas já reportaram.
                   </p>
-                  <span className="font-semibold underline inline-flex items-center gap-1" style={{ color: '#00988D' }}>
-                    github.com/MatheusAmorimm/seneb/issues <ExternalLink className="w-4 h-4" />
+                  <span className="font-semibold underline break-all" style={{ color: '#00988D' }}>
+                    github.com/MatheusAmorimm/seneb/issues
+                    <ExternalLink className="inline w-4 h-4 ml-1 align-text-bottom" />
                   </span>
                 </div>
               </a>
