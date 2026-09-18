@@ -20,6 +20,7 @@
 2. Dashboard > **New** > **Blueprint** > escolha o repositório `MatheusAmorimm/seneb`.
 3. O Render lê `render.yaml` e pede os valores `sync: false`:
    - `MONGO_URI` — do passo 1
+   - `DATABASE_NAME` — nome do banco onde estão os dados (Atlas > Browse Collections)
    - `MAIL_PASSWORD` — API key do Resend (passo 4). Pode deixar vazio por enquanto:
      sem SMTP, o backend **registra o código OTP no log** em vez de enviar e-mail.
 4. Aguarde o primeiro deploy. Teste: `https://<nome>.onrender.com/health` → `{"status":"ok"}`.

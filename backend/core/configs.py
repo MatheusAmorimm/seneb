@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     MONGO_URI: str = ""
     SECRET_KEY: str = ""
-    DATABASE_NAME: str = "finance_saas_dev"
+    DATABASE_NAME: str = "seneb"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30

@@ -179,7 +179,7 @@ SECRET_KEY=<string_aleatória_mínimo_32_chars>
 MONGO_URI=mongodb+srv://...
 
 # Opcionais (com defaults)
-DATABASE_NAME=finance_saas_dev
+DATABASE_NAME=seneb
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 REFRESH_TOKEN_EXPIRE_DAYS=30

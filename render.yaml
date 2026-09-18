@@ -17,7 +17,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_NAME
-        value: seneb_prod
+        sync: false
       - key: ALLOWED_ORIGINS
         value: '["https://seneb.com.br","https://www.seneb.com.br"]'
       - key: DISABLE_OPENAPI
