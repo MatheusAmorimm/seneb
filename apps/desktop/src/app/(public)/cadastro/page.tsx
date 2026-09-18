@@ -131,7 +131,7 @@ export default function CadastroPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #013750 0%, #2C6B74 50%, #00988D 100%)' }}>
 
       <div className="w-112.5">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-white dark:bg-[#012a3d] rounded-2xl shadow-2xl overflow-hidden transition-colors border border-transparent dark:border-slate-800">
 
           <div className="p-8 text-center" style={{ background: 'linear-gradient(to right, #013750, #2C6B74)' }}>
             <div className="flex justify-center mb-4">
@@ -153,13 +153,13 @@ export default function CadastroPage() {
 
                 {/* Nome */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">NOME COMPLETO <span className="text-red-500">*</span></label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-300 font-medium text-sm">NOME COMPLETO <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="text"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 dark:border-slate-700"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Seu nome completo"
                       required
@@ -169,13 +169,13 @@ export default function CadastroPage() {
 
                 {/* Apelido */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">APELIDO (Opcional)</label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-300 font-medium text-sm">APELIDO (Opcional)</label>
                   <div className="relative">
                     <input
                       type="text"
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
-                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 dark:border-slate-700"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Seu apelido"
                     />
@@ -184,13 +184,13 @@ export default function CadastroPage() {
 
                 {/* Email */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">E-MAIL <span className="text-red-500">*</span></label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-300 font-medium text-sm">E-MAIL <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                      className="w-full pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 dark:border-slate-700"
                       style={{ paddingLeft: '20px' }}
                       placeholder="seu@email.com"
                       required
@@ -200,13 +200,13 @@ export default function CadastroPage() {
 
                 {/* Senha */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">SENHA <span className="text-red-500">*</span></label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-300 font-medium text-sm">SENHA <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 dark:border-slate-700"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Mínimo 8 caracteres"
                     />
@@ -215,13 +215,13 @@ export default function CadastroPage() {
 
                 {/* Confirmar Senha */}
                 <div>
-                  <label className="block mb-2 text-slate-700 font-medium text-sm">CONFIRMAR SENHA <span className="text-red-500">*</span></label>
+                  <label className="block mb-2 text-slate-700 dark:text-slate-300 font-medium text-sm">CONFIRMAR SENHA <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all"
+                      className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 dark:border-slate-700"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Digite a senha novamente"
                     />
@@ -236,7 +236,7 @@ export default function CadastroPage() {
                     className="mt-1 w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
                     required
                   />
-                  <label htmlFor="terms" className="ml-2 text-sm text-slate-600">
+                  <label htmlFor="terms" className="ml-2 text-sm text-slate-600 dark:text-slate-400">
                     Eu concordo com os{' '}
                     <button
                       type="button"
@@ -268,12 +268,12 @@ export default function CadastroPage() {
                 </button>
 
                 <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-300"></div></div>
-                  <div className="relative flex justify-center text-sm"><span className="px-4 bg-white text-slate-500">Ou</span></div>
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-300 dark:border-slate-700"></div></div>
+                  <div className="relative flex justify-center text-sm"><span className="px-4 bg-white dark:bg-[#012a3d] text-slate-500 transition-colors">Ou</span></div>
                 </div>
 
                 <div className="text-center">
-                  <span className="text-slate-600">Já tem uma conta? </span>
+                  <span className="text-slate-600 dark:text-slate-400">Já tem uma conta? </span>
                   <button type="button" onClick={() => router.push('/login/')} className="transition-colors font-bold hover:underline cursor-pointer" style={{ color: '#F23E02' }}>Fazer login</button>
                 </div>
               </form>
@@ -283,14 +283,14 @@ export default function CadastroPage() {
             {step === 2 && (
               <form onSubmit={handleFinalSubmit} className="space-y-6">
                 <div className="text-center">
-                  <p className="text-slate-600 mb-4">Insira o código de 8 dígitos enviado para <strong>{email}</strong>.</p>
+                  <p className="text-slate-600 dark:text-slate-400 mb-4">Insira o código de 8 dígitos enviado para <strong>{email}</strong>.</p>
 
                   <input
                     type="text"
                     maxLength={8}
                     value={inputCode}
                     onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ''))} // Só aceita números
-                    className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                    className="w-full text-center text-3xl font-bold tracking-widest py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 dark:border-slate-700"
                     placeholder="00000000"
                     autoFocus
                   />
@@ -309,7 +309,7 @@ export default function CadastroPage() {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-sm text-slate-500 hover:text-slate-800 underline"
+                    className="text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 underline"
                   >
                     Voltar e corrigir e-mail
                   </button>
