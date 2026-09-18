@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   DollarSign,
-  TrendingUp,
-  PieChart,
-  Calendar,
   Download,
   CheckCircle,
   Sparkles,
@@ -14,7 +12,19 @@ import {
   X,
   Monitor,
   Terminal,
-  Package
+  Package,
+  Wallet,
+  Target,
+  Users,
+  BarChart3,
+  CalendarDays,
+  RefreshCw,
+  Github,
+  Linkedin,
+  Globe,
+  Mail,
+  Bug,
+  ExternalLink
 } from 'lucide-react';
 
 // Instaladores e atualizações vêm do GitHub Releases. O workflow de release
@@ -22,6 +32,53 @@ import {
 const RELEASE_BASE = 'https://github.com/MatheusAmorimm/seneb/releases/latest/download';
 const RELEASES_PAGE = 'https://github.com/MatheusAmorimm/seneb/releases';
 const ISSUES_PAGE = 'https://github.com/MatheusAmorimm/seneb/issues';
+
+// Desenvolvedor e suporte. A foto vem do avatar público do GitHub.
+const DEV_GITHUB = 'https://github.com/MatheusAmorimm';
+const DEV_LINKEDIN = 'https://www.linkedin.com/in/matheus-amorimm/';
+const DEV_PORTFOLIO = 'https://matheusamorimm.github.io/DevLinks/';
+const DEV_AVATAR = 'https://avatars.githubusercontent.com/MatheusAmorimm?size=256';
+const SUPPORT_EMAIL = 'mtxdevfrontend@gmail.com';
+const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Seneb: problema ou sugestão')}`;
+
+const FEATURES = [
+  {
+    icon: Wallet,
+    color: '#F23E02',
+    title: 'Lançamentos e parcelas',
+    text: 'Receitas, despesas e compras parceladas com categoria, meio de pagamento e vencimento. A parcela do mês entra sozinha.',
+  },
+  {
+    icon: Target,
+    color: '#00988D',
+    title: 'Metas',
+    text: 'Defina um valor e um prazo, registre os aportes e acompanhe o progresso. Ao chegar em 100%, o app celebra com você.',
+  },
+  {
+    icon: Users,
+    color: '#2C6B74',
+    title: 'Grupos compartilhados',
+    text: 'Controle as contas da casa com quem mora com você. Quem administra edita, quem é convidado acompanha.',
+  },
+  {
+    icon: BarChart3,
+    color: '#F23E02',
+    title: 'Análises',
+    text: 'Para onde o dinheiro vai: por categoria, por meio de pagamento, evolução mês a mês e próximos vencimentos.',
+  },
+  {
+    icon: CalendarDays,
+    color: '#00988D',
+    title: 'Histórico mensal',
+    text: 'Feche o mês e ele vira um relatório. Reabra quando precisar corrigir algo, com segurança.',
+  },
+  {
+    icon: RefreshCw,
+    color: '#2C6B74',
+    title: 'Atualização automática',
+    text: 'Windows e Linux. O app se atualiza sozinho a cada nova versão, sem precisar instalar de novo.',
+  },
+];
 
 export default function LandingPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -90,6 +147,12 @@ export default function LandingPage() {
               >
                 Changelogs
               </Link>
+              <Link
+                href="#suporte"
+                className="px-4 py-2 hover:text-white/80 transition-colors"
+              >
+                Suporte
+              </Link>
             </nav>
 
             {/* Auth Buttons */}
@@ -118,6 +181,7 @@ export default function LandingPage() {
             </Link>
             <Link href="#sobre-dev" className="text-sm px-3 py-1">Sobre o Dev</Link>
             <Link href="#changelogs" className="text-sm px-3 py-1">Changelogs</Link>
+            <Link href="#suporte" className="text-sm px-3 py-1">Suporte</Link>
           </nav>
         </div>
       </header>
@@ -229,45 +293,19 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4 text-slate-800">Por que escolher o Seneb?</h2>
-              <p className="text-xl text-slate-600">Simplicidade e poder em um único lugar</p>
+              <p className="text-xl text-slate-600">Tudo o que você precisa para cuidar do dinheiro, sem plano pago</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Feature 1 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ backgroundColor: 'rgba(242, 62, 2, 0.1)' }}>
-                  <TrendingUp className="w-7 h-7" style={{ color: '#F23E02' }} />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {FEATURES.map(({ icon: Icon, color, title, text }) => (
+                <div key={title} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ backgroundColor: `${color}1A` }}>
+                    <Icon className="w-7 h-7" style={{ color }} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-slate-800">{title}</h3>
+                  <p className="text-slate-600">{text}</p>
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-slate-800">Interface Intuitiva</h3>
-                <p className="text-slate-600">
-                  Design limpo e moderno. Adicione transações em segundos, sem complicação.
-                  Tudo que você precisa, nada que você não precisa.
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ backgroundColor: 'rgba(0, 152, 141, 0.1)' }}>
-                  <PieChart className="w-7 h-7" style={{ color: '#00988D' }} />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-slate-800">Visualização Clara</h3>
-                <p className="text-slate-600">
-                  Cards coloridos mostram suas receitas, despesas e saldo em tempo real.
-                  Entenda suas finanças de um só olhar.
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ backgroundColor: 'rgba(44, 107, 116, 0.1)' }}>
-                  <Calendar className="w-7 h-7" style={{ color: '#2C6B74' }} />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-slate-800">Histórico Completo</h3>
-                <p className="text-slate-600">
-                  Navegue pelo histórico mês a mês. Veja padrões, acompanhe seu progresso
-                  e tome decisões financeiras melhores.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
@@ -303,9 +341,14 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
               <div className="flex flex-col md:flex-row gap-8 items-center">
-                <div className="w-32 h-32 rounded-full flex items-center justify-center text-4xl" style={{ backgroundColor: 'rgba(242, 62, 2, 0.1)', color: '#F23E02' }}>
-                  👨‍💻
-                </div>
+                <Image
+                  src={DEV_AVATAR}
+                  alt="Foto de Matheus Amorim"
+                  width={128}
+                  height={128}
+                  className="w-32 h-32 rounded-full object-cover shadow-lg shrink-0"
+                  style={{ border: '4px solid rgba(242, 62, 2, 0.25)' }}
+                />
                 <div className="flex-1 text-center md:text-left">
                   <h2 className="text-3xl font-bold mb-4 text-slate-800">Sobre o Desenvolvedor</h2>
                   <p className="text-slate-600 mb-4">
@@ -315,6 +358,35 @@ export default function LandingPage() {
                     Desenvolvido com Tauri, React, TypeScript e Tailwind CSS.
                     Focado em proporcionar a melhor experiência de usuário possível.
                   </p>
+                  <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-6">
+                    <a
+                      href={DEV_GITHUB}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow transition-all hover:scale-105"
+                      style={{ backgroundColor: '#013750' }}
+                    >
+                      <Github className="w-4 h-4" /> GitHub
+                    </a>
+                    <a
+                      href={DEV_LINKEDIN}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow transition-all hover:scale-105"
+                      style={{ backgroundColor: '#2C6B74' }}
+                    >
+                      <Linkedin className="w-4 h-4" /> LinkedIn
+                    </a>
+                    <a
+                      href={DEV_PORTFOLIO}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow transition-all hover:scale-105"
+                      style={{ backgroundColor: '#00988D' }}
+                    >
+                      <Globe className="w-4 h-4" /> Portfólio
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -326,7 +398,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-bold mb-4 text-slate-800">Changelogs</h2>
             <p className="text-xl text-slate-600 mb-8">
-              Encontrou um bug? Tem uma sugestão? Adoraríamos ouvir você!
+              O que mudou em cada versão do app.
             </p>
 
             <div className="bg-white rounded-2xl shadow-lg p-8 text-left">
@@ -415,16 +487,54 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
 
-              <div className="mt-8 pt-8 border-t border-slate-200">
-                <h4 className="text-lg font-bold mb-4 text-slate-800">Reportar um problema</h4>
-                <p className="text-slate-600 mb-4">
-                  Abra uma issue no GitHub:{' '}
-                  <a href={ISSUES_PAGE} target="_blank" rel="noopener noreferrer" className="font-semibold underline" style={{ color: '#F23E02' }}>
-                    github.com/MatheusAmorimm/seneb/issues
-                  </a>
-                </p>
-              </div>
+        {/* Suporte */}
+        <section id="suporte" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/50">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl font-bold mb-4 text-slate-800">Precisa de ajuda?</h2>
+            <p className="text-xl text-slate-600 mb-10">
+              Encontrou um bug ou tem uma sugestão? Fale direto com quem desenvolve o Seneb.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 text-left">
+              <a
+                href={SUPPORT_MAILTO}
+                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(242, 62, 2, 0.1)' }}>
+                  <Mail className="w-6 h-6" style={{ color: '#F23E02' }} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-1 text-slate-800">Enviar um e-mail</h3>
+                  <p className="text-slate-600 text-sm mb-3">
+                    Descreva o problema e, se puder, anexe um print. Respondo o mais rápido que conseguir.
+                  </p>
+                  <span className="font-semibold underline break-all" style={{ color: '#F23E02' }}>{SUPPORT_EMAIL}</span>
+                </div>
+              </a>
+
+              <a
+                href={ISSUES_PAGE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(0, 152, 141, 0.1)' }}>
+                  <Bug className="w-6 h-6" style={{ color: '#00988D' }} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-1 text-slate-800">Abrir uma issue no GitHub</h3>
+                  <p className="text-slate-600 text-sm mb-3">
+                    Para quem já usa o GitHub: acompanhe o andamento e veja o que outras pessoas já reportaram.
+                  </p>
+                  <span className="font-semibold underline inline-flex items-center gap-1" style={{ color: '#00988D' }}>
+                    github.com/MatheusAmorimm/seneb/issues <ExternalLink className="w-4 h-4" />
+                  </span>
+                </div>
+              </a>
             </div>
           </div>
         </section>
@@ -437,7 +547,7 @@ export default function LandingPage() {
                 Pronto para começar?
               </h2>
               <p className="text-xl text-slate-600 mb-8">
-                Junte-se a milhares de pessoas que já controlam suas finanças com facilidade
+                Instala em 2 minutos. Sem plano pago, sem cartão, sem limite de lançamentos.
               </p>
               <button
                 onClick={handleCTAClick}
@@ -542,21 +652,74 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="text-white py-12 px-4 sm:px-6 lg:px-8" style={{ background: 'linear-gradient(to right, #013750, #2C6B74)' }}>
-        <div className="max-w-7xl mx-auto justify-center items-center">
-          <div className="grid md:grid-cols-4 gap-8 mb-8 justify-center items-center">
-            <div>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+            <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <DollarSign className="w-6 h-6" />
                 <span className="text-xl font-bold">Seneb</span>
               </div>
               <p className="text-white/70 text-sm">
-                Controle financeiro pessoal simples e eficaz.
+                Controle financeiro pessoal e em grupo. Gratuito, para Windows e Linux.
               </p>
+            </div>
+
+            <div>
+              <h4 className="font-bold mb-4">Produto</h4>
+              <ul className="space-y-2 text-sm text-white/70">
+                <li><Link href="#download" className="hover:text-white transition-colors">Download</Link></li>
+                <li><Link href="#changelogs" className="hover:text-white transition-colors">Changelogs</Link></li>
+                <li>
+                  <a href={RELEASES_PAGE} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                    Todas as versões
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm text-white/70">
+                <li><Link href="/termos/" className="hover:text-white transition-colors">Termos de Uso</Link></li>
+                <li><Link href="/privacidade/" className="hover:text-white transition-colors">Política de Privacidade</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold mb-4">Contato</h4>
+              <ul className="space-y-2 text-sm text-white/70">
+                <li>
+                  <a href={SUPPORT_MAILTO} className="inline-flex items-center gap-2 hover:text-white transition-colors break-all">
+                    <Mail className="w-4 h-4 shrink-0" /> {SUPPORT_EMAIL}
+                  </a>
+                </li>
+                <li>
+                  <a href={DEV_GITHUB} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-white transition-colors">
+                    <Github className="w-4 h-4" /> GitHub
+                  </a>
+                </li>
+                <li>
+                  <a href={DEV_LINKEDIN} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-white transition-colors">
+                    <Linkedin className="w-4 h-4" /> LinkedIn
+                  </a>
+                </li>
+                <li>
+                  <a href={DEV_PORTFOLIO} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-white transition-colors">
+                    <Globe className="w-4 h-4" /> Portfólio
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
 
-          <div className="border-t border-white/20 pt-8 text-center text-sm text-white/70">
-            © {new Date().getFullYear()} Seneb. Todos os direitos reservados.
+          <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row items-center justify-between gap-2 text-sm text-white/70">
+            <span>© {new Date().getFullYear()} Seneb. Todos os direitos reservados.</span>
+            <span>
+              Feito por{' '}
+              <a href={DEV_GITHUB} target="_blank" rel="noopener noreferrer" className="text-white font-semibold hover:underline">
+                Matheus Amorim
+              </a>
+            </span>
           </div>
         </div>
       </footer>
