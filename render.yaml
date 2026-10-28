@@ -28,8 +28,10 @@ services:
         value: "30"
       - key: MAIL_SERVER
         value: smtp.resend.com
+      # O plano free do Render bloqueia saída nas portas 25, 465 e 587;
+      # o Resend também aceita STARTTLS na 2587.
       - key: MAIL_PORT
-        value: "587"
+        value: "2587"
       - key: MAIL_USERNAME
         value: resend
       - key: MAIL_PASSWORD
