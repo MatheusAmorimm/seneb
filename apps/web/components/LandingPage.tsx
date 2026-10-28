@@ -408,8 +408,22 @@ export default function LandingPage() {
                   <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#F23E02' }} />
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-slate-800 font-semibold">v0.5.0 - Análises Financeiras & Seneb 100% Gratuito</span>
+                      <span className="text-slate-800 font-semibold">v0.5.1 - Requisitos de Senha em Tempo Real</span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold text-white" style={{ backgroundColor: '#F23E02' }}>NOVO</span>
+                      <span className="text-xs text-slate-400">28/10/2026</span>
+                    </div>
+                    <ul className="text-sm text-slate-500 space-y-1 list-none mt-2">
+                      <li>• <strong>Requisitos da senha à vista:</strong> ao criar a conta, recuperar ou trocar a senha, a lista de requisitos aparece embaixo do campo e cada item fica verde conforme você digita</li>
+                      <li>• <strong>Confirmação na hora:</strong> o app avisa se as duas senhas digitadas não coincidem antes de enviar</li>
+                      <li>• <strong>Mesma regra em todo lugar:</strong> cadastro, recuperação e troca de senha seguem a mesma regra, com os símbolos <span className="whitespace-nowrap">@ # $ % &amp; * ! ? . _ -</span>. Senhas antigas continuam funcionando</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(0, 152, 141, 0.04)', border: '1px solid rgba(0, 152, 141, 0.15)' }}>
+                  <CheckCircle className="w-5 h-5 mt-1 shrink-0" style={{ color: '#00988D' }} />
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-slate-800 font-semibold">v0.5.0 - Análises Financeiras & Seneb 100% Gratuito</span>
                       <span className="text-xs text-slate-400">11/09/2026</span>
                     </div>
                     <ul className="text-sm text-slate-500 space-y-1 list-none mt-2">
