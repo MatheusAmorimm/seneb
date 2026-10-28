@@ -27,13 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Habilitar Corepack (Yarn 4)
-        run: corepack enable
-
+      # Node antes do Corepack: no runner Windows o Yarn 1 global (C:\npm\prefix)
+      # vem antes no PATH; o shim precisa ir para a pasta do Node do setup-node.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+
+      - name: Habilitar Corepack (Yarn 4)
+        run: |
+          corepack enable
+          yarn --version
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -45,7 +48,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
 
       - run: yarn install --immutable
 
