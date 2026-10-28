@@ -9,6 +9,8 @@ import { useTheme } from "../../../../components/theme_provider";
 import { Palette, Moon, Sun } from "lucide-react";
 import api from "../../../../services/api";
 import { setStorageItem } from "../../../../lib/storage";
+import { PasswordMatchHint, PasswordRequirements } from "../../../../components/password_requirements";
+import { isPasswordValid } from "../../../../lib/password_rules";
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -126,6 +128,10 @@ export default function ProfilePage() {
 
   const handlePwConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordValid(newPassword)) {
+      toast.error("A senha ainda não cumpre todos os requisitos.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       toast.error("Senhas não coincidem.");
       return;
@@ -410,15 +416,17 @@ export default function ProfilePage() {
                 <form onSubmit={handlePwConfirm} className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Nova Senha</label>
-                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} maxLength={128}
                       className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all"
                       placeholder="Mínimo 8 caracteres" autoFocus />
+                    <PasswordRequirements password={newPassword} />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#2C6B74] dark:text-slate-400 uppercase mb-1.5">Confirmar Nova Senha</label>
                     <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                       className="w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#00988D] dark:focus:border-teal-400 transition-all"
                       placeholder="Digite novamente" />
+                    <PasswordMatchHint password={newPassword} confirmPassword={confirmPassword} />
                   </div>
                   <button type="submit" disabled={pwLoading}
                     className="w-full py-3 bg-[#F23E02] text-white font-bold rounded-xl hover:bg-[#d93602] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer">

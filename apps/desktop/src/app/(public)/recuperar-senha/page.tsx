@@ -5,6 +5,8 @@ import { AxiosError } from 'axios';
 import api from '../../../services/api';
 import { DollarSign, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { PasswordMatchHint, PasswordRequirements } from '../../../components/password_requirements';
+import { isPasswordValid } from '../../../lib/password_rules';
 
 export default function RecuperarSenhaPage() {
   const [loading, setLoading] = useState(false);
@@ -59,9 +61,8 @@ export default function RecuperarSenhaPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}<>]).{8,}$/;
-    if (!passwordRegex.test(newPassword)) {
-      toast.error("A senha deve ter 8+ caracteres, 1 maiúscula, 1 minúscula e 1 caractere especial.");
+    if (!isPasswordValid(newPassword)) {
+      toast.error("A senha ainda não cumpre todos os requisitos.");
       return;
     }
 
@@ -208,11 +209,13 @@ export default function RecuperarSenhaPage() {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    maxLength={128}
                     className="w-full pr-12 py-3 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                     style={{ paddingLeft: '20px' }}
                     placeholder="Mínimo 8 caracteres"
                     autoFocus
                   />
+                  <PasswordRequirements password={newPassword} />
                 </div>
 
                 <div>
@@ -225,6 +228,7 @@ export default function RecuperarSenhaPage() {
                     style={{ paddingLeft: '20px' }}
                     placeholder="Digite a senha novamente"
                   />
+                  <PasswordMatchHint password={newPassword} confirmPassword={confirmPassword} />
                 </div>
 
                 <button

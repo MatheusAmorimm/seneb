@@ -8,6 +8,8 @@ import { DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { setStorageItem } from '@/src/lib/storage';
 import { open } from '@tauri-apps/plugin-shell';
+import { PasswordMatchHint, PasswordRequirements } from '../../../components/password_requirements';
+import { isPasswordValid } from '../../../lib/password_rules';
 
 import { useRouter } from 'next/navigation';
 
@@ -42,10 +44,8 @@ export default function CadastroPage() {
       return;
     }
 
-    // 🚀 NOVA VALIDAÇÃO DE SENHA FORTE NO FRONTEND
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      toast.error("A senha deve ter 8+ caracteres, 1 maiúscula, 1 minúscula e 1 caractere especial.");
+    if (!isPasswordValid(password)) {
+      toast.error("A senha ainda não cumpre todos os requisitos.");
       return;
     }
 
@@ -206,11 +206,13 @@ export default function CadastroPage() {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      maxLength={128}
                       className="w-full pr-12 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:border-brand-turquoise focus:ring-brand-turquoise transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 dark:border-slate-700"
                       style={{ paddingLeft: '20px' }}
                       placeholder="Mínimo 8 caracteres"
                     />
                   </div>
+                  <PasswordRequirements password={password} />
                 </div>
 
                 {/* Confirmar Senha */}
@@ -226,6 +228,7 @@ export default function CadastroPage() {
                       placeholder="Digite a senha novamente"
                     />
                   </div>
+                  <PasswordMatchHint password={password} confirmPassword={confirmPassword} />
                 </div>
 
                 {/* Termos */}
