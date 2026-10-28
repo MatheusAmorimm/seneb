@@ -1,19 +1,8 @@
-import re
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-_PASSWORD_SPECIAL_CHARS = r'[!@#$%^&*(),.?":{}|<>]'
-
-
-def _validate_password_strength(v: str) -> str:
-    if not re.search(r"[A-Z]", v):
-        raise ValueError("A senha deve conter pelo menos uma letra maiúscula.")
-    if not re.search(r"[a-z]", v):
-        raise ValueError("A senha deve conter pelo menos uma letra minúscula.")
-    if not re.search(_PASSWORD_SPECIAL_CHARS, v):
-        raise ValueError("A senha deve conter pelo menos um caractere especial.")
-    return v
+from backend.application.policies.password_policy import validate_password_strength
 
 
 class SendCodeInput(BaseModel):
@@ -31,7 +20,7 @@ class SignupInput(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
-        return _validate_password_strength(v)
+        return validate_password_strength(v)
 
 
 class SignupOutput(BaseModel):
@@ -77,4 +66,4 @@ class ResetPasswordInput(BaseModel):
     @field_validator("new_password")
     @classmethod
     def validate_password(cls, v: str) -> str:
-        return _validate_password_strength(v)
+        return validate_password_strength(v)
